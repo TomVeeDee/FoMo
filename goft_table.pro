@@ -1,10 +1,10 @@
 
 
-pro goft_table
+pro goft_table, lin=lin
 
+; Creates G(T,n) table
 ; for Fe IX 171.073, set lin = 1
 ; for Fe XII 193.509, set lin = 2
-lin = 1
 
   if lin eq 1 then begin
      enum = 26                  ; number for element
@@ -19,6 +19,7 @@ lin = 1
 n_e_min = 1.e8
 n_e_max = 1.e10
 
+; set delta(n_e) = steplg:
 ;steplg = 0.005
 steplg = 0.001
 
@@ -26,8 +27,8 @@ num = alog10(n_e_max/n_e_min)/steplg
 
 n_e_lg = dindgen(num+1)/num*alog10(n_e_max/n_e_min)+alog10(n_e_min)
 
-;openw,unit,'goft_table_frt_193.dat',/get_lun
-openw,unit,'goft_table_f2rt_171.dat',/get_lun
+if lin eq 1 then begin openw,unit,'goft_table_f2rt_171.dat',/get_lun
+if lin eq 2 then begin openw,unit,'goft_table_frt_193.dat',/get_lun
 
 for i=0,num do begin
    goft0=g_of_t(enum,inum,dens=n_e_lg[i],ioneq_file=concat_dir(concat_dir(!xuvtop,'ioneq'),'chianti.ioneq'),abund_file=concat_dir(concat_dir(!xuvtop,'abundance'),'sun_coronal.abund'),index=ind,/quiet)
