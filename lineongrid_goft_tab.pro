@@ -18,7 +18,7 @@ pro lineongrid, rh_s, te_s, wave=wave,nwave=nwave,w0=w0,minwave=minwave,maxwave=
 ; w0 = wavelength center
 ; emission_goft = array of emission (x, y, (z), lambda)
 
-if (~(keyword_set(wayemi)) then begin 
+if keyword_set(wayemi) eq 0 then begin 
    way = 2 
 endif else begin
    if wayemi eq 1 then way = 1
