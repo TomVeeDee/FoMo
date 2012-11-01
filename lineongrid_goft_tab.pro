@@ -47,7 +47,7 @@ normte = proton/(2*kboltz)*normro
 rh = rh_s / normro
 T = te_s * normte
 
-n_e=rh/proton/1.e^6/1.e6 ; in cgs
+n_e=rh/proton/1.e6 ; in cgs
 logT = alog10(T>1.)
 logne = alog10(n_e)
 
