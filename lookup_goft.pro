@@ -1,16 +1,23 @@
 
 pro lookup_goft, ion=ion, n_e_lg=n_e_lg, logt=logt, goft_mat=goft_mat
 
-; returns got_mat matrix 
+; returns got_mat matrix reading dat files created by table_goft.pro
 ; INPUT:
-; 
-
+; ion = spectral line : 'fe_9' for Fe IX 171, 'fe_12' for Fe XII 193
+; OUTPUT:
+; n_e_lg: number density array (logarithm) of table
+; logt: temperature array (logarithm) of table
+; goft_mat: 
   n_e_min = 1.e8
   n_e_max = 1.e10
 ;  steplg = 0.005
   steplg = 0.001
   num = alog10(n_e_max/n_e_min)/steplg
 
+if keyword_set(ion) eq 0 then begin
+   print,' lookup_goft, ion=ion, n_e_lg=n_e_lg, logt=logt, goft_mat=goft_mat'
+   return
+endif
 if ion eq 'fe_9' then  openr,unit,'goft_table_f2rt_171.dat',/get_lun
 if ion eq 'fe_12' then  openr,unit,'goft_table_frt_193.dat',/get_lun
   readf,unit,n_e_0,pts
