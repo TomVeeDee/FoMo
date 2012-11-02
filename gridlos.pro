@@ -1,15 +1,13 @@
 
 
-PRO gridlos, gridx=gridx, gridy=gridy, gridz=gridz, mua_d=mua_d, velx=velx, vely=vely, velz=velz, n_gridx, n_gridy, ngrid, losvel
+PRO gridlos, gridx=gridx, gridy=gridy, mua_d=mua_d, velx=velx, vely=vely, n_gridx, n_gridy, ngrid, losvel
 
 ; INPUT:
-; gridx = grid along new x axis (longitudinal direction)
+; gridx = grid along new x axis (longitudinal direction: old z axis)
 ; gridy = grid along new y axis (radial direction)
-; gridz = grid along new z axis (radial direction)
 ; mua_d = angle between line-of-sight and perpendicular to cylinder axis
 ; velx = (y,z) array of velocity along x
 ; vely = (y,z) array of velocity along y
-; velz = (y,z) array of velocity along z
 ; OUTPUT:
 ; n_gridx = grid along new x direction (longitudinal direction)
 ; n_gridy = grid along new y direction (radial direction)
@@ -24,8 +22,8 @@ endif
 
 mua_r=mua_d*!pi/180.
 dimx = n_elements(gridx)
-dimy = n_elements(gridy)
-dimz = n_elements(gridz)
+if keyword_set(gridy) eq 0 then begin gridy=gridx & dimy = dimx
+if keyword_set(vely) eq 0 then begin vely = velx
 xc = float(dimx)/2.
 yc = float(dimy)/2.
 

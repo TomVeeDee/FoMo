@@ -4,7 +4,7 @@ pro integrateemission,emis=emis,n_gridx=n_gridx,n_gridy=n_gridy,ngrid=ngrid,wave
 ; emis = output of lineongrid.pro , array of emission (x,y,(z),lambda)
 ; wave = wavelength array from lineongrid.pro
 ; n_gridx = output of gridlos.pro, grid along new x direction
-; (longitudinal direction)
+; (longitudinal direction: old z axis)
 ; n_gridy = output of gridlos.pro, grid along new y direction 
 ; (radial direction)
 ; ngrid = output of gridlos.pro, number of points in depth for each
@@ -18,9 +18,8 @@ sizes=size(emis)
 dims=sizes[0]-1
 nx=sizes[1]
 ny=sizes[2]
-nz=sizes[3]
-if (dims eq 2) then nz=1
-nwave=sizes[4]
+if dims eq 2 then nz=1 else nz = sizes[3]
+if dims eq 2 then nwave = sizes[3] else nwave=sizes[4]
 
 c=299792000./1.e5
 emission = emis

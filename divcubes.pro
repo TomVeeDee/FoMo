@@ -3,6 +3,7 @@
 pro divcubes,dimt=dimt,dimx=dimx,dimy=dimy,model=model,smooth=smooth
 
 if n_params(0) lt 1 then begin
+   print,'Check input and output directories first'
    print,'divcubes,dimt=dimt,dimx=dimx,dimy=dimy,model=model,[smooth=smooth]'
    return
 endif
@@ -16,7 +17,9 @@ endif
 ; model = string with name of treated model:
 ;      model = 'base'corresponds to ka = 2.24, 
 ;      model = 'long' corresponds to ka = 1.25
-;      model = 'high_res' corresponds to ka = 2.24_hgres
+;      model = 'high_res' corresponds to ka = 2.24, high spatial resolution
+;      model = 'high_res2d' corresponds to ka = 2.24, high 2D spatial resolution
+;      model = 'highT' corresponds to ka = 2.24, high external temperature
 ; OUPUT:
 ; Produces IDL save files of slices at each x and time position
 ; OPTIONAL:
@@ -26,7 +29,12 @@ endif
   if model eq 'base' then  kanm = 'ka2.24'
   if model eq 'long' then  kanm = 'ka1.25'
   if model eq 'high_res' then  kanm = 'ka2.24_hgres'
+  if model eq 'high_res2d' then  kanm = 'ka2.24_hgres2d'
+  if model eq 'highT' then kanm = 'ka2.24highT'
+
+; INPUT DIRECTORY:
   cubedir='/users/cpa/pantolin/Modeling/cubes/set2/'
+; OUTPUT DIRECTORY:
   savedir='/users/cpa/pantolin/Modeling/cubes/set2/'
 ;  dir = '/volume1/scratch/set3/'
 

@@ -3,7 +3,7 @@ pro rays, set=set, gridy=gridy, n_gridy=n_gridy, n_gridz=n_gridz, ngrid=ngrid, n
 
   if n_params(0) lt 1 then begin
      print,'do before:'
-     print,'gridlos, gridx=gridz_ext, gridy=gridy, gridz=gridx, mua_d=mua_d, velx=0., vely=0., velz=0., n_gridz, n_gridy, ngrid, losvel_ext'
+     print,'gridlos, gridx=gridz_ext, gridy=gridy, mua_d=mua_d, velx=0., vely=0., n_gridz, n_gridy, ngrid, losvel_ext'
      print,'then:'
      print,'rays, set=set, gridy=gridy, n_gridy=n_gridy, n_gridz=n_gridz, ngrid=ngrid, ray00d_0, ray00d_1, vr_cube_t=vr_cube_t, gridz=gridz'
      return

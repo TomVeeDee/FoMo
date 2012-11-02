@@ -1,8 +1,9 @@
 
-pro params, set, it, ix, ro, re, va, vae, co, ce, aa, r0, gridx, gridy, gridz, dimx, dimy, dimz, tarr, kafix, ka_rt, wk_rt, te, rho, vr, vz, velx, vely, velz
+pro params, set=set, it=it, ix=ix, ro=ro, re=re, valfven=va, vae=vae, co=co, ce=ce, aa=aa, r0=r0, gridx=gridx, gridy=gridy, gridz=gridz, dimx=dimx, dimy=dimy, dimz=dimz, tarr=tarr, kafix=kafix, ka_rt=ka_rt, wk_rt=wk_rt, te=te, rho=rho, vr=vr, vz=vz, velx=velx, vely=vely, velz=velz
 
-if n_params(0) lt 1 then begin
-   print,'params, set, it, ix, ro, re, va, vae, co, ce, aa, r0, gridx, gridy, gridz, dimx, dimy, dimz, tarr, kafix, ka_rt, wk_rt, te, rho, vr, vz, velx, vely, velz'
+if keyword_set(set) eq 0 then begin
+   print,'Check input and output directories first'
+   print,'params, set=set, it=it, ix=ix, ro=ro, re=re, valfven=va, vae=vae, co=co, ce=ce, aa=aa, r0=r0, gridx=gridx, gridy=gridy, gridz=gridz, dimx=dimx, dimy=dimy, dimz=dimz, tarr=tarr, kafix=kafix, ka_rt=ka_rt, wk_rt=wk_rt, te=te, rho=rho, vr=vr, vz=vz, velx=velx, vely=vely, velz=velz'
    return
 endif
 
@@ -20,7 +21,7 @@ endif
 ; OUTPUT:
 ; ro = internal density: rho[dimx/2,dimy/2,dimz/2]
 ; re = external density: rho[0,0,0]
-; va = internal Alfven velocity: calculated at (dimx/2,dimy/2,dimz/2)
+; valfven = internal Alfven velocity: calculated at (dimx/2,dimy/2,dimz/2)
 ; vae = external Alfven velocity: calculated at (0,0,0)
 ; co = internal sound speed: calculated at (dimx/2,dimy/2,dimz/2)
 ; ce = external sound speed: calculated at (0,0,0)
@@ -43,6 +44,8 @@ endif
 ; velx = (y,z) array of velocity along x at position ix and time it
 ; vely = (y,z) array of velocity along y at position ix and time it
 ; velz = (y,z) array of velocity along z at position ix and time it
+; NOTE: 
+; If 2D model (set = 25) then only quantities with x and z values are returned
 
 ;if set eq 2 then begin dir = '/volume1/scratch/set2/' & kanm = 'ka2.24' & endif
 ;if set eq 3 then begin dir = '/volume1/scratch/set3/' & kanm = 'ka1.27' & endif
@@ -51,26 +54,36 @@ if set eq 2 then begin dir = '/users/cpa/pantolin/Modeling/cubes/set2/' & kanm =
 if set eq 24 then begin dir = '/users/cpa/pantolin/Modeling/cubes/set2/' & kanm = 'ka2.24_hgres' & endif
 if set eq 21 then begin dir = '/users/cpa/pantolin/Modeling/cubes/set2/' & kanm = 'ka2.24_highT' & endif
 if set eq 22 then begin dir = '/users/cpa/pantolin/Modeling/cubes/set2/' & kanm = 'ka2.24_sm' & endif
+if set eq 25 then begin dir = '/users/cpa/pantolin/Modeling/cubes/set2/' & kanm = 'ka2.24_hgres2d' & endif
 if set eq 3 then begin dir = '/users/cpa/pantolin/Modeling/cubes/set3/' & kanm = 'ka1.25' & endif
 ;snum = fix(strmid(slize,11,3))
    
-restore,dir+'params_'+kanm+'.sav'
-restore, dir+'slice_'+kanm+'_'+string(it,format='(i3.3)')+'t_'+string(ix,format='(i3.3)')+'x'+'.sav'
 ;   restore,'cubes_'+string(it,format='(i3.3)')+'.sav'
-gridx0=gridx
-gridx = gridx0[ix]
-sizes = size(te)
-dimx = sizes[1] & dimy = sizes[2] & dimz = sizes[3]
-velx = fltarr(dimx,dimy,dimz)
-vely = fltarr(dimx,dimy,dimz)
-velz = fltarr(dimx,dimy,dimz)
 
-for i=0,dimx-1 do begin
-   for j=0,dimy-1 do begin
-      velx[i,j,*] = vr[i,j,*]*(gridx[i]-r0)/sqrt((gridx[i]-r0)^2+(gridy[j]-r0)^2)
-      vely[i,j,*] = vr[i,j,*]*(gridy[j]-r0)/sqrt((gridx[i]-r0)^2+(gridy[j]-r0)^2)
+if set ne 25 then begin
+   restore,dir+'params_'+kanm+'.sav'
+   restore, dir+'slice_'+kanm+'_'+string(it,format='(i3.3)')+'t_'+string(ix,format='(i3.3)')+'x'+'.sav'
+   gridx0=gridx
+   gridx = gridx0[ix]
+   sizes = size(te)
+   dimx = sizes[1] & dimy = sizes[2] & dimz = sizes[3]
+   velx = fltarr(dimx,dimy,dimz)
+   vely = fltarr(dimx,dimy,dimz)
+   velz = fltarr(dimx,dimy,dimz)
+   for i=0,dimx-1 do begin
+      for j=0,dimy-1 do begin
+         velx[i,j,*] = vr[i,j,*]*(gridx[i]-r0)/sqrt((gridx[i]-r0)^2+(gridy[j]-r0)^2)
+         vely[i,j,*] = vr[i,j,*]*(gridy[j]-r0)/sqrt((gridx[i]-r0)^2+(gridy[j]-r0)^2)
+      endfor
    endfor
-endfor
-velz = vz
+endif else begin
+   restore,dir+'params2d_'+kanm+'.sav'
+   restore, dir+'cubes2d_'+kanm+'_'+string(it,format='(i3.3)')+'.sav'
+   sizes = size(te_cube)
+   dimx = sizes[1] & dimz = sizes[2]
+   te = te_cube & rho = rh_cube & vr = vr_cube & vz = vz_cube
+   velx = vr_cube
+   velz = vz_cube
+endelse
 
 end

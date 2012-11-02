@@ -17,7 +17,9 @@ pro prl_slices,set=set
 ;  mua_dd=[0.,30.,45.,60.]
   ion = 'fe_9'
 ;  ion = 'fe_12'
-  params, set, 0,0, ro, re, va, vae, co, ce, aa, r0, gridx, gridy, gridz, dimx, dimy, dimz, tarr, kafix, ka_rt, wk_rt, te, rho, vr, vz, velx, vely, velz
+
+  params, set=set, it=0, ix=0, ro=ro, re=re, va=va, vae=vae, co=co, ce=ce, aa=aa, r0=r0, gridx=gridx, gridy=gridy, gridz=gridz, dimx=dimx, dimy=dimy, dimz=dimz, tarr=tarr, kafix=kafix, ka_rt=ka_rt, wk_rt=wk_rt, te=te, rho=rho, vr=vr, vz=vz, velx=velx, vely=vely, velz=velz
+
   restore,files[0]
   siz = size(rho)
   nwave = 100
@@ -98,7 +100,7 @@ pro prl_slices,set=set
         gridx = gridy
         for j=0,n_elements(mua_dd)-1 do begin
            mua_d = mua_dd[j]
-           gridlos, gridx=gridz_ext, gridy=gridy, gridz=gridx, mua_d=mua_d, velx=velz_ext, vely=vely_ext, velz=velx_ext, n_gridz_ext, n_gridy_ext, ngrid_ext, losvel_ext
+           gridlos, gridx=gridz_ext, gridy=gridy, mua_d=mua_d, velx=velz_ext, vely=vely_ext, n_gridz_ext, n_gridy_ext, ngrid_ext, losvel_ext
            integrateemission,emis=emission_goft_ext,n_gridx=n_gridz_ext,n_gridy=n_gridy_ext,ngrid=ngrid_ext,wave=wave,w0=w0,direction=direction,losvel=losvel_ext,image
            if j eq 0 then image00d_ext=image
            if j eq 1 then image30d_ext=image

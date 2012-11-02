@@ -54,9 +54,14 @@ logne = alog10(n_e)
 sizes=size(rh)
 dims=sizes[0]
 ; if dims<2 exit
-nx=sizes[1]
-ny=sizes[2]
-nz=sizes[3]
+if dims eq 3 then begin
+   nx=sizes[1]
+   ny=sizes[2]
+   nz=sizes[3]
+endif else begin
+   nx = sizes[1]
+   nz = sizes[2]
+endelse
 
 if (~(keyword_set(ion))) then begin
    ion='fe_9'  
@@ -83,7 +88,7 @@ if (~(keyword_set(wave))) then begin
    wave=findgen(nwave)/(nwave-1)*(maxwave-minwave)+minwave
 endif
 
-if (dims eq 2) then emission_goft=dblarr(nx,ny,nwave)
+if (dims eq 2) then emission_goft=dblarr(nx,nz,nwave)
 if (dims eq 3) then emission_goft=dblarr(nx,ny,nz,nwave)
 if way eq 3 then begin
    lognen = fltarr(nx,ny,nz,nwave)
@@ -135,8 +140,13 @@ if way eq 2 then begin
    numemi = min([n_elements(uniq(emi)),10000]) ; 10000 pts are sufficient
    hist_emi = histogram(emi,nbins=numemi,locations=loc_emi,reverse_indices=Rem)
    nhemi = n_elements(hist_emi)
-   emin = fltarr(nx,ny,nz,nwave)
-   for i=0,nwave-1 do emin[*,*,*,i]=emi
+   if dims eq 3 then begin
+      emin = fltarr(nx,ny,nz,nwave) 
+      for i=0,nwave-1 do emin[*,*,*,i]=emi
+   endif else begin
+      emin = fltarr(nx,nz,nwave)
+      for i=0,nwave-1 do emin[*,*,i]=emi
+   endelse
    hist_emin = histogram(emin,nbins=numemi,locations=loc_emin,reverse_indices=Remn)
    for i=0,nhemi-1 do begin
       if hist_emi[i] ne 0 then begin

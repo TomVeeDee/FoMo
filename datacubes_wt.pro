@@ -1,8 +1,9 @@
 
-pro datacubes_wt, rho_int=ro, rho_ext=re, valfv_int=va, valv_ext=vae, cs_int=co, cs_ext=ce, radius = aa, gridx=gridx, gridz=gridz, dimt=dimt, tarr=tarr, ka_rt=ka_rt, wk_rt=wk_rt, vr_t=vr_t, vz_t=vz_t, rtot_t=rtot_t, te_t=te_t, vr_cube, vz_cube, te_cube, rh_cube, smooth=smooth, save_cubes=save_cubes
+pro datacubes_wt, rho_int=ro, rho_ext=re, valfv_int=va, valv_ext=vae, cs_int=co, cs_ext=ce, radius = aa, gridx=gridx, gridz=gridz, dimt=dimt, tarr=tarr, ka_rt=ka_rt, kafix=kafix, wk_rt=wk_rt, vr_t=vr_t, vz_t=vz_t, rtot_t=rtot_t, te_t=te_t, model=model, vr_cube, vz_cube, te_cube, rh_cube, smooth=smooth, save_cubes=save_cubes
 
 if n_params(0) lt 1 then begin
-   print,'rho_int=ro, rho_ext=re, valfv_int=va, valv_ext=vae, cs_int=co, cs_ext=ce, radius=aa, gridx=gridx, gridz=gridz, dimt=dimt, tarr=tarr, ka_rt=ka_rt, wk_rt=wk_rt, vr_t=vr_t, vz_t=vz_t, rtot_t=rtot_t, te_t=te_t, vr_cube, vz_cube, te_cube, rh_cube, [smooth=smooth, save_cubes=save_cubes]'
+   print,'Check output directories first'
+   print,'datacubes_wt,rho_int=ro, rho_ext=re, valfv_int=va, valv_ext=vae, cs_int=co, cs_ext=ce, radius=aa, gridx=gridx, gridz=gridz, dimt=dimt, tarr=tarr, ka_rt=ka_rt, kafix=kafix, wk_rt=wk_rt, vr_t=vr_t, vz_t=vz_t, rtot_t=rtot_t, te_t=te_t, model=model, vr_cube, vz_cube, te_cube, rh_cube [,smooth=smooth, save_cubes=save_cubes]'
    return
 endif
 
@@ -25,7 +26,13 @@ endif
 ; vr_t = vr(dimx,dimz,dimt) : radial velocity
 ; vz_t = vz(dimx,dimz,dimt) : longitudinal velocity
 ; rtot_t = rtot(dimx,dimz,dimt) : total density
-; te_t = te_t(dimx,dimy,dimz) : temperature
+; te_t = te_t(dimx,dimz,dimt) : temperature
+; model = string with name of treated model:
+;      model = 'base'corresponds to ka = 2.24, 
+;      model = 'long' corresponds to ka = 1.25
+;      model = 'high_res' corresponds to ka = 2.24, high spatial resolution
+;      model = 'highT' corresponds to ka = 2.24, high external
+;      temperature
 ; OUTPUT:
 ; Produces IDL save files of cubes for each time step
 ; vr_cube = vr_cube(dimx,dimy,dimz) : radial velocity at last time step
@@ -48,15 +55,13 @@ dimz = n_elements(gridz)
 gridy = gridx
 dimy = dimx
 
+; OUTPUT DIRECTORY:
 cubedir='/users/cpa/pantolin/Modeling/cubes/set2/'
 
-; for low external temperature case:
-kafix = ([min(abs(ka_rt-2.244)),!c])[1] & kanm = 'ka2.24_hgres'
-;kafix = 161 & kanm = 'ka2.24'
-;kafix = 222 & kanm = 'ka1.25'
-
-; for high external temperature case: 
-;kafix = 155 & kanm = 'ka2.24_highT'
+if model eq 'base' then  kanm = 'ka2.24'
+if model eq 'long' then  kanm = 'ka1.25'
+if model eq 'high_res' then  kanm = 'ka2.24_hgres'
+if model eq 'highT' then kanm = 'ka2.24highT'
 
 fixk = 1
 vr_cube=fltarr(dimx,dimy,dimz)
@@ -124,7 +129,7 @@ for j=0,dimt-1 do begin
    endif
    print,string(13b)+' % finished: ',float(j)*100./(dimt-1),format='(a,f4.0,$)'
 endfor
-save, ro, re, va, vae, co, ce, aa, r0, gridx, gridy, gridz, dimx, dimy, dimz, dimt, tarr, kafix, ka_rt, wk_rt,filename=cubedir+'params_'+kanm+'.sav'
+if sav eq 1 then save, ro, re, va, vae, co, ce, aa, r0, gridx, gridy, gridz, dimx, dimy, dimz, dimt, tarr, kafix, ka_rt, wk_rt,filename=cubedir+'params_'+kanm+'.sav'
 
 end
 
