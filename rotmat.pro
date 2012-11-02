@@ -34,7 +34,7 @@ RESTORE,'/users/cpa/tomvd/data/forwardmodelling/sausage_marcin2/imagesave0000int
 RESTORE,'/users/cpa/tomvd/data/forwardmodelling/sausage_marcin2/forpatrick.sav'
 ;RESTORE,'./forpatrick.sav'
 ;RESTORE,'/users/cpa/pantolin/Modeling/Bfield.sav'
-RESTORE,'./Bfield_s.sav'
+RESTORE,'/users/cpa/pantolin/Modeling/Bfield_s.sav'
 
 rho = data.rho
 rho = reform(rho[0:201:20,*,0:100:2,0])
