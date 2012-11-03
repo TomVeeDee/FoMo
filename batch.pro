@@ -67,13 +67,18 @@ retall
 ; Proceed with intensity calculation:
 
 .r params
+.r ch_synthetic  ; change parenthesis for brackets in line 1021
 .r lineongrid_goft_tab
 .r integrateemission
 .r gridlos
 .r prl_slices
 
+; define line-of-sight angles:
+mua_d = [0.,30.,45.,60.]
+; define ion:
+ion = 'fe_9'
 ; wrapper for intensity calculation:
-prl_slices
+prl_slices, set=set, mua_d=mua_d, ion=ion
 
 end
 

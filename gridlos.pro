@@ -22,8 +22,7 @@ endif
 
 mua_r=mua_d*!pi/180.
 dimx = n_elements(gridx)
-if keyword_set(gridy) eq 0 then begin gridy=gridx & dimy = dimx
-if keyword_set(vely) eq 0 then begin vely = velx
+dimy = n_elements(gridy)
 xc = float(dimx)/2.
 yc = float(dimy)/2.
 

@@ -47,10 +47,10 @@ endif
 ; NOTE: 
 ; If 2D model (set = 25) then only quantities with x and z values are returned
 
-;if set eq 2 then begin dir = '/volume1/scratch/set2/' & kanm = 'ka2.24' & endif
+if set eq 2 then begin dir = '/volume1/scratch/set2/' & kanm = 'ka2.24' & endif
 ;if set eq 3 then begin dir = '/volume1/scratch/set3/' & kanm = 'ka1.27' & endif
 
-if set eq 2 then begin dir = '/users/cpa/pantolin/Modeling/cubes/set2/' & kanm = 'ka2.24' & endif
+;if set eq 2 then begin dir = '/users/cpa/pantolin/Modeling/cubes/set2/' & kanm = 'ka2.24' & endif
 if set eq 24 then begin dir = '/users/cpa/pantolin/Modeling/cubes/set2/' & kanm = 'ka2.24_hgres' & endif
 if set eq 21 then begin dir = '/users/cpa/pantolin/Modeling/cubes/set2/' & kanm = 'ka2.24_highT' & endif
 if set eq 22 then begin dir = '/users/cpa/pantolin/Modeling/cubes/set2/' & kanm = 'ka2.24_sm' & endif
@@ -63,22 +63,21 @@ if set eq 3 then begin dir = '/users/cpa/pantolin/Modeling/cubes/set3/' & kanm =
 if set ne 25 then begin
    restore,dir+'params_'+kanm+'.sav'
    restore, dir+'slice_'+kanm+'_'+string(it,format='(i3.3)')+'t_'+string(ix,format='(i3.3)')+'x'+'.sav'
-   gridx0=gridx
-   gridx = gridx0[ix]
+   gridx0=gridx[ix]
+;   gridx = gridx0[ix]
    sizes = size(te)
-   dimx = sizes[1] & dimy = sizes[2] & dimz = sizes[3]
-   velx = fltarr(dimx,dimy,dimz)
-   vely = fltarr(dimx,dimy,dimz)
-   velz = fltarr(dimx,dimy,dimz)
-   for i=0,dimx-1 do begin
-      for j=0,dimy-1 do begin
-         velx[i,j,*] = vr[i,j,*]*(gridx[i]-r0)/sqrt((gridx[i]-r0)^2+(gridy[j]-r0)^2)
-         vely[i,j,*] = vr[i,j,*]*(gridy[j]-r0)/sqrt((gridx[i]-r0)^2+(gridy[j]-r0)^2)
-      endfor
+   dimx0 = sizes[1] & dimy = sizes[2] & dimz = sizes[3]
+   dimx = dimy
+   velx = fltarr(dimx0,dimy,dimz)
+   vely = fltarr(dimx0,dimy,dimz)
+   velz = fltarr(dimx0,dimy,dimz)
+   for j=0,dimy-1 do begin
+      velx[0,j,*] = vr[0,j,*]*(gridx0[0]-r0)/sqrt((gridx0[0]-r0)^2+(gridy[j]-r0)^2)
+      vely[0,j,*] = vr[0,j,*]*(gridy[j]-r0)/sqrt((gridx0[0]-r0)^2+(gridy[j]-r0)^2)
    endfor
 endif else begin
-   restore,dir+'params2d_'+kanm+'.sav'
-   restore, dir+'cubes2d_'+kanm+'_'+string(it,format='(i3.3)')+'.sav'
+   restore,dir+'params_'+kanm+'.sav'
+   restore, dir+'cubes_'+kanm+'_'+string(it,format='(i3.3)')+'.sav'
    sizes = size(te_cube)
    dimx = sizes[1] & dimz = sizes[2]
    te = te_cube & rho = rh_cube & vr = vr_cube & vz = vz_cube

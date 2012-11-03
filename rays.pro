@@ -14,7 +14,7 @@ pro rays, set=set, gridy=gridy, n_gridy=n_gridy, n_gridz=n_gridz, ngrid=ngrid, n
      z0 = 67. & y0 = 102.
      z1 = 89. & y1 = 102.
   endif
-  if set eq 2 or set eq 21 or set eq 22 or set eq 23 or set eq 24 then begin
+  if set eq 2 or set eq 21 or set eq 22 or set eq 23 or set eq 24 or set eq 25 then begin
      siz = size(vr_cube_t)
      dimz = n_elements(gridz)
      vr_cube_t_ext = fltarr(siz[1],siz[2]*3,siz[3])

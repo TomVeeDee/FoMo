@@ -50,12 +50,21 @@ doppleremission=emission
 bsize = 0.005
 nhlosvel = histogram(losvel,binsize=bsize,locations=histvel,reverse_indices=R)
 nhist = n_elements(nhlosvel)
-nlosvel = fltarr(nx,ny,nz,nwave)
-for i=0,nwave-1 do nlosvel[*,*,*,i]=losvel
+if dims eq 3 then begin
+   nlosvel = fltarr(nx,ny,nz,nwave) 
+   for i=0,nwave-1 do nlosvel[*,*,*,i]=losvel
+endif else begin 
+   nlosvel = fltarr(nx,ny,nwave)
+   for i=0,nwave-1 do nlosvel[*,*,i]=losvel
+endelse
 nnhlosvel = histogram(nlosvel,binsize=bsize,reverse_indices=Rn)
-if dims eq 2 then lemmx = ([max(emission[nx/2,ny/2,*]),!c])[1]
-if dims eq 3 then lemmx = ([max(emission[nx/2,ny/2,nz/2,*]),!c])[1]
-emipk = reform(emission[0,*,*,lemmx])
+if dims eq 3 then begin
+   lemmx = ([max(emission[nx/2,ny/2,nz/2,*]),!c])[1]
+   emipk = reform(emission[0,*,*,lemmx])
+endif else begin
+   lemmx = ([max(emission[nx/2,ny/2,*]),!c])[1]
+   emipk = reform(emission[*,*,lemmx])
+endelse
 
 for i=0,nhist-1 do begin
    losv = histvel[i]
@@ -69,8 +78,13 @@ for i=0,nhist-1 do begin
       nhemi = n_elements(hemi)
       for j=0,nhemi-1 do begin
          if Re[j] ne Re[j+1] then begin
-            dopemi=interpol(emission[0,indx[0,Re[Re[j]]],indx[1,Re[Re[j]]],*],wave,newwave,/spline)
-            for k=0,hemi[j]-1 do doppleremission[0,indx[0,Re[Re[j]+k]],indx[1,Re[Re[j]+k]],*]=dopemi
+            if dims eq 3 then begin
+               dopemi=interpol(emission[0,indx[0,Re[Re[j]]],indx[1,Re[Re[j]]],*],wave,newwave,/spline) 
+               for k=0,hemi[j]-1 do doppleremission[0,indx[0,Re[Re[j]+k]],indx[1,Re[Re[j]+k]],*]=dopemi
+            endif else begin 
+               dopemi=interpol(emission[indx[0,Re[Re[j]]],indx[1,Re[Re[j]]],*],wave,newwave,/spline)
+               for k=0,hemi[j]-1 do doppleremission[indx[0,Re[Re[j]+k]],indx[1,Re[Re[j]+k]],*]=dopemi
+            endelse
          endif
       endfor
    endif
@@ -86,7 +100,7 @@ endif else begin
       if dims eq 2 then image = dblarr(n_elements(ngrid)-1,nwave) else image = dblarr(nx,n_elements(ngrid)-1,nwave)
       for i=0, n_elements(ngrid)-2 do begin
          if (dims eq 2) then begin
-            for j=0,nwave-1 do image[i,j] = total(interpolate(reform(doppleremission[*,*,j]),n_gridx[ngrid[i]:ngrid[i+1]-1],n_gridy[ngrid[i]:ngrid[i+1]-1]))
+            for j=0,nwave-1 do image[i,j] = total(interpolate(reform(doppleremission[*,*,j]),n_gridy[ngrid[i]:ngrid[i+1]-1],n_gridx[ngrid[i]:ngrid[i+1]-1]))
          endif
          if (dims eq 3) then begin
             for k=0,nx-1 do begin

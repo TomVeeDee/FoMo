@@ -1,4 +1,10 @@
-pro lineongrid, rh_s, te_s, wave=wave,nwave=nwave,w0=w0,minwave=minwave,maxwave=maxwave,ion=ion, emission_goft=emission_goft, goft=goft, wayemi=wayemi
+pro lineongrid_goft_tab, rh_s, te_s, wave=wave,nwave=nwave,w0=w0,minwave=minwave,maxwave=maxwave,ion=ion, emission_goft=emission_goft, goft=goft, wayemi=wayemi
+
+if n_params(0) lt 1 then begin
+   print,'Check input directories'
+   print,'lineongrid_goft_tab, rh_s, te_s, wave=wave,nwave=nwave,w0=w0,minwave=minwave,maxwave=maxwave,ion=ion, emission_goft=emission_goft, goft=goft, wayemi=wayem'
+   return
+endif
 
 ; Calculates the emission at each point of a given numerical box by
 ; reading tabulated G(T) values produced by function goft_table.pro

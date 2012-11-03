@@ -1,7 +1,7 @@
 
 pro mkimgcubes, set=set, gridx=gridx, dimt=dimt, dim00d=dim00d, dim30d=dim30d, dim45d=dim45d, dim60d=dim60d, gridy, gridz_ext, wave, imgcube00d,imgcube30d,imgcube45d,imgcube60d
 
-; Produces cubes from sav files produced by prl_slices.pro
+; Produces 3D intensity image cubes from sav files produced by prl_slices.pro
 ; INPUT:
 ; set = defines model:
 ;     = 2: 'base model - 171' corresponds to ka = 2.24, line Fe IX 171
