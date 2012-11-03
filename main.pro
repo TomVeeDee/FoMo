@@ -43,9 +43,6 @@ divcubes,dimt=dimt,dimx=dimx,dimy=dimy,model=model,[/smooth]
 ----------------
 ; GENERATE INTENSITY CUBES FROM DATA
 
-; A call to these 2 routines is first needed to load functions in memory (otherwise a strange error comes out)
-.r params_r
-.r lineongrid_goft_r
 ; set the model:
 ; set = case considered: 
 ;       set = 2 -> base model ka = 2.24
@@ -55,23 +52,10 @@ divcubes,dimt=dimt,dimx=dimx,dimy=dimy,model=model,[/smooth]
 ;       set = 25 -> hgres2d model (2D base model with high spatial resolution)
 ;       set = 3 -> long lambda model (longer wavelength, ka = 1.25)
 set=25
-ix=0
-it=0
-
-params, set=set, it=it, ix=ix, ro=ro, re=re, va=va, vae=vae, co=co, ce=ce, aa=aa, r0=r0, gridx=gridx, gridy=gridy, gridz=gridz, dimx=dimx, dimy=dimy, dimz=dimz, tarr=tarr, kafix=kafix, ka_rt=ka_rt, wk_rt=wk_rt, te=te, rho=rho, vr=vr, vz=vz, velx=velx, vely=vely, velz=velz
-
-lineongrid, rho, te, wayemi=2
-
-retall
 
 ; Proceed with intensity calculation:
 
-.r params
 .r ch_synthetic  ; change parenthesis for brackets in line 1021
-.r lineongrid_goft_tab
-.r integrateemission
-.r gridlos
-.r prl_slices
 
 ; define line-of-sight angles:
 mua_d = [0.,30.,45.,60.]
