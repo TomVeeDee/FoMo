@@ -54,7 +54,7 @@ pro prl_slices,set=set, mua_d=mua_d, ion=ion
      gridz_ext[dimz:-1] = gridz[0:dimz-1]+gridz[dimz-1]+gridz[1]
   endif
   for i=0,nfiles-1 do begin
-     checkfile=files[i]+'.done'
+     checkfile=files[i]+'.'+ion+'.done'
      slize = (strsplit(files[i],'/',/extract))[6]
      if set eq 2 or set eq 3 then begin
         tmp = strmid(slize,13,3)
