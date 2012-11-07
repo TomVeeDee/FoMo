@@ -1,8 +1,8 @@
-pro lineongrid_goft_tab, rh_s, te_s, wave=wave,nwave=nwave,w0=w0,minwave=minwave,maxwave=maxwave,ion=ion, emission_goft=emission_goft, goft=goft, wayemi=wayemi
+pro lineongrid_goft_tab, rh_s, te_s, wave=wave,nwave=nwave,minwave=minwave,maxwave=maxwave,ion=ion, w0=w0, emission_goft=emission_goft, goft=goft, wayemi=wayemi
 
 if n_params(0) lt 1 then begin
    print,'Check input directories'
-   print,'lineongrid_goft_tab, rh_s, te_s, wave=wave,nwave=nwave,w0=w0,minwave=minwave,maxwave=maxwave,ion=ion, emission_goft=emission_goft, goft=goft, wayemi=wayem'
+   print,'lineongrid_goft_tab, rh_s, te_s, wave=wave,nwave=nwave,minwave=minwave,maxwave=maxwave,ion=ion, w0=w0, emission_goft=emission_goft, goft=goft, wayemi=wayem'
    return
 endif
 
@@ -77,10 +77,8 @@ endif
 if (~(keyword_set(nwave))) then begin
    nwave=100
 endif
-if (~(keyword_set(w0))) then begin
-   if ion eq 'fe_9' then w0 = 171.073 ; wave center
-   if ion eq 'fe_12' then w0 = 193.509
-endif
+if ion eq 'fe_9' then w0 = 171.073 ; wave center
+if ion eq 'fe_12' then w0 = 193.509
 if (~(keyword_set(minwave))) then begin
    if ion eq 'fe_9' then minwave = w0-0.07
    if ion eq 'fe_12' then minwave = w0-0.07
@@ -117,7 +115,7 @@ ch_synthetic,min(wave),max(wave),output=singleline,density=max(n_e),logt_isother
 goft=n_e*0.
 ; calculate emission point by point:
 if way eq 1 then begin
-   for i=0,n_elements(n_e)-1 do begin
+   for i=0.,n_elements(n_e)-1 do begin
       lc_ne = ([min(abs(n_e_lg-alog10(n_e_sorted[i]))),!c])[1]
       lc_te = ([min(abs(t_lg-tlg_sorted[i])),!c])[1]
       coords=array_indices(n_e,ne_sort[i])
@@ -135,7 +133,7 @@ endif
 ; calculate emission through binning of G(T)*ne^2 matrix
 if way eq 2 then begin
    emi=n_e*0.
-   for i=0,n_elements(n_e)-1 do begin
+   for i=0.,n_elements(n_e)-1 do begin
       lc_ne = ([min(abs(n_e_lg-alog10(n_e_sorted[i]))),!c])[1]
       lc_te = ([min(abs(t_lg-tlg_sorted[i])),!c])[1]
       goft[ne_sort[i]] = interpol(goft_mat[lc_ne,*],t_lg,tlg_sorted[i])
@@ -154,13 +152,13 @@ if way eq 2 then begin
       for i=0,nwave-1 do emin[*,*,i]=emi
    endelse
    hist_emin = histogram(emin,nbins=numemi,locations=loc_emin,reverse_indices=Remn)
-   for i=0,nhemi-1 do begin
+   for i=0.,nhemi-1 do begin
       if hist_emi[i] ne 0 then begin
          singleline.logt_isothermal[0] = max(logt[Rem[Rem[i]:Rem[i+1]-1]])
          singleline.lines.int[0] = loc_emi[i]
          make_chianti_spec, singleline, wave, out, abund_name=abund_name
          nRem = n_elements(Rem[Rem[i]:Rem[i+1]-1])
-         for j=0,nRem-1 do emission_goft[Remn[Remn[i]+j:Remn[i+1]-1:nRem]] = out.spectrum
+         for j=0.,nRem-1 do emission_goft[Remn[Remn[i]+j:Remn[i+1]-1:nRem]] = out.spectrum
       endif
       print,string(13b)+' % finished: ',float(i)*100./(nhemi-1),format='(a,f4.0,$)'
    endfor
@@ -171,12 +169,12 @@ if way eq 3 then begin
    hist_ne=histogram(logne,nbins=401,locations=loc_ne,min=8,max=10,reverse_indices=Rne)
    hist_nen=histogram(lognen,nbins=401,locations=loc_nen,min=8,max=10,reverse_indices=Rnen)
    nhne = n_elements(hist_ne)
-   for i=0,nhne-1 do begin
+   for i=0.,nhne-1 do begin
       if hist_ne[i] ne 0 then begin
          singleline.logt_isothermal[0] = tlg_sorted[i]
          nRne = n_elements(Rne[Rne[i]:Rne[i+1]-1])
          stop
-         for j=0,nRne-1 do begin
+         for j=0.,nRne-1 do begin
             goft[Rne[Rne[i]+j]]=spline(t_lg,goft_mat[i,*],logt[Rne[Rne[i]+j]])
             singleline.lines.int[0]=goft[Rne[Rne[i]+j]]*(10.^loc_ne[i])^2
             make_chianti_spec, singleline, wave, out, abund_name=concat_dir(concat_dir(!xuvtop,'abundance'),'sun_coronal.abund')

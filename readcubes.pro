@@ -24,7 +24,7 @@ if set eq 24 then begin
    dir2 = dir
 ;   dir2 = '/volume1/scratch/set2/'
 endif
-if set eq 25 or set eq 26 then begin
+if set eq 25 then begin
    ka_n = 'ka2.24_hgres2d'
    dir = '/volume1/scratch/set2/hgres2d/'
    ndz = 3
@@ -62,7 +62,9 @@ if set eq 2 or set eq 23 or set eq 21 or set eq 24 or set eq 3 or set eq 25 or s
 if set eq 25 or set eq 26 then ldimz = 1 else ldimz = 2
 restore,dir+'params_'+ka_n+'.sav'
 
-if set ne 25 and set ne 26 then files = file_search(dir2+'rslt_slice_*.sav',count=nfiles,/fully_qualify_path) else files = file_search(dir2+'rslt_cubes_*.sav',count=nfiles,/fully_qualify_path)
+if set ne 25 and set ne 26 then files = file_search(dir2+'rslt_slice_*.sav',count=nfiles,/fully_qualify_path) 
+if set eq 25 then files = file_search(dir2+'rslt_cubes_'+ka_n+'.fe9'+'*.sav',count=nfiles,/fully_qualify_path)
+if set eq 26 then files = file_search(dir2+'rslt_cubes_'+ka_n+'.fe12'+'*.sav',count=nfiles,/fully_qualify_path)
 restore,files[0]
 dim00d = (size(image00d_ext))[ldimz]
 dim30d = (size(image30d_ext))[ldimz]
@@ -118,16 +120,16 @@ endif
 if set eq 2 or set eq 21 or set eq 23 or set eq 22 or set eq 24 or set eq 25 or set eq 26 then begin
    gridz_ext[0:dimz-1] = gridz
    gridz_ext[dimz:2*dimz-1] = gridz[0:dimz-1]+gridz[dimz-1]+gridz[1]
-   gridz_ext[dimz*2:-1] = gridz_ext[dimz:dimz*2-1]+gridz[dimz-1]+gridz[1]
+   gridz_ext[dimz*2:*] = gridz_ext[dimz:dimz*2-1]+gridz[dimz-1]+gridz[1]
    rh_cube_t_ext[*,0:dimz-1,*] = rh_cube_t
    rh_cube_t_ext[*,dimz:2*dimz-1,*] = rh_cube_t
-   rh_cube_t_ext[*,dimz*2:-1,*] = rh_cube_t
+   rh_cube_t_ext[*,dimz*2:*,*] = rh_cube_t
 endif
 if set eq 3 then begin
    gridz_ext[0:dimz-1] = gridz
-   gridz_ext[dimz:-1] = gridz[0:dimz-1]+gridz[dimz-1]+gridz[1]   
+   gridz_ext[dimz:*] = gridz[0:dimz-1]+gridz[dimz-1]+gridz[1]   
    rh_cube_t_ext[*,0:dimz-1,*] = rh_cube_t
-   rh_cube_t_ext[*,dimz:-1,*] = rh_cube_t
+   rh_cube_t_ext[*,dimz:*,*] = rh_cube_t
 endif
 
 end

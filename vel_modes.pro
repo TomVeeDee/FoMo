@@ -36,7 +36,7 @@ dimx = n_elements(gridx)
 dimy = n_elements(gridy)
 
 n = 0
-r0=gridx[-1]/2.
+r0=gridx[n_elements(gridx)-1]/2.
 aa = 10.
 dim = n_elements(waka_root)
 bslij = fltarr(dim,dimx)

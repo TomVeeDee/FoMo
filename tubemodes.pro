@@ -59,7 +59,9 @@ mrk = 0
 waka_j = waka_ini
 
 for j=0,nka-1 do begin
-   ka = ka_ar[-1-j]
+   ka_arrev = reverse(ka_ar)
+;   ka = ka_ar[-1-j]
+   ka = ka_arrev[j]
    wa0 = waka_j*ka
 ;   wa0 = (waka_ini+step*j)*ka
 ;   if mrk eq 1 then begin

@@ -26,19 +26,13 @@ endif
 
   savcub = 1
   if set ne 25 and set ne 26 then dimx = n_elements(gridx) else dimx = 1
-  nwave = 100
 ;  if set eq 2 then begin
 ;     dim00d = 342 & dim30d = 398 & dim45d = 386 & dim60d = 348
 ;  endif
 ;  if set eq 3 or set eq 31 then begin
 ;     dim00d = 404 & dim30d = 452 & dim45d = 430 & dim60d = 379
 ;  endif
-  imgcube00d = fltarr(dimx,dim00d,nwave,dimt)
-  if set ne 25 and set ne 26 then begin
-     imgcube30d = fltarr(dimx,dim30d,nwave,dimt)
-     imgcube45d = fltarr(dimx,dim45d,nwave,dimt)
-     imgcube60d = fltarr(dimx,dim60d,nwave,dimt)
-  endif
+
 
 if set eq 2 then begin dir = '/volume1/scratch/set2/' & ka_n = '_ka2.24_fe9' & sln = 3 & endif
 ;if set eq 2 then begin dir = '/users/cpa/pantolin/Modeling/cubes/set2/' & ka_n = '_ka2.24_fe9' & sln = 6 & endif
@@ -47,8 +41,8 @@ if set eq 21 then begin dir = '/volume1/scratch/set2/high_T/' & ka_n = '_ka2.24_
 if set eq 22 then begin dir = '/volume1/scratch/set2/sm/' & ka_n = '_ka2.24_sm_fe9' & sln = 4 & endif
 if set eq 23 then begin dir = '/volume1/scratch/set2/193/' & ka_n = '_ka2.24_fe12' & sln = 4 & endif
 if set eq 24 then begin dir = '/volume1/scratch/set2/hgres/' & ka_n = '_ka2.24_hgres_fe9' & sln = 4 & endif
-if set eq 25 then begin dir = '/users/cpa/pantolin/Modeling/cubes/set2/' & ka_n = '_ka2.24_hgres2d.fe9' & sln = 6 & endif
-if set eq 26 then begin dir = '/users/cpa/pantolin/Modeling/cubes/set2/' & ka_n = '_ka2.24_hgres2d.fe12' & sln = 6 & endif
+if set eq 25 then begin dir = '/volume1/scratch/set2/hgres2d/' & ka_n = '_ka2.24_hgres2d.fe9' & sln = 4 & endif
+if set eq 26 then begin dir = '/volume1/scratch/set2/hgres2d/' & ka_n = '_ka2.24_hgres2d.fe12' & sln = 4 & endif
 if set eq 3 then begin dir='/volume1/scratch/set3/' &  ka_n='_ka1.25_fe9' & sln = 3 & endif
 ;if set eq 3 then begin dir = '/users/cpa/pantolin/Modeling/cubes/set3/' & ka_n = '_ka1.25_fe9' & sln = 6 & endif
 
@@ -58,6 +52,21 @@ if set eq 2 or set eq 23 or set eq 3 then begin ltn = 18 & lxn = 23 & endif
 if set eq 22 then begin ltn = 21 & lxn = 26 & endif
 if set eq 25 then begin ltn = 30 & lxn = 0 & endif
 if set eq 26 then begin ltn = 31 & lxn = 0 & endif
+
+if set eq 25 or set eq 26 then ldimz = 1 else ldimz = 2
+
+restore,files[0]
+nwave = n_elements(wave)
+dim00d = (size(image00d_ext))[ldimz]
+imgcube00d = fltarr(dimx,dim00d,nwave,dimt)
+if set ne 25 and set ne 26 then begin
+   dim30d = (size(image30d_ext))[ldimz]
+   dim45d = (size(image45d_ext))[ldimz]
+   dim60d = (size(image60d_ext))[ldimz]
+   imgcube30d = fltarr(dimx,dim30d,nwave,dimt)
+   imgcube45d = fltarr(dimx,dim45d,nwave,dimt)
+   imgcube60d = fltarr(dimx,dim60d,nwave,dimt)
+endif
 
   for i=0,nfiles-1 do begin
      restore,files[i]

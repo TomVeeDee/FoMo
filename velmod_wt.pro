@@ -44,7 +44,7 @@ ce = B1 & vae = B2 & cte = B3 & re = B4
 dimx = n_elements(gridx)
 
 n = 0 ; sausage mode
-r0 = gridx[-1]/2.
+r0 = gridx[n_elements(gridx)-1]/2.
 aa = 10. ; radius of cylinder
 amp = 0.1 ; amplitude of perturbation
 wk_rt = waka_root[reg3]
@@ -60,7 +60,7 @@ kafix = ([min(abs(ka_rt-2.244)),!c])[1] ; for ka closest to 2.244
 t_u = 2*!pi/(wk_rt[kafix]*ka_rt[kafix])*aa
 tarr = findgen(dimt)/(dimt-1.)*t_u
 z_u = 2*!pi/(ka_rt[kafix])*aa
-dimz = round(z_u*dimx/gridx[-1])
+dimz = round(z_u*dimx/gridx[n_elements(gridx)-1])
 gridz = findgen(dimz)/(dimz-1.)*z_u
 proton = 1.67262158*10^(-27.)
 kboltz = 1.380658*10^(-23.)

@@ -79,9 +79,10 @@ endif else begin
    restore,dir+'params_'+kanm+'.sav'
    restore, dir+'cubes_'+kanm+'_'+string(it,format='(i3.3)')+'.sav'
    sizes = size(te_cube)
-   dimx = sizes[1] & dimz = sizes[2]
+   dimy = sizes[1] & dimz = sizes[2]
    te = te_cube & rho = rh_cube & vr = vr_cube & vz = vz_cube
-   velx = vr_cube
+   vely = vr*0. & gridy = gridx
+   for j=0,dimy-1 do vely[j,*] = vr[j,*]*(gridy[j]-r0)/sqrt((gridy[j]-r0)^2)
    velz = vz_cube
 endelse
 

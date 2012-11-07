@@ -1,5 +1,5 @@
 
-pro prl_slices,set=set, mua_d=mua_d, ion=ion
+pro prl_slices,set=set, mua_d=mua_d, ion=ion, imaging=imaging
 
 ; Wrapper routine that produces intensity cubes. Checks for existence
 ; of previously produced cubes before execution. In this way it can be ran in
@@ -31,17 +31,15 @@ pro prl_slices,set=set, mua_d=mua_d, ion=ion
   if set eq 3 then ndz = 2
   if siz[0] eq 3 then begin
      gridz_ext = fltarr(siz[3]*ndz)
-     emission_goft_ext = fltarr(siz[1],siz[2],siz[3]*ndz,nwave)
-     rho_ext = fltarr(siz[1],siz[2],siz[3]*ndz)
+     if imaging eq 0 then emission_goft_ext = fltarr(siz[1],siz[2],siz[3]*ndz,nwave) else intens_ext = fltarr(siz[1],siz[2],siz[3]*ndz)
      velx_ext = fltarr(siz[1],siz[2],siz[3]*ndz)
      vely_ext = fltarr(siz[1],siz[2],siz[3]*ndz)
      velz_ext = fltarr(siz[1],siz[2],siz[3]*ndz)
      gridx = gridy
   endif else begin
      gridz_ext = fltarr(siz[2]*ndz)
-     emission_goft_ext = fltarr(siz[1],siz[2]*ndz,nwave)
-     rho_ext = fltarr(siz[1],siz[2]*ndz)
-     velx_ext = fltarr(siz[1],siz[2]*ndz)
+     if imaging eq 0 then emission_goft_ext = fltarr(siz[1],siz[2]*ndz,nwave) else intens_ext = fltarr(siz[1],siz[2]*ndz)
+     vely_ext = fltarr(siz[1],siz[2]*ndz)
      velz_ext = fltarr(siz[1],siz[2]*ndz)
   endelse
   if set eq 2 or set eq 21 or set eq 22 or set eq 24 or set eq 25 then begin
@@ -84,11 +82,21 @@ pro prl_slices,set=set, mua_d=mua_d, ion=ion
         free_lun, lun
         print,'Doing slice:',slize
         params, set=set, it=ntsl, ix=nxsl, ro=ro, re=re, valfven=va, vae=vae, co=co, ce=ce, aa=aa, r0=r0, gridx=gridx, gridy=gridy, gridz=gridz, dimx=dimx, dimy=dimy, dimz=dimz, tarr=tarr, kafix=kafix, ka_rt=ka_rt, wk_rt=wk_rt, te=te, rho=rho, vr=vr, vz=vz, velx=velx, vely=vely, velz=velz
-        lineongrid_goft_tab, rho, te, wave=wave,nwave=nwave,w0=w0,minwave=minwave,maxwave=maxwave,ion=ion, emission_goft=emission_goft,wayemi=2
+        if imaging eq 1 then begin
+           lineongrid_int_tab, rho, te, wave=wave,nwave=nwave,minwave=minwave,maxwave=maxwave,ion=ion, w0=w0, intens=intens
+        endif else begin
+           lineongrid_goft_tab, rho, te, wave=wave,nwave=nwave,minwave=minwave,maxwave=maxwave,ion=ion, w0=w0, emission_goft=emission_goft,wayemi=2
+        endelse
         if set eq 2 or set eq 21 or set eq 22 or set eq 24 then begin
-           emission_goft_ext[*,*,0:dimz-1,*] = emission_goft
-           emission_goft_ext[*,*,dimz:2*dimz-1,*] = emission_goft
-           emission_goft_ext[*,*,dimz*2:-1,*] = emission_goft
+           if imaging eq 0 then begin
+              emission_goft_ext[*,*,0:dimz-1,*] = emission_goft
+              emission_goft_ext[*,*,dimz:2*dimz-1,*] = emission_goft
+              emission_goft_ext[*,*,dimz*2:*,*] = emission_goft
+           endif else begin
+              intens_ext[*,*,0:dimz-1] = intens
+              intens_ext[*,*,dimz:2*dimz-1] = intens
+              intens_ext[*,*,dimz*2:*] = intens
+           endelse
            velx_ext[*,*,0:dimz-1] = velx 
            velx_ext[*,*,dimz:2*dimz-1] = velx 
            velx_ext[*,*,dimz*2:-1] = velx 
@@ -98,43 +106,49 @@ pro prl_slices,set=set, mua_d=mua_d, ion=ion
            velz_ext[*,*,0:dimz-1] = velz 
            velz_ext[*,*,dimz:2*dimz-1] = velz
            velz_ext[*,*,dimz*2:-1] = velz
-           rho_ext[*,*,0:dimz-1] = rho 
-           rho_ext[*,*,dimz:2*dimz-1] = rho
-           rho_ext[*,*,dimz*2:-1] = rho
         endif
         if set eq 3 then begin
-           emission_goft_ext[*,*,0:dimz-1,*] = emission_goft
-           emission_goft_ext[*,*,dimz:-1,*] = emission_goft
+           if imaging eq 0 then begin
+              emission_goft_ext[*,*,0:dimz-1,*] = emission_goft
+              emission_goft_ext[*,*,dimz:*,*] = emission_goft
+           endif else begin
+              intens_ext[*,*,0:dimz-1,*] = intens
+              intens_ext[*,*,dimz:*,*] = intens
+           endelse
            velx_ext[*,*,0:dimz-1] = velx 
            velx_ext[*,*,dimz:-1] = velx 
            vely_ext[*,*,0:dimz-1] = vely
            vely_ext[*,*,dimz:-1] = vely
            velz_ext[*,*,0:dimz-1] = velz 
            velz_ext[*,*,dimz:-1] = velz
-           rho_ext[*,*,0:dimz-1] = rho 
-           rho_ext[*,*,dimz:-1] = rho
         endif
         if set eq 25 then begin
-           emission_goft_ext[*,0:dimz-1,*] = emission_goft
-           emission_goft_ext[*,dimz:2*dimz-1,*] = emission_goft
-           emission_goft_ext[*,dimz*2:-1,*] = emission_goft
-           velx_ext[*,0:dimz-1] = velx 
-           velx_ext[*,dimz:2*dimz-1] = velx 
-           velx_ext[*,dimz*2:-1] = velx 
+           if imaging eq 0 then begin
+              emission_goft_ext[*,0:dimz-1,*] = emission_goft
+              emission_goft_ext[*,dimz:2*dimz-1,*] = emission_goft
+              emission_goft_ext[*,dimz*2:-1,*] = emission_goft
+           endif else begin
+              intens_ext[*,0:dimz-1,*] = intens
+              intens_ext[*,dimz:2*dimz-1,*] = intens
+              intens_ext[*,dimz*2:-1,*] = intens
+           endelse
+           vely_ext[*,0:dimz-1] = vely
+           vely_ext[*,dimz:2*dimz-1] = vely
+           vely_ext[*,dimz*2:-1] = vely
            velz_ext[*,0:dimz-1] = velz 
            velz_ext[*,dimz:2*dimz-1] = velz
            velz_ext[*,dimz*2:-1] = velz
-           rho_ext[*,0:dimz-1] = rho 
-           rho_ext[*,dimz:2*dimz-1] = rho
-           rho_ext[*,dimz*2:-1] = rho
            gridy = gridx
-           vely_ext = velx_ext
         endif
         for j=0,n_elements(mua_d)-1 do begin
            mua = mua_d[j]
            gridlos, gridx=gridz_ext, gridy=gridy, mua_d=mua, velx=velz_ext, vely=vely_ext, n_gridz_ext, n_gridy_ext, ngrid_ext, losvel_ext
            if mua eq 0. then direction = 1 else direction = 4
-           integrateemission,emis=emission_goft_ext,n_gridx=n_gridz_ext,n_gridy=n_gridy_ext,ngrid=ngrid_ext,wave=wave,w0=w0,direction=direction,losvel=losvel_ext,image
+           if imaging eq 0 then begin
+              integrateemission,emission=emission_goft_ext,n_gridx=n_gridz_ext,n_gridy=n_gridy_ext,ngrid=ngrid_ext,wave=wave,w0=w0,direction=direction,losvel=losvel_ext,imaging=imaging,image
+           endif else begin
+              integrateemission,emission=intens,n_gridx=n_gridz_ext,n_gridy=n_gridy_ext,ngrid=ngrid_ext,wave=wave,w0=w0,direction=direction,losvel=losvel_ext,imaging=imaging,image
+           endelse
            if mua eq 0.  then image00d_ext=image
            if mua eq 30. then image30d_ext=image
            if mua eq 45. then image45d_ext=image
@@ -142,7 +156,10 @@ pro prl_slices,set=set, mua_d=mua_d, ion=ion
         endfor
         savn0 = (strsplit(slize,'.',/extract))
         savn = savn0[0]+'.'+savn0[1]+'.'+ion
-        save,wave,gridx,gridy,gridz_ext,emission_goft,image00d_ext,image30d_ext,image45d_ext,image60d_ext,filename=dir+'rslt_'+savn+'.sav'
+        if imaging eq 0 then begin
+           save,wave,gridx,gridy,gridz_ext,emission_goft,image00d_ext,image30d_ext,image45d_ext,image60d_ext,filename=dir+'rslt_'+savn+'.sav' 
+        endif else begin
+           save,wave,gridx,gridy,gridz_ext,intens,image00d_ext,image30d_ext,image45d_ext,image60d_ext,filename=dir+'rslt_'+savn+'.sav'
      endif
   endfor
 

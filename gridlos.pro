@@ -98,7 +98,7 @@ endwhile
 
 dimx_n = n_elements(xi_ar)
 ;stop
-for i=0, dimx_n-1 do begin
+for i=0., dimx_n-1 do begin
    spline_p, [xi_ar[i],xe_ar[i]], [yi_ar[i],ye_ar[i]], ni_gridx, ni_gridy, interval=1
    nigrid = n_elements(ni_gridx)
    if i eq 0 then begin

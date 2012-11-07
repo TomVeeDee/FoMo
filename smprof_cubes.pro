@@ -24,10 +24,10 @@ endif
 
   for j=0,dimt-1 do begin
      for i=0,dimz-1 do begin
-        gr1 = ([max(te_t[1:-1,i,j]-te_t[0:-1,i,j]),!c])[1]
+        gr1 = ([max(te_t[1:*,i,j]-te_t[0:*,i,j]),!c])[1]
         ite1 = (te_t[gr1+5,i,j]-te_t[gr1-5,i,j])/10.*indgen(10)+te_t[gr1-5,i,j]
         iro1 = (rtot_t[gr1+5,i,j]-rtot_t[gr1-5,i,j])/10.*indgen(10)+rtot_t[gr1-5,i,j]
-        gr2 = ([min(te_t[1:-1,i,j]-te_t[0:-1,i,j]),!c])[1]
+        gr2 = ([min(te_t[1:*,i,j]-te_t[0:*,i,j]),!c])[1]
         ite2 = (te_t[gr2+5,i,j]-te_t[gr2-5,i,j])/10.*indgen(10)+te_t[gr2-5,i,j]
         iro2 = (rtot_t[gr2+5,i,j]-rtot_t[gr2-5,i,j])/10.*indgen(10)+rtot_t[gr2-5,i,j]
         nrm_tan = ([max(atan((gridx-gridx[gr1])*stp)/!pi-atan((gridx-gridx[gr2])*stp)/!pi),!c])[0]

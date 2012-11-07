@@ -96,18 +96,20 @@ endif else begin
    te_cube=fltarr(dimx,dimy,dimz)
    rh_cube=fltarr(dimx,dimy,dimz)
    dist_cube=fltarr(dimx,dimy,dimz)
-
+   distance = fltarr(dimx,dimy)
+   print,'1st step check'
 ; (frequency, x, y, z, time)
-   for i=0,dimx-1 do for j=0,dimy-1 do dist_cube[i,j,*] = sqrt((r0-gridx[i])^2+(r0-gridy[j])^2)
+   for i=0,dimx-1 do for j=0,dimy-1 do distance[i,j] = sqrt((r0-gridx[i])^2+(r0-gridy[j])^2)
+   for i=0,dimz do dist_cube[*,*,i] = distance
 
-   mxdist = sqrt((gridx[-1]-r0)^2+(gridy[-1]-r0)^2)
+   mxdist = sqrt((gridx[n_elements(gridx)-1]-r0)^2+(gridy[n_elements(gridy)-1]-r0)^2)
 
    cyl = histogram(dist_cube,binsize=0.01,locations=loccyl,reverse_indices=Rl)
    dis = histogram(dist_cube[*,*,0],binsize=0.01,locations=locdis)
    ncyl = n_elements(cyl)
-
+   print,'n_elements(cyl):',ncyl
    for j=0,dimt-1 do begin
-      for l=0,ncyl-1 do begin
+      for l=0.,ncyl-1 do begin
          ndist = dis[l]
          if ndist gt 0 then begin
             lgrid = ([min(abs(locdis[l]-abs(gridx[0:dimx/2]-r0))),!c])[1]

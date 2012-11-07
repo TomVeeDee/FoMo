@@ -1,5 +1,6 @@
 
 ; GENERATE DATACUBES OF A CYLINDER WITH A FAST SAUSAGE WAVE
+pro main
 
 rotmat, dimx, dimy, dimz, ro, re, va, vae, co, ce, waka_ini
 
@@ -26,21 +27,18 @@ velmod_wt, waka_root=waka_root, ka_root=ka_root, gridx=gridx, dimt=dimt, reg3=re
 ; if smooth profile case then run smprof_cubes.pro:
 ;smprof_cubes, dimz, dimt, gridx, rtot_t, te_t, rtot_sm_t, te_sm_t
 ; specify first the wavelength in datacubes_wt.pro (add /smooth keyword for smooth profile)
-
-; for 2d datasets, no smoothing:
-;datacubes_2d, rho_int=ro, rho_ext=re, valfv_int=va, valv_ext=vae, cs_int=co, cs_ext=ce, radius = aa, gridx=gridx, gridz=gridz, dimt=dimt, tarr=tarr, ka_rt=ka_rt, kafix=kafix, wk_rt=wk_rt, vr_t=vr_t, vz_t=vz_t, rtot_t=rtot_t, te_t=te_t, model=model, vr_cube, vz_cube, te_cube, rh_cube, smooth=smooth, save_cubes=save_cubes
-
-; 3d with no smoothing:
-datacubes_wt, rho_int=ro, rho_ext=re, valfv_int=va, valv_ext=vae, cs_int=co, cs_ext=ce, radius = aa, gridx=gridx, gridz=gridz, dimt=dimt, tarr=tarr, ka_rt=ka_rt, kafix=kafix, wk_rt=wk_rt, vr_t=vr_t, vz_t=vz_t, rtot_t=rtot_t, te_t=te_t, model=model, vr_cube, vz_cube, te_cube, rh_cube, /save_cubes)
+stop
+; 2d or 3d with no smoothing:
+datacubes_wt, rho_int=ro, rho_ext=re, valfv_int=va, valv_ext=vae, cs_int=co, cs_ext=ce, radius = aa, gridx=gridx, gridz=gridz, dimt=dimt, tarr=tarr, ka_rt=ka_rt, kafix=kafix, wk_rt=wk_rt, vr_t=vr_t, vz_t=vz_t, rtot_t=rtot_t, te_t=te_t, model=model, vr_cube, vz_cube, te_cube, rh_cube, /save_cubes
 
 ; with smoothing:
 ;datacubes_wt, rho_int=ro, rho_ext=re, valfv_int=va, valv_ext=vae,
 ;cs_int=co, cs_ext=ce, radius = aa, gridx=gridx, gridz=gridz, dimt=dimt, tarr=tarr, ka_rt=ka_rt, kafix=kafix, wk_rt=wk_rt, vr_t=vr_t, vz_t=vz_t, rtot_t=rtot_sm_t, te_t=te_sm_t, model=model,vr_cube, vz_cube, te_cube, rh_cube
 
 ; for 3d datasets, divide in 2D (radial) slices:
-divcubes,dimt=dimt,dimx=dimx,dimy=dimy,model=model,[/smooth]
+divcubes,dimt=dimt,dimx=dimx,dimy=dimy,model=model;,[/smooth]
 
-----------------
+;----------------
 ; GENERATE INTENSITY CUBES FROM DATA
 
 ; set the model:
@@ -55,14 +53,16 @@ set=25
 
 ; Proceed with intensity calculation:
 
-.r ch_synthetic  ; change parenthesis for brackets in line 1021
+;!!!! .r ch_synthetic  -> change parenthesis for brackets in line 1021
 
 ; define line-of-sight angles:
 mua_d = [0.,30.,45.,60.]
 ; define ion:
 ion = 'fe_9'
+; choose whether imaging (=1) or spectroscopic (=0) data:
+imaging = 1
 ; wrapper for intensity calculation:
-prl_slices, set=set, mua_d=mua_d, ion=ion
+prl_slices, set=set, mua_d=mua_d, ion=ion, imaging=imaging
 
 end
 
