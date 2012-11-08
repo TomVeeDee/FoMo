@@ -1,9 +1,9 @@
 
-pro datacubes_wt, rho_int=ro, rho_ext=re, valfv_int=va, valv_ext=vae, cs_int=co, cs_ext=ce, radius = aa, gridx=gridx, gridz=gridz, dimt=dimt, tarr=tarr, ka_rt=ka_rt, kafix=kafix, wk_rt=wk_rt, vr_t=vr_t, vz_t=vz_t, rtot_t=rtot_t, te_t=te_t, model=model, vr_cube, vz_cube, te_cube, rh_cube, sngcub=sngcub, smooth=smooth, save_cubes=save_cubes
+pro datacubes_wt, rho_int=ro, rho_ext=re, valfv_int=va, valv_ext=vae, cs_int=co, cs_ext=ce, radius = aa, gridx=gridx, gridz=gridz, dimt=dimt, tarr=tarr, ka_rt=ka_rt, kafix=kafix, wk_rt=wk_rt, vr_t=vr_t, vz_t=vz_t, rtot_t=rtot_t, te_t=te_t, model=model, vr_cube, vz_cube, te_cube, rh_cube, br_cube, bz_cube, sngcub=sngcub, mag=mag, smooth=smooth, save_cubes=save_cubes
 
 if n_params(0) lt 1 then begin
    print,'Check output directories first'
-   print,'datacubes_wt,rho_int=ro, rho_ext=re, valfv_int=va, valv_ext=vae, cs_int=co, cs_ext=ce, radius=aa, gridx=gridx, gridz=gridz, dimt=dimt, tarr=tarr, ka_rt=ka_rt, kafix=kafix, wk_rt=wk_rt, vr_t=vr_t, vz_t=vz_t, rtot_t=rtot_t, te_t=te_t, model=model, vr_cube, vz_cube, te_cube, rh_cube [,sngcub=sngcub,smooth=smooth, save_cubes=save_cubes]'
+   print,'datacubes_wt,rho_int=ro, rho_ext=re, valfv_int=va, valv_ext=vae, cs_int=co, cs_ext=ce, radius=aa, gridx=gridx, gridz=gridz, dimt=dimt, tarr=tarr, ka_rt=ka_rt, kafix=kafix, wk_rt=wk_rt, vr_t=vr_t, vz_t=vz_t, rtot_t=rtot_t, te_t=te_t, model=model, vr_cube, vz_cube, te_cube, rh_cube [,sngcub=sngcub,mag=mag,smooth=smooth, save_cubes=save_cubes]'
    return
 endif
 
@@ -27,6 +27,8 @@ endif
 ; vz_t = vz(dimx,dimz,dimt) : longitudinal velocity
 ; rtot_t = rtot(dimx,dimz,dimt) : total density
 ; te_t = te_t(dimx,dimz,dimt) : temperature
+; br_t = br_t(dimx,dimy,dimz) : radial magnetic field
+; bz_t = bz_t(dimx,dimy,dimz) : longitudinal magnetic field
 ; model = string with name of treated model:
 ;      model = 'base'corresponds to ka = 2.24, 
 ;      model = 'long' corresponds to ka = 1.25
@@ -41,6 +43,9 @@ endif
 ; te_cube = te_cube(dimx,(dimy),dimz) : temperature at last time step
 ; rh_cube = rh_cube(dimx,(dimy),dimz) : total density at last time step
 ; OPTIONAL:
+; if mag keyword is set then produces magnetic field:
+; br_cube = te_cube(dimx,(dimy),dimz) : temperature at last time step
+; bz_cube = rh_cube(dimx,(dimy),dimz) : total density at last time step
 ; if keyword 'smooth' is set then smooth density profile is used instead
 ; of sharp profile. In this case run 'smprof_cubes.pro' first and set
 ; 'rtot_t=rtot_sm_t, te_t=te_sm_t' in call
@@ -70,6 +75,10 @@ if model eq 'ka2.24_hgres2d' then begin
    vz_cube=fltarr(dimx,dimz)
    te_cube=fltarr(dimx,dimz)
    rh_cube=fltarr(dimx,dimz)
+   if keyword_set(mag) then begin
+      br_cube=fltarr(dimx,dimz)
+      bz_cube=fltarr(dimx,dimz)
+   endif
 
    for j=0,dimt-1 do begin
       if sav eq 1 and sm eq 0 then begin
@@ -77,18 +86,26 @@ if model eq 'ka2.24_hgres2d' then begin
          vz_cube = reform(vz_t[*,*,j])
          rh_cube = reform(rtot_t[*,*,j])
          te_cube = reform(te_t[*,*,j])
-         save,vr_cube,vz_cube,te_cube,rh_cube,filename=cubedir+'cubes2d_'+kanm+'_'+string(j,format="(i3.3)")+'.sav'
+         if keyword_set(mag) then begin
+            br_cube = reform(br_t[*,*,j])
+            bz_cube = reform(bz_t[*,*,j])
+         endif
+         save,vr_cube,vz_cube,te_cube,rh_cube,br_cube,bz_cube,filename=cubedir+'cubes2d_'+kanm+'_'+string(j,format="(i3.3)")+'.sav'
       endif
       if sav eq 1 and sm eq 1 then begin
          vr_cube_sm = smooth(reform(vr_t[*,*,j]),[4,4])
          vz_cube_sm = smooth(reform(vz_t[*,*,j]),[4,4])
          rh_cube_sm = smooth(reform(rtot_t[*,*,j]),[4,4])
          te_cube_sm = smooth(reform(te_t[*,*,j]),[4,4])
-         save,vr_cube_sm,vz_cube_sm,te_cube_sm,rh_cube_sm,filename=cubedir+'cubes_'+kanm+'_'+string(j,format="(i3.3)")+'.sav'
+         if keyword_set(mag) eq 1 then begin
+            br_cube_sm = smooth(reform(br_t[*,*,j]),[4,4])
+            bz_cube_sm = smooth(reform(bz_t[*,*,j]),[4,4])
+         endif
+         save,vr_cube_sm,vz_cube_sm,te_cube_sm,rh_cube_sm,br_cube_sm,bz_cube_sm,filename=cubedir+'cubes_'+kanm+'_'+string(j,format="(i3.3)")+'.sav'
       endif
       print,string(13b)+' % finished: ',float(j)*100./(dimt-1),format='(a,f4.0,$)'
    endfor
-   if sav eq 1 then save, ro, re, va, vae, co, ce, aa, r0, gridx, gridz, dimx, dimz, dimt, tarr, kafix, ka_rt, wk_rt,filename=cubedir+'params_'+kanm+'.sav'
+   if sav eq 1 then save, ro, re, va, vae, co, ce, bo, be, aa, r0, gridx, gridz, dimx, dimz, dimt, tarr, kafix, ka_rt, wk_rt,filename=cubedir+'params_'+kanm+'.sav'
 endif else begin
    gridy = gridx
    dimy = dimx
@@ -97,6 +114,9 @@ endif else begin
    if sngcub eq 'all' or sngcub eq 'vz' then vz_cube=fltarr(dimx,dimy,dimz)
    if sngcub eq 'all' or sngcub eq 'te' then te_cube=fltarr(dimx,dimy,dimz)
    if sngcub eq 'all' or sngcub eq 'rh' then rh_cube=fltarr(dimx,dimy,dimz)
+   if (keyword_set(mag) and (sngcub eq 'all' or sngcub eq 'br')) then br_cube=fltarr(dimx,dimy,dimz)
+   if (keyword_set(mag) and (sngcub eq 'all' or sngcub eq 'bz')) then bz_cube=fltarr(dimx,dimy,dimz)
+
    dist_cube=fltarr(dimx,dimy,dimz)
    distance = fltarr(dimx,dimy)
    print,'1st step check'
@@ -119,11 +139,15 @@ endif else begin
             if sngcub eq 'all' or sngcub eq 'vz' then col3dvz = fltarr(ndist*dimz)
             if sngcub eq 'all' or sngcub eq 'te' then col3dte = fltarr(ndist*dimz)
             if sngcub eq 'all' or sngcub eq 'rh' then col3drh = fltarr(ndist*dimz)
+            if (keyword_set(mag) and (sngcub eq 'all' or sngcub eq 'br')) then col3dbr = fltarr(ndist*dimz)
+            if (keyword_set(mag) and (sngcub eq 'all' or sngcub eq 'bz')) then col3dbz = fltarr(ndist*dimz)
             if fixk eq 1 then begin
                if sngcub eq 'all' or sngcub eq 'vr' then colvr = reform(vr_t[lgrid,*,j]) 
                if sngcub eq 'all' or sngcub eq 'vz' then colvz = reform(vz_t[lgrid,*,j])
                if sngcub eq 'all' or sngcub eq 'te' then colte = reform(te_t[lgrid,*,j])
                if sngcub eq 'all' or sngcub eq 'rh' then colrh = reform(rtot_t[lgrid,*,j])
+               if (keyword_set(mag) and (sngcub eq 'all' or sngcub eq 'br')) then colbr = reform(br_t[lgrid,*,j])
+               if (keyword_set(mag) and (sngcub eq 'all' or sngcub eq 'bz')) then colbz = reform(bz_t[lgrid,*,j])
             endif else begin
                if sngcub eq 'all' or sngcub eq 'vr' then colvr = reform(vr_t[kafix,lgrid,*,j]) 
                if sngcub eq 'all' or sngcub eq 'vz' then colvz = reform(vz_t[kafix,lgrid,*,j])
@@ -135,11 +159,15 @@ endif else begin
                if sngcub eq 'all' or sngcub eq 'vz' then col3dvz[k*ndist:(k+1)*ndist-1]=replicate(colvz[k],ndist)
                if sngcub eq 'all' or sngcub eq 'te' then col3dte[k*ndist:(k+1)*ndist-1]=replicate(colte[k],ndist)
                if sngcub eq 'all' or sngcub eq 'rh' then col3drh[k*ndist:(k+1)*ndist-1]=replicate(colrh[k],ndist)
+               if (keyword_set(mag) and (sngcub eq 'all' or sngcub eq 'br')) then col3dbr[k*ndist:(k+1)*ndist-1]=replicate(colbr[k],ndist)
+               if (keyword_set(mag) and (sngcub eq 'all' or sngcub eq 'bz')) then col3dbz[k*ndist:(k+1)*ndist-1]=replicate(colbz[k],ndist)
             endfor
             if sngcub eq 'all' or sngcub eq 'vr' then vr_cube[Rl[Rl[l]:Rl[l+1]-1]] = col3dvr
             if sngcub eq 'all' or sngcub eq 'vz' then vz_cube[Rl[Rl[l]:Rl[l+1]-1]] = col3dvz
             if sngcub eq 'all' or sngcub eq 'te' then te_cube[Rl[Rl[l]:Rl[l+1]-1]] = col3dte
             if sngcub eq 'all' or sngcub eq 'rh' then rh_cube[Rl[Rl[l]:Rl[l+1]-1]] = col3drh
+            if (keyword_set(mag) and (sngcub eq 'all' or sngcub eq 'br')) then br_cube[Rl[Rl[l]:Rl[l+1]-1]] = col3dbr
+            if (keyword_set(mag) and (sngcub eq 'all' or sngcub eq 'bz')) then bz_cube[Rl[Rl[l]:Rl[l+1]-1]] = col3dbz
          endif
       endfor
       if sm eq 1 then begin
@@ -147,22 +175,26 @@ endif else begin
          if sngcub eq 'all' or sngcub eq 'vz' then vz_cube_sm = vz_cube 
          if sngcub eq 'all' or sngcub eq 'te' then te_cube_sm = te_cube 
          if sngcub eq 'all' or sngcub eq 'rh' then rh_cube_sm = rh_cube 
+         if (keyword_set(mag) and (sngcub eq 'all' or sngcub eq 'br')) then br_cube_sm = br_cube 
+         if (keyword_set(mag) and (sngcub eq 'all' or sngcub eq 'bz')) then bz_cube_sm = bz_cube 
          for i=0,dimx-1 do begin
             if sngcub eq 'all' or sngcub eq 'vr' then vr_cube_sm[i,*,*]=smooth(reform(vr_cube[i,*,*]),[4,4])
             if sngcub eq 'all' or sngcub eq 'vz' then vz_cube_sm[i,*,*]=smooth(reform(vz_cube[i,*,*]),[4,4])
             if sngcub eq 'all' or sngcub eq 'rh' then rh_cube_sm[i,*,*]=smooth(reform(rh_cube[i,*,*]),[4,4])
             if sngcub eq 'all' or sngcub eq 'te' then te_cube_sm[i,*,*]=smooth(reform(te_cube[i,*,*]),[4,4])
+            if (keyword_set(mag) and (sngcub eq 'all' or sngcub eq 'br')) then br_cube_sm[i,*,*]=smooth(reform(br_cube[i,*,*]),[4,4])
+            if (keyword_set(mag) and (sngcub eq 'all' or sngcub eq 'bz')) then bz_cube_sm[i,*,*]=smooth(reform(bz_cube[i,*,*]),[4,4])
          endfor
       endif
       if sav eq 1 and sm eq 0 then begin
-         save,vr_cube,vz_cube,te_cube,rh_cube,filename=cubedir+'cubes_'+sngcub+'_'+kanm+'_'+string(j,format="(i3.3)")+'.sav'
+         save,vr_cube,vz_cube,te_cube,rh_cube,br_cube,bz_cube,filename=cubedir+'cubes_'+sngcub+'_'+kanm+'_'+string(j,format="(i3.3)")+'.sav'
       endif
       if sav eq 1 and sm eq 1 then begin
-         save,vr_cube_sm,vz_cube_sm,te_cube_sm,rh_cube_sm,filename=cubedir+'cubes_'+sngcub+'_'+kanm+'_'+string(j,format="(i3.3)")+'.sav'
+         save,vr_cube_sm,vz_cube_sm,te_cube_sm,rh_cube_sm,br_cube,bz_cube,filename=cubedir+'cubes_'+sngcub+'_'+kanm+'_'+string(j,format="(i3.3)")+'.sav'
       endif
       print,string(13b)+' % finished: ',float(j)*100./(dimt-1),format='(a,f4.0,$)'
    endfor
-   if sav eq 1 then save, ro, re, va, vae, co, ce, aa, r0, gridx, gridy, gridz, dimx, dimy, dimz, dimt, tarr, kafix, ka_rt, wk_rt,filename=cubedir+'params_'+kanm+'.sav'
+   if sav eq 1 then save, ro, re, va, vae, co, ce, bo, be, aa, r0, gridx, gridy, gridz, dimx, dimy, dimz, dimt, tarr, kafix, ka_rt, wk_rt,filename=cubedir+'params_'+kanm+'.sav'
 endelse
 
 end

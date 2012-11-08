@@ -1,5 +1,5 @@
 
-pro vel_modes, waka_root=waka_root, ka_root=ka_root, dimx=dimx, dimy=dimy, reg0, reg1, reg2, reg3, reg4, gridx, vr_md, vt_md, vz_md, pr_md, rr_md
+pro vel_modes, waka_root=waka_root, ka_root=ka_root, dimx=dimx, dimy=dimy, reg0, reg1, reg2, reg3, reg4, gridx, vr_md, vt_md, vz_md, pr_md, rr_md, br_md, bt_md, bz_md
 
 if n_params(0) lt 1 then begin
    print,'vel_modes, waka_root=waka_root, ka_root=ka_root, dimx=dimx, dimy=dimy, reg0, reg1, reg2, reg3, reg4, gridx, vr_md, vt_md, vz_md, pr_md, rr_md'
@@ -23,11 +23,14 @@ endif
 ; vz_md = vz(k,x) : array of longitudinal velocity (wavelength, x position)
 ; pr_md = pr(k,x) : array of pressure perturbation along radial direction (x axis)
 ; rr_md = rr(k,x) : array of density perturbation along radial direction (x axis)
+; br_md = rr(k,x) : array of radial magnetic field perturbation along radial direction (x axis)
+; bt_md = rr(k,x) : array of azimuthal magnetic field perturbation along radial direction (x axis)
+; bz_md = rr(k,x) : array of longitudinal magnetic field perturbation along radial direction (x axis)
 
-common vars1, A1, A2, A3, A4, B1, B2, B3, B4, n, ka
+common vars1, A1, A2, A3, A4, A5, B1, B2, B3, B4, B5, n, ka
 
-co = A1 & va = A2 & ct = A3 & ro = A4
-ce = B1 & vae = B2 & cte = B3 & re = B4
+co = A1 & va = A2 & ct = A3 & ro = A4 & bo = A5
+ce = B1 & vae = B2 & cte = B3 & re = B4 & be = B5
 
 gridx = findgen(dimx)/float(dimx-1)*50.
 gridy = findgen(dimy)/float(dimy-1)*50.
@@ -46,6 +49,9 @@ vt_md = fltarr(dim,dimx)
 vz_md = fltarr(dim,dimx)
 pr_md = fltarr(dim,dimx)
 rr_md = fltarr(dim,dimx)
+br_md = fltarr(dim,dimx)
+bt_md = fltarr(dim,dimx)
+bz_md = fltarr(dim,dimx)
 mor2 = fltarr(dim,dimx)
 mer2 = fltarr(dim,dimx)
 R = fltarr(dim,dimx)
@@ -80,6 +86,9 @@ if reg0[0] ne -1 then begin
       vz_md[reg0,locin[i]] = 0.
       pr_md[reg0,locin[i]] = 0.;ro*aa0/ka_root[reg0]
       rr_md[reg0,locin[i]] = 0.
+      br_md[reg0,locin[i]] = 0.
+      bt_md[reg0,locin[i]] = 0.
+      bz_md[reg0,locin[i]] = 0.
    endfor
    for i=0,nlocout-1 do begin
       vr_md[reg0,locout[i]] = 0.
@@ -87,6 +96,9 @@ if reg0[0] ne -1 then begin
       vz_md[reg0,locout[i]] = 0.
       pr_md[reg0,locout[i]] = 0.;re*aa1/ka_root[reg0]
       rr_md[reg0,locout[i]] = 0.
+      br_md[reg0,locout[i]] = 0.
+      bt_md[reg0,locout[i]] = 0.
+      bz_md[reg0,locout[i]] = 0.
    endfor
 endif
 if reg1[0] ne -1 then begin
@@ -102,6 +114,9 @@ if reg1[0] ne -1 then begin
       vz_md[reg1,locin[i]] = -complex(0,1)/waka_root[reg1]^2/ka_root[reg1]*co^2*aa0[reg1]*beseli(sqrt(abs(mor2[reg1,locin[i]])),n)*aa
       pr_md[reg1,locin[i]] = ro/ka_root[reg1]*(co^2+va^2-va^2*co^2/waka_root[reg1]^2)*beseli(sqrt(abs(mor2[reg1,locin[i]])),n)*aa0[reg1]
       rr_md[reg1,locin[i]] = 1./waka_root[reg1]/ka_root[reg1]*ro*aa0[reg1]*sigi[reg1]*beseli(sqrt(abs(moa2[reg1]))*abs((gridx[locin[i]]-r0)/aa),n,/double)*aa
+      br_md[reg1,locin[i]] = bo/waka_root[reg1]*vr_md[reg1,locin[i]]
+      bt_md[reg1,locin[i]] = bo/waka_root[reg1]*vt_md[reg1,locin[i]]
+      bz_md[reg1,locin[i]] = bo/waka_root[reg1]^3/ka_root[reg1]*aa*(co^2-waka_root[reg1]^2)*aa0[reg1]*beseli(sqrt(abs(mor2[reg1,locin[i]])),n)
    endfor
    for i=0,nlocout-1 do begin
       mer2[reg1,locout[i]] = mea2[reg1]*(abs(gridx[locout[i]]-r0)/aa)^2
@@ -110,6 +125,9 @@ if reg1[0] ne -1 then begin
       vz_md[reg1,locout[i]] = -complex(0,1)/waka_root[reg1]^2/ka_root[reg1]*ce^2*aa1[reg1]*beselk(sqrt(abs(mer2[reg1,locout[i]])),n)*aa
       pr_md[reg1,locout[i]] = re/ka_root[reg1]*(ce^2+vae^2-vae^2*ce^2/waka_root[reg1]^2)*beselk(sqrt(abs(mer2[reg1,locout[i]])),n)*aa1[reg1]
       rr_md[reg1,locout[i]] = 1./waka_root[reg1]/ka_root[reg1]*re*aa1[reg1]*sigk[reg1]*beselk(sqrt(abs(mea2[reg1]))*abs((gridx[locout[i]]-r0)/aa),n,/double)*aa
+      br_md[reg1,locout[i]] = be/waka_root[reg1]*vr_md[reg1,locout[i]]
+      bt_md[reg1,locout[i]] = be/waka_root[reg1]*vt_md[reg1,locout[i]]
+      bz_md[reg1,locout[i]] = be/waka_root[reg1]^3/ka_root[reg1]*aa*(ce^2-waka_root[reg1]^2)*aa1[reg1]*beselk(sqrt(abs(mer2[reg1,locout[i]])),n)
    endfor
 endif
 
@@ -126,6 +144,9 @@ if reg2[0] ne -1 then begin
       vz_md[reg2,locin[i]] = -complex(0,1)/waka_root[reg2]^2/ka_root[reg2]*co^2*aa0[reg2]*beseli(sqrt(abs(mor2[reg2,locin[i]])),n)*aa
       pr_md[reg2,locin[i]] = ro/ka_root[reg2]*(co^2+va^2-va^2*co^2/waka_root[reg2]^2)*beseli(sqrt(abs(mor2[reg2,locin[i]])),n)*aa0[reg2]
       rr_md[reg2,locin[i]] = 1./waka_root[reg2]/ka_root[reg2]*ro*aa0[reg2]*sigi[reg2]*beseli(sqrt(abs(moa2[reg2]))*abs((gridx[locin[i]]-r0)/aa),n,/double)*aa
+      br_md[reg2,locin[i]] = bo/waka_root[reg2]*vr_md[reg2,locin[i]]
+      bt_md[reg2,locin[i]] = bo/waka_root[reg2]*vt_md[reg2,locin[i]]
+      bz_md[reg2,locin[i]] = bo/waka_root[reg2]^3/ka_root[reg2]*aa*(co^2-waka_root[reg2]^2)*aa0[reg2]*beseli(sqrt(abs(mor2[reg2,locin[i]])),n)
    endfor
    for i=0,nlocout-1 do begin
       mer2[reg2,locout[i]] = mea2[reg2]*(abs(gridx[locout[i]]-r0)/aa)^2
@@ -136,6 +157,9 @@ if reg2[0] ne -1 then begin
       vz_md[reg2,locout[i]] = -complex(0,1)/waka_root[reg2]^2/ka_root[reg2]*ce^2*aa1[reg2]*besely(sqrt(abs(mer2[reg2,locout[i]])),n)*aa
       pr_md[reg2,locout[i]] = re/ka_root[reg2]*(ce^2+vae^2-vae^2*ce^2/waka_root[reg2]^2)*besely(sqrt(abs(mer2[reg2,locout[i]])),n)*aa1[reg2]
       rr_md[reg2,locout[i]] = 1./waka_root[reg2]/ka_root[reg2]*re*aa1[reg2]*sigk[reg2]*besely(sqrt(abs(mea2[reg2]))*abs((gridx[locout[i]]-r0)/aa),n,/double)*aa
+      br_md[reg2,locout[i]] = be/waka_root[reg2]*vr_md[reg2,locout[i]]
+      bt_md[reg2,locout[i]] = be/waka_root[reg2]*vt_md[reg2,locout[i]]
+      bz_md[reg2,locout[i]] = be/waka_root[reg2]^3/ka_root[reg2]*aa*(ce^2-waka_root[reg2]^2)*aa1[reg2]*besely(sqrt(abs(mer2[reg2,locout[i]])),n)
    endfor
 endif
 
@@ -153,6 +177,9 @@ if reg3[0] ne -1 then begin
       vz_md[reg3,locin[i]] = -complex(0,1)/waka_root[reg3]^2/ka_root[reg3]*co^2*aa0[reg3]*beselj(sqrt(abs(mor2[reg3,locin[i]])),n)*aa
       pr_md[reg3,locin[i]] = ro/waka_root[reg3]*aa/ka_root[reg3]*(co^2+va^2-va^2*co^2/waka_root[reg3]^2)*beselj(sqrt(abs(moa2[reg3]))*abs((gridx[locin[i]]-r0)/aa),n,/double)*aa0[reg3]
       rr_md[reg3,locin[i]] = 1./waka_root[reg3]*aa/ka_root[reg3]*ro*aa0[reg3]*beselj(sqrt(abs(moa2[reg3]))*abs((gridx[locin[i]]-r0)/aa),n,/double)
+      br_md[reg3,locin[i]] = bo/waka_root[reg3]*vr_md[reg3,locin[i]]
+      bt_md[reg3,locin[i]] = bo/waka_root[reg3]*vt_md[reg3,locin[i]]
+      bz_md[reg3,locin[i]] = bo/waka_root[reg3]^3/ka_root[reg3]*aa*(co^2-waka_root[reg3]^2)*aa0[reg3]*beselj(sqrt(abs(mor2[reg3,locin[i]])),n)
    endfor
    for i=0,nlocout-1 do begin
       mer2[reg3,locout[i]] = mea2[reg3]*(abs(gridx[locout[i]]-r0)/aa)^2
@@ -165,6 +192,9 @@ if reg3[0] ne -1 then begin
       pr_md[reg3,locout[i]] = re/waka_root[reg3]*aa/ka_root[reg3]*(ce^2+vae^2-vae^2*ce^2/waka_root[reg3]^2)*beselk(sqrt(abs(mea2[reg3]))*abs((gridx[locout[i]]-r0)/aa),n,/double)*aa1[reg3]
       pr_md[reg3,locout[i]] = re/ka_root[reg3]*(ce^2+vae^2-vae^2*ce^2/waka_root[reg3]^2)*beselk(sqrt(abs(mer2[reg3,locout[i]])),n)*aa1[reg3]
       rr_md[reg3,locout[i]] = 1./waka_root[reg3]*aa/ka_root[reg3]*re*aa1[reg3]*beselk(sqrt(abs(mea2[reg3]))*abs((gridx[locout[i]]-r0)/aa),n,/double)
+      br_md[reg3,locout[i]] = be/waka_root[reg3]*vr_md[reg3,locout[i]]
+      bt_md[reg3,locout[i]] = be/waka_root[reg3]*vt_md[reg3,locout[i]]
+      bz_md[reg3,locout[i]] = be/waka_root[reg3]^3/ka_root[reg3]*aa*(ce^2-waka_root[reg3]^2)*aa1[reg3]*beselk(sqrt(abs(mer2[reg3,locout[i]])),n)
    endfor
 endif
 
@@ -181,6 +211,9 @@ if reg4[0] ne -1 then begin
       vz_md[reg4,locin[i]] = -complex(0,1)/waka_root[reg4]^2/ka_root[reg4]*co^2*aa0[reg4]*beselj(sqrt(abs(mor2[reg4,locin[i]])),n)*aa
       pr_md[reg4,locin[i]] = ro/ka_root[reg4]*(co^2+va^2-va^2*co^2/waka_root[reg4]^2)*beselj(sqrt(abs(mor2[reg4,locin[i]])),n)*aa0[reg4]
       rr_md[reg4,locin[i]] = 1./waka_root[reg4]/ka_root[reg4]*ro*aa0[reg4]*sigi[reg4]*beselj(sqrt(abs(moa2[reg4]))*abs((gridx[locin[i]]-r0)/aa),n,/double)*aa
+      br_md[reg4,locin[i]] = bo/waka_root[reg4]*vr_md[reg4,locin[i]]
+      bt_md[reg4,locin[i]] = bo/waka_root[reg4]*vt_md[reg4,locin[i]]
+      bz_md[reg4,locin[i]] = bo/waka_root[reg4]^3/ka_root[reg4]*aa*(co^2-waka_root[reg4]^2)*aa0[reg4]*beselj(sqrt(abs(mor2[reg4,locin[i]])),n)
    endfor
    for i=0,nlocout-1 do begin
       mer2[reg4,locout[i]] = mea2[reg4]*(abs(gridx[locout[i]]-r0)/aa)^2
@@ -191,6 +224,9 @@ if reg4[0] ne -1 then begin
       vz_md[reg4,locout[i]] = -complex(0,1)/waka_root[reg4]^2/ka_root[reg4]*ce^2*aa1[reg4]*besely(sqrt(abs(mer2[reg4,locout[i]])),n)*aa
       pr_md[reg4,locout[i]] = re/ka_root[reg4]*(ce^2+vae^2-vae^2*ce^2/waka_root[reg4]^2)*besely(sqrt(abs(mer2[reg4,locout[i]])),n)*aa1[reg4]
       rr_md[reg4,locout[i]] = 1./waka_root[reg4]/ka_root[reg4]*re*aa1[reg4]*sigk[reg4]*besely(sqrt(abs(mea2[reg4]))*abs((gridx[locout[i]]-r0)/aa),n,/double)*aa
+      br_md[reg4,locout[i]] = be/waka_root[reg4]*vr_md[reg4,locout[i]]
+      bt_md[reg4,locout[i]] = be/waka_root[reg4]*vt_md[reg4,locout[i]]
+      bz_md[reg4,locout[i]] = be/waka_root[reg4]^3/ka_root[reg4]*aa*(ce^2-waka_root[reg4]^2)*aa1[reg4]*besely(sqrt(abs(mer2[reg4,locout[i]])),n)
    endfor
 endif
 

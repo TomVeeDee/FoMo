@@ -1,8 +1,8 @@
 
-pro rotmat, dimx, dimy, dimz, ro, re, va, vae, co, ce, waka_ini, no_init_guess = no_init, high_t_ext = high_t
+pro rotmat, dimx, dimy, dimz, ro, re, va, vae, co, ce, bo, be, waka_ini, no_init_guess = no_init, high_t_ext = high_t
 
 if n_params(0) lt 1 then begin
-   print,'rotmat, dimx, dimy, dimz, ro, re, va, vae, co, ce, [no_init_guess = no_guess, high_ext_t = high_t]'
+   print,'rotmat, dimx, dimy, dimz, ro, re, va, vae, co, ce, bo, be [,no_init_guess = no_guess, high_ext_t = high_t]'
    return
 endif
 
@@ -20,6 +20,8 @@ endif
 ; vae = external Alfven velocity: calculated at (0,0,0)
 ; co = internal sound speed: calculated at (dimx/2,dimy/2,dimz/2)
 ; ce = external sound speed: calculated at (0,0,0)
+; bo = internal magnetic field calculated at (dimx/2,dimy/2,dimz/2)
+; be = external magnetic field calculated at (0,0,0)
 ; waka_ini = initial guess of w/k for solving dispersion relation
 ; OPTIONAL:
 ; if keyword 'no_init' is set then calculation of initial guess is avoided
@@ -151,6 +153,8 @@ if initial eq 1 then begin
    vae = sqrt(rBx[0,0,0]^2+rBy[0,0,0]^2+rBz[0,0,0]^2)/sqrt(mup*re)
    co = sqrt(2*gamma*kboltz/proton*te_in)/1.e5
    ce = sqrt(2*gamma*kboltz/proton*te_out)/1.e5
+   bo = va*sqrt(mup*ro)
+   be = vae*sqrt(mup*re)
    ct = co*va/sqrt(co^2+va^2)
    cte = ce*vae/sqrt(ce^2+vae^2)
 

@@ -1,10 +1,10 @@
 
 
-pro divcubes,dimt=dimt,dimx=dimx,dimy=dimy,model=model,sngcub=sngcub,smooth=smooth
+pro divcubes,dimt=dimt,dimx=dimx,dimy=dimy,model=model,sngcub=sngcub,mag=mag,smooth=smooth
 
 if n_params(0) lt 1 then begin
    print,'Check input and output directories first'
-   print,'divcubes,dimt=dimt,dimx=dimx,dimy=dimy,model=model[,smooth=smooth]'
+   print,'divcubes,dimt=dimt,dimx=dimx,dimy=dimy,model=model[,mag=mag,smooth=smooth]'
    return
 endif
 
@@ -23,6 +23,7 @@ endif
 ; OUPUT:
 ; Produces IDL save files of slices at each x and time position
 ; OPTIONAL:
+; if keyword 'mag' is set then it includes the magnetic field cubes
 ; if keyword 'smooth' is set then cubes correspond to smooth profiles
 
   if keyword_set(smooth) then sm = 1 else sm = 0
@@ -46,7 +47,9 @@ endif
            if sngcub eq 'all' or sngcub eq 'rh' then rho = rh_cube[j,*,*]
            if sngcub eq 'all' or sngcub eq 'vr' then vr = vr_cube[j,*,*]
            if sngcub eq 'all' or sngcub eq 'vz' then vz = vz_cube[j,*,*]
-           save,te,rho,vr,vz,filename=savedir+'slice_'+sngcub+'_'+kanm+'_'+string(i,format='(i3.3)')+'t_'+string(j,format='(i3.3)')+'x'+'.sav'
+           if (keyword_set(mag) and (sngcub eq 'all' or sngcub eq 'bz')) then bz = bz_cube[j,*,*]
+           if (keyword_set(mag) and (sngcub eq 'all' or sngcub eq 'br')) then br = br_cube[j,*,*]
+           save,te,rho,vr,vz,br,bz,filename=savedir+'slice_'+sngcub+'_'+kanm+'_'+string(i,format='(i3.3)')+'t_'+string(j,format='(i3.3)')+'x'+'.sav'
         endfor
      endif
      if sm eq 1 then begin
@@ -55,7 +58,9 @@ endif
            if sngcub eq 'all' or sngcub eq 'rh' then rho = rh_cube_sm[j,*,*]
            if sngcub eq 'all' or sngcub eq 'vr' then vr = vr_cube_sm[j,*,*]
            if sngcub eq 'all' or sngcub eq 'vz' then vz = vz_cube_sm[j,*,*]
-           save,te,rho,vr,vz,filename=savedir+'slice_'+sngcub+'_'+kanm+'_'+string(i,format='(i3.3)')+'t_'+string(j,format='(i3.3)')+'x'+'.sav'
+           if (keyword_set(mag) and (sngcub eq 'all' or sngcub eq 'bz')) then bz = bz_cube_sm[j,*,*]
+           if (keyword_set(mag) and (sngcub eq 'all' or sngcub eq 'br')) then br = br_cube_sm[j,*,*]
+           save,te,rho,vr,vz,br,bz,filename=savedir+'slice_'+sngcub+'_'+kanm+'_'+string(i,format='(i3.3)')+'t_'+string(j,format='(i3.3)')+'x'+'.sav'
         endfor
      endif
      print,string(13b)+' % finished: ',float(i)*100./(dimt-1),format='(a,f4.0,$)'

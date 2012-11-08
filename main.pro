@@ -2,18 +2,19 @@
 ; GENERATE DATACUBES OF A CYLINDER WITH A FAST SAUSAGE WAVE
 pro main
 
-rotmat, dimx, dimy, dimz, ro, re, va, vae, co, ce, waka_ini
+rotmat, dimx, dimy, dimz, ro, re, va, vae, co, ce, bo, be, waka_ini
 
-tubemodes, rho_int=ro, rho_ext=re, valfv_int=va, valv_ext=vae, cs_int=co, cs_ext=ce, waka_ini=waka_ini, waka_root, ka_root
+tubemodes, rho_int=ro, rho_ext=re, valfv_int=va, valv_ext=vae, cs_int=co, cs_ext=ce,  bo_int=bo, be_ext=be, waka_ini=waka_ini, waka_root, ka_root
 
 ; set dimensions of your model
 dimx=204 & dimy=204
 
-vel_modes, waka_root=waka_root, ka_root=ka_root, dimx=dimx, dimy=dimy, reg0, reg1, reg2, reg3, reg4, gridx, vr_md, vt_md, vz_md, pr_md, rr_md
+vel_modes, waka_root=waka_root, ka_root=ka_root, dimx=dimx, dimy=dimy, reg0, reg1, reg2, reg3, reg4, gridx, vr_md, vt_md, vz_md, pr_md, rr_md, br_md, bt_md, bz_md
 dimt=30
 
-;specify first the wavelength in velmod_wt.pro
-velmod_wt, waka_root=waka_root, ka_root=ka_root, gridx=gridx, dimt=dimt, reg3=reg3, vr_md=vr_md, aa, wk_rt, ka_rt, kafix, dimz, tarr, gridz, vr_t, vz_t, rr_t, rtot_t, ptot_t, dispr, te_t
+; specify first the wavelength in velmod_wt.pro. Set keyword 'mag' for
+; including magnetic field
+velmod_wt, waka_root=waka_root, ka_root=ka_root, gridx=gridx, dimt=dimt, reg3=reg3, vr_md=vr_md, aa, wk_rt, ka_rt, kafix, dimz, tarr, gridz, vr_t, vz_t, rr_t, rtot_t, ptot_t, dispr, te_t, br_t, bz_t ;mag=mag
 
 ; set model = string with name of treated model:
 ;      model = 'base'corresponds to ka = 2.24, 
@@ -32,15 +33,15 @@ velmod_wt, waka_root=waka_root, ka_root=ka_root, gridx=gridx, dimt=dimt, reg3=re
 ; variables (='vr', 'vz', 'rh', or 'te')
 sngcub = 'all'
 
-; 2d or 3d with no smoothing:
-datacubes_wt, rho_int=ro, rho_ext=re, valfv_int=va, valv_ext=vae, cs_int=co, cs_ext=ce, radius = aa, gridx=gridx, gridz=gridz, dimt=dimt, tarr=tarr, ka_rt=ka_rt, kafix=kafix, wk_rt=wk_rt, vr_t=vr_t, vz_t=vz_t, rtot_t=rtot_t, te_t=te_t, model=model, vr_cube, vz_cube, te_cube, rh_cube, sngcub=sngcub, /save_cubes
+; 2d or 3d with no smoothing. set keyword 'mag' for including magnetic field
+datacubes_wt, rho_int=ro, rho_ext=re, valfv_int=va, valv_ext=vae, cs_int=co, cs_ext=ce, radius = aa, gridx=gridx, gridz=gridz, dimt=dimt, tarr=tarr, ka_rt=ka_rt, kafix=kafix, wk_rt=wk_rt, vr_t=vr_t, vz_t=vz_t, rtot_t=rtot_t, te_t=te_t, br_t=br_t, bz_t=bz_t, model=model, vr_cube, vz_cube, te_cube, rh_cube, br_cube, bz_cube, sngcub=sngcub, /save_cubes ;,mag=mag
 
 ; with smoothing:
 ;datacubes_wt, rho_int=ro, rho_ext=re, valfv_int=va, valv_ext=vae,
 ;cs_int=co, cs_ext=ce, radius = aa, gridx=gridx, gridz=gridz, dimt=dimt, tarr=tarr, ka_rt=ka_rt, kafix=kafix, wk_rt=wk_rt, vr_t=vr_t, vz_t=vz_t, rtot_t=rtot_sm_t, te_t=te_sm_t, model=model,vr_cube, vz_cube, te_cube, rh_cube
 
 ; for 3d datasets, divide in 2D (radial) slices:
-divcubes,dimt=dimt,dimx=dimx,dimy=dimy,model=model,sngcub=sngcub;,[/smooth]
+divcubes,dimt=dimt,dimx=dimx,dimy=dimy,model=model,sngcub=sngcub;,/mag,/smooth
 
 print,'for continuing type .c'
 stop

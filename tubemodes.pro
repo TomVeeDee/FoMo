@@ -1,8 +1,8 @@
 
-PRO tubemodes, rho_int=ro, rho_ext=re, valfv_int=va, valv_ext=vae, cs_int=co, cs_ext=ce, waka_ini=waka_ini, waka_root, ka_root, normcase = normcase
+PRO tubemodes, rho_int=ro, rho_ext=re, valfv_int=va, valv_ext=vae, cs_int=co, cs_ext=ce, bo_int=bo, be_ext=be, waka_ini=waka_ini, waka_root, ka_root, normcase = normcase
 
 if n_params(0) lt 1 then begin
-   print,'tubemode, ro=ro, re=re, va=va, vae=vae, co=co, ce=ce, waka_ini=waka_ini, waka_root, ka_root, [normcase = normcase]'
+   print,'tubemodes, rho_int=ro, rho_ext=re, valfv_int=va, valv_ext=vae, cs_int=co, cs_ext=ce, bo_int=bo, be_ext=be, waka_ini=waka_ini, waka_root, ka_root [,normcase = normcase]'
    return
 endif
 
@@ -15,6 +15,8 @@ endif
 ; vae = external Alfven velocity: calculated at (0,0,0)
 ; co = internal sound speed: calculated at (dimx/2,dimy/2,dimz/2)
 ; ce = external sound speed: calculated at (0,0,0)
+; bo = internal magnetic field calculated at (dimx/2,dimy/2,dimz/2)
+; be = external magnetic field calculated at (0,0,0)
 ; waka_ini = initial guess of w/k for solving dispersion relation
 ; OUTPUT:
 ; waka_root = roots of w/k from dispersion relation
@@ -26,7 +28,7 @@ endif
 ; function 'wkeqsyst.pro': dispersion relation
 
 ; define parameters:
-common vars1, A1, A2, A3, A4, B1, B2, B3, B4, n, ka
+common vars1, A1, A2, A3, A4, A5, B1, B2, B3, B4, B5, n, ka
 
 n = 0 ; sausage mode
 
@@ -52,8 +54,8 @@ endif
 ct = co*va/sqrt(co^2+va^2)
 cte = ce*vae/sqrt(ce^2+vae^2)
 
-A1 = co & A2 = va & A3 = ct & A4 = ro 
-B1 = ce & B2 = vae & B3 = cte & B4 = re 
+A1 = co & A2 = va & A3 = ct & A4 = ro & A5 = bo
+B1 = ce & B2 = vae & B3 = cte & B4 = re & B5 = be
 mrk = 0
 ;step = waka_ini*0.005
 waka_j = waka_ini

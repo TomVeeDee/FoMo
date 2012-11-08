@@ -1,7 +1,7 @@
-pro velmod_wt, waka_root=waka_root, ka_root=ka_root, gridx=gridx, dimt=dimt, reg3=reg3, vr_md=vr_md, aa, wk_rt, ka_rt, kafix, dimz, tarr, gridz, vr_t, vz_t, rr_t, rtot_t, ptot_t, dispr, te_t, no_standing=no_standing
+pro velmod_wt, waka_root=waka_root, ka_root=ka_root, gridx=gridx, dimt=dimt, reg3=reg3, vr_md=vr_md, aa, wk_rt, ka_rt, kafix, dimz, tarr, gridz, vr_t, vz_t, rr_t, rtot_t, ptot_t, dispr, te_t, br_t, bz_t, mag=mag, no_standing=no_standing
 
 if n_params(0) lt 1 then begin
-   print,'velmod_t, waka_root=waka_root, ka_root=ka_root, gridx=gridx, dimt=dimt, reg3=reg3, vr_md=vr_md, wk_rt, ka_rt, kafix, dimz, tarr, gridz, vr_t, vz_t, rr_t, rtot_t, ptot_t, dispr, te_t, [no_standing=no_standing]'
+   print,'velmod_t, waka_root=waka_root, ka_root=ka_root, gridx=gridx, dimt=dimt, reg3=reg3, vr_md=vr_md, wk_rt, ka_rt, kafix, dimz, tarr, gridz, vr_t, vz_t, rr_t, rtot_t, ptot_t, dispr, te_t, br_t, bz_t [,no_standing=no_standing]'
    return
 endif
 
@@ -31,15 +31,18 @@ endif
 ; te_t = te_t(dimx,dimy,dimz) : temperature
 ; dispr = dispr(dimx,dimz,dimt) : displacement field
 ; OPTIONAL:
+; if mag keyword is set then produces magnetic field cubes:
+; br_t = br_t(dimx,dimy,dimz) : radial magnetic field
+; bz_t = bz_t(dimx,dimy,dimz) : longitudinal magnetic field
 ; if keyword 'no_standing' is set then propagating mode case is
 ; treated, else standing mode is treated
 
 if keyword_set(no_standing) then standing = 0 else standing = 1
 
-common vars1, A1, A2, A3, A4, B1, B2, B3, B4, n, ka
+common vars1, A1, A2, A3, A4, A5, B1, B2, B3, B4, B5, n, ka
 
-co = A1 & va = A2 & ct = A3 & ro = A4
-ce = B1 & vae = B2 & cte = B3 & re = B4
+co = A1 & va = A2 & ct = A3 & ro = A4 & bo = A5
+ce = B1 & vae = B2 & cte = B3 & re = B4 & be = B5
 
 dimx = n_elements(gridx)
 
@@ -75,6 +78,10 @@ rr_t = fltarr(dimx,dimz,dimt)
 rtot_t = fltarr(dimx,dimz,dimt)
 ptot_t = fltarr(dimx,dimz,dimt)
 te_t = fltarr(dimx,dimz,dimt)
+if keyword_set(mag) then begin
+   br_t = fltarr(dimx,dimz,dimt)
+   bz_t = fltarr(dimx,dimz,dimt)
+endif
 dispr = fltarr(dimx,dimz,dimt)
 factora = make_array(1,/complex)
 factorb = make_array(1,/complex)
@@ -102,14 +109,20 @@ for i=0,dimx-1 do begin
                rtot_t[i,j,k] = -real_part(1./wk_rt[kafix]*aa/ka_rt[kafix]*ro*aa0*beselj(sqrt(abs(moa2[kafix]))*abs((gridx[i]-r0)/aa),n,/double)*factorb)+ro
                ptot_t[i,j,k] = -real_part(gamma/wk_rt[kafix]*aa/ka_rt[kafix]*po*aa0*beselj(sqrt(abs(moa2[kafix]))*abs((gridx[i]-r0)/aa),n,/double)*factorb)+po
                te_t[i,j,k] = ptot_t[i,j,k]/rtot_t[i,j,k]
-;               te_t[i,j,k] = rtot_t[i,j,k]^(gamma-1.)
+               if keyword_set(mag) then begin
+                  br_t[i,j,k] = bo*amp/wk_rt[kafix]*vr_0[kafix,i]*sin(wk_rt[kafix]*ka_rt[kafix]*tarr[k]/aa)*sin(ka_rt[kafix]*gridz[j]/aa+!pi/2)
+                  bz_t[i,j,k] = bo*amp/wk_rt[kafix]^3/ka_rt[kafix]*aa*(co^2-wk_rt[kafix]^2)*aa0*beselj(sqrt(abs(moa2[kafix]))*abs((gridx[i]-r0)/aa),n,/double)*sin(wk_rt[kafix]*ka_rt[kafix]*tarr[k]/aa)*cos(ka_rt[kafix]*gridz[j]/aa+!pi/2)
+               endif
             endif else begin
                vz_t[i,j,k] = real_part(-complex(0,1)/wk_rt[kafix]^2*aa/ka_rt[kafix]*co^2*aa1*beselk(sqrt(abs(mea2[kafix]))*abs((gridx[i]-r0)/aa),n,/double)*factora)
                rr_t[i,j,k] = -1.*real_part(1./wk_rt[kafix]*aa/ka_rt[kafix]*re*aa1*beselk(sqrt(abs(mea2[kafix]))*abs((gridx[i]-r0)/aa),n,/double)*factorb)
                rtot_t[i,j,k] = -1.*real_part(1./wk_rt[kafix]*aa/ka_rt[kafix]*re*aa1*beselk(sqrt(abs(mea2[kafix]))*abs((gridx[i]-r0)/aa),n,/double)*factorb)+re
                ptot_t[i,j,k] = -1.*real_part(gamma/wk_rt[kafix]*aa/ka_rt[kafix]*pe*aa1*beselk(sqrt(abs(mea2[kafix]))*abs((gridx[i]-r0)/aa),n,/double)*factorb)+pe
                te_t[i,j,k] = ptot_t[i,j,k]/rtot_t[i,j,k]
-;               te_t[i,j,k] = rtot_t[i,j,k]^(gamma-1.)
+               if keyword_set(mag) then begin
+                  br_t[i,j,k] = bo*amp/wk_rt[kafix]*vr_0[kafix,i]*sin(wk_rt[kafix]*ka_rt[kafix]*tarr[k]/aa)*sin(ka_rt[kafix]*gridz[j]/aa+!pi/2)
+                  bz_t[i,j,k] = be*amp/wk_rt[kafix]^3/ka_rt[kafix]*aa*(ce^2-wk_rt[kafix]^2)*aa1*beselk(sqrt(abs(mea2[kafix]))*abs((gridx[i]-r0)/aa),n,/double)*sin(wk_rt[kafix]*ka_rt[kafix]*tarr[k]/aa)*cos(ka_rt[kafix]*gridz[j]/aa+!pi/2)
+               endif
             endelse 
          endif else begin
             factora = cos(wk_rt[kafix]*ka_rt[kafix]*tarr[k]/aa+ka_rt[kafix]*gridz[j]/aa)+complex(0,1)*sin(wk_rt[kafix]*ka_rt[kafix]*tarr[k]/aa+ka_rt[kafix]*gridz[j]/aa)
@@ -120,6 +133,10 @@ for i=0,dimx-1 do begin
                rr_t[i,j,k] = real_part(complex(0,1)/wk_rt[kafix]*aa/ka_rt[kafix]*ro*aa0*beselj(sqrt(abs(moa2[kafix]))*abs((gridx[i]-r0)/aa),n,/double)*factora)
                rtot_t[i,j,k] = real_part(complex(0,1)/wk_rt[kafix]*aa/ka_rt[kafix]*ro*aa0*beselj(sqrt(abs(moa2[kafix]))*abs((gridx[i]-r0)/aa),n,/double)*factora)+ro
                te_t[i,j,k] = rtot_t[i,j,k]^(gamma-1.)
+               if keyword_set(mag) then begin
+                  br_t[i,j,k] = bo/wk_rt[kafix]*vr_0[kafix,i]*real_part(complex(0,1)*factora)
+                  bz_t[i,j,k] = bo/wk_rt[kafix]^3/ka_rt[kafix]*aa*(co^2-wk_rt[kafix]^2)*aa0*beselj(sqrt(abs(moa2[kafix]))*abs((gridx[i]-r0)/aa),n,/double)*real_part(complex(0,1)*factora)
+               endif
             endif else begin
                rr_t[i,j,k] = real_part(complex(0,1)/wk_rt[kafix]*aa/ka_rt[kafix]*re*aa1*beselk(sqrt(abs(mea2[kafix]))*abs((gridx[i]-r0)/aa),n,/double)*factora)
                rtot_t[i,j,k] = real_part(complex(0,1)/wk_rt[kafix]*aa/ka_rt[kafix]*re*aa1*beselk(sqrt(abs(mea2[kafix]))*abs((gridx[i]-r0)/aa),n,/double)*factora)+re

@@ -1,10 +1,10 @@
 
-pro readcubes,set=set,rh_cube_t,te_cube_t,vr_cube_t,vz_cube_t,aa,gridx,gridy,gridz,gridz_ext,co,ce,ro,re,va,vae,dimt,tarr,r0,ka_rt,wk_rt,rh_cube_t_ext,wave,dim00d,dim30d,dim45d,dim60d
+pro readcubes,set=set,rh_cube_t,te_cube_t,vr_cube_t,vz_cube_t,br_cube_t,bz_cube_t,aa,gridx,gridy,gridz,gridz_ext,co,ce,ro,re,va,vae,dimt,tarr,r0,ka_rt,wk_rt,rh_cube_t_ext,wave,dim00d,dim30d,dim45d,dim60d,mag=mag
 
 ; Reads cubes produced by datacubes_wt.pro
 
 if keyword_set(set) eq 0 then begin
- print,'readcubes,set=set,rh_cube_t,te_cube_t,vr_cube_t,vz_cube_t,aa,gridx,gridy,gridz,gridz_ext,co,ce,ro,re,va,vae,dimt,tarr,r0,ka_rt,wk_rt,rh_cube_t_ext,wave,dim00d,dim30d,dim45d,dim60d'
+ print,'readcubes,set=set,rh_cube_t,te_cube_t,vr_cube_t,vz_cube_t,br_cube_t,bz_cube_t,aa,gridx,gridy,gridz,gridz_ext,co,ce,ro,re,va,vae,dimt,tarr,r0,ka_rt,wk_rt,rh_cube_t_ext,wave,dim00d,dim30d,dim45d,dim60d [,mag=mag]'
    return
 endif
 
@@ -76,6 +76,10 @@ if set ne 25 and set ne 26 then begin
    rh_cube_t = fltarr(siz[2],siz[3],dimt)
    rh_cube_t_ext = fltarr(siz[2],siz[3]*ndz,dimt)
    te_cube_t = fltarr(siz[2],siz[3],dimt)
+   if keyword_set(mag) then begin
+      br_cube_t = fltarr(siz[2],siz[3],dimt)
+      bz_cube_t = fltarr(siz[2],siz[3],dimt)
+   endif
    if set ne 24 then begin
       vr_cube_t = fltarr(siz[2],siz[3],dimt)
       vz_cube_t = fltarr(siz[2],siz[3],dimt)
@@ -87,6 +91,10 @@ endif else begin
    te_cube_t = fltarr(siz[1],siz[2],dimt)
    vr_cube_t = fltarr(siz[1],siz[2],dimt)
    vz_cube_t = fltarr(siz[1],siz[2],dimt)
+   if keyword_set(mag) then begin
+      br_cube_t = fltarr(siz[1],siz[2],dimt)
+      bz_cube_t = fltarr(siz[1],siz[2],dimt)
+   endif
    gridz_ext = fltarr(siz[2]*ndz)
 endelse
 
@@ -97,6 +105,10 @@ if set eq 2 or set eq 23 or set eq 21 or set eq 3 then begin
       te_cube_t[*,*,i]=te_cube[dimx/2,*,*]
       vr_cube_t[*,*,i]=vr_cube[dimx/2,*,*]
       vz_cube_t[*,*,i]=vz_cube[dimx/2,*,*]
+      if keyword_set(mag) then begin
+         br_cube_t[*,*,i] = br_cube[dimx/2,*,*]
+         bz_cube_t[*,*,i] = bz_cube[dimx/2,*,*]
+      endif
       print,string(13b)+' % finished: ',float(i)*100./(dimt-1),format='(a,f4.0,$)'
    endfor
 endif
@@ -121,6 +133,10 @@ if set eq 22 then begin
       te_cube_t[*,*,i]=te_cube_sm[dimx/2,*,*]
       vr_cube_t[*,*,i]=vr_cube_sm[dimx/2,*,*]
       vz_cube_t[*,*,i]=vz_cube_sm[dimx/2,*,*]
+      if keyword_set(mag) then begin
+         br_cube_t[*,*,i] = br_cube_sm[dimx/2,*,*]
+         bz_cube_t[*,*,i] = bz_cube_sm[dimx/2,*,*]
+      endif      
       print,string(13b)+' % finished: ',float(i)*100./(dimt-1),format='(a,f4.0,$)'
    endfor
 endif
@@ -131,6 +147,10 @@ if set eq 25 or set eq 26 then begin
       te_cube_t[*,*,i]=te_cube
       vr_cube_t[*,*,i]=vr_cube
       vz_cube_t[*,*,i]=vz_cube
+      if keyword_set(mag) then begin
+         br_cube_t[*,*,i] = br_cube
+         bz_cube_t[*,*,i] = bz_cube
+      endif
       print,string(13b)+' % finished: ',float(i)*100./(dimt-1),format='(a,f4.0,$)'
    endfor
 endif
