@@ -1,9 +1,9 @@
 
-pro datacubes_wt, rho_int=ro, rho_ext=re, valfv_int=va, valv_ext=vae, cs_int=co, cs_ext=ce, radius = aa, gridx=gridx, gridz=gridz, dimt=dimt, tarr=tarr, ka_rt=ka_rt, kafix=kafix, wk_rt=wk_rt, vr_t=vr_t, vz_t=vz_t, rtot_t=rtot_t, te_t=te_t, model=model, vr_cube, vz_cube, te_cube, rh_cube, smooth=smooth, save_cubes=save_cubes
+pro datacubes_wt, rho_int=ro, rho_ext=re, valfv_int=va, valv_ext=vae, cs_int=co, cs_ext=ce, radius = aa, gridx=gridx, gridz=gridz, dimt=dimt, tarr=tarr, ka_rt=ka_rt, kafix=kafix, wk_rt=wk_rt, vr_t=vr_t, vz_t=vz_t, rtot_t=rtot_t, te_t=te_t, model=model, vr_cube, vz_cube, te_cube, rh_cube, sngcub=sngcub, smooth=smooth, save_cubes=save_cubes
 
 if n_params(0) lt 1 then begin
    print,'Check output directories first'
-   print,'datacubes_wt,rho_int=ro, rho_ext=re, valfv_int=va, valv_ext=vae, cs_int=co, cs_ext=ce, radius=aa, gridx=gridx, gridz=gridz, dimt=dimt, tarr=tarr, ka_rt=ka_rt, kafix=kafix, wk_rt=wk_rt, vr_t=vr_t, vz_t=vz_t, rtot_t=rtot_t, te_t=te_t, model=model, vr_cube, vz_cube, te_cube, rh_cube [,smooth=smooth, save_cubes=save_cubes]'
+   print,'datacubes_wt,rho_int=ro, rho_ext=re, valfv_int=va, valv_ext=vae, cs_int=co, cs_ext=ce, radius=aa, gridx=gridx, gridz=gridz, dimt=dimt, tarr=tarr, ka_rt=ka_rt, kafix=kafix, wk_rt=wk_rt, vr_t=vr_t, vz_t=vz_t, rtot_t=rtot_t, te_t=te_t, model=model, vr_cube, vz_cube, te_cube, rh_cube [,sngcub=sngcub,smooth=smooth, save_cubes=save_cubes]'
    return
 endif
 
@@ -49,13 +49,14 @@ endif
 
 if keyword_set(smooth) then sm = 1 else sm = 0 
 if keyword_set(save_cubes) then sav = 1 else sav = 0
+if keyword_set(sngcub) eq 0 then sngcub = 'all'
 
-r0 = gridx[-1]/2.
 dimx = n_elements(gridx)
 dimz = n_elements(gridz)
+r0 = gridx[dimx-1]/2.
 
 ; OUTPUT DIRECTORY:
-cubedir='/users/cpa/pantolin/Modeling/cubes/set2/'
+cubedir='../cubes/set2/'
 
 if model eq 'base' then  kanm = 'ka2.24'
 if model eq 'long' then  kanm = 'ka1.25'
@@ -91,21 +92,22 @@ if model eq 'ka2.24_hgres2d' then begin
 endif else begin
    gridy = gridx
    dimy = dimx
-   vr_cube=fltarr(dimx,dimy,dimz)
-   vz_cube=fltarr(dimx,dimy,dimz)
-   te_cube=fltarr(dimx,dimy,dimz)
-   rh_cube=fltarr(dimx,dimy,dimz)
+   print,'doing '+sngcub+' cube'
+   if sngcub eq 'all' or sngcub eq 'vr' then vr_cube=fltarr(dimx,dimy,dimz)
+   if sngcub eq 'all' or sngcub eq 'vz' then vz_cube=fltarr(dimx,dimy,dimz)
+   if sngcub eq 'all' or sngcub eq 'te' then te_cube=fltarr(dimx,dimy,dimz)
+   if sngcub eq 'all' or sngcub eq 'rh' then rh_cube=fltarr(dimx,dimy,dimz)
    dist_cube=fltarr(dimx,dimy,dimz)
    distance = fltarr(dimx,dimy)
    print,'1st step check'
 ; (frequency, x, y, z, time)
    for i=0,dimx-1 do for j=0,dimy-1 do distance[i,j] = sqrt((r0-gridx[i])^2+(r0-gridy[j])^2)
-   for i=0,dimz do dist_cube[*,*,i] = distance
+   for i=0,dimz-1 do dist_cube[*,*,i] = distance
 
-   mxdist = sqrt((gridx[n_elements(gridx)-1]-r0)^2+(gridy[n_elements(gridy)-1]-r0)^2)
-
-   cyl = histogram(dist_cube,binsize=0.01,locations=loccyl,reverse_indices=Rl)
-   dis = histogram(dist_cube[*,*,0],binsize=0.01,locations=locdis)
+   mxdist = sqrt((gridx[dimx-1]-r0)^2+(gridy[dimy-1]-r0)^2)
+   if model eq 'ka2.24_hgres' then bsiz = 0.001 else bsiz = 0.01
+   cyl = histogram(dist_cube,binsize=bsiz,locations=loccyl,reverse_indices=Rl)
+   dis = histogram(dist_cube[*,*,0],binsize=bsiz,locations=locdis)
    ncyl = n_elements(cyl)
    print,'n_elements(cyl):',ncyl
    for j=0,dimt-1 do begin
@@ -113,47 +115,50 @@ endif else begin
          ndist = dis[l]
          if ndist gt 0 then begin
             lgrid = ([min(abs(locdis[l]-abs(gridx[0:dimx/2]-r0))),!c])[1]
-            col3dvr = fltarr(ndist*dimz)
-            col3dvz = fltarr(ndist*dimz)
-            col3dte = fltarr(ndist*dimz)
-            col3drh = fltarr(ndist*dimz)
+            if sngcub eq 'all' or sngcub eq 'vr' then col3dvr = fltarr(ndist*dimz)
+            if sngcub eq 'all' or sngcub eq 'vz' then col3dvz = fltarr(ndist*dimz)
+            if sngcub eq 'all' or sngcub eq 'te' then col3dte = fltarr(ndist*dimz)
+            if sngcub eq 'all' or sngcub eq 'rh' then col3drh = fltarr(ndist*dimz)
             if fixk eq 1 then begin
-               colvr = reform(vr_t[lgrid,*,j]) 
-               colvz = reform(vz_t[lgrid,*,j])
-               colte = reform(te_t[lgrid,*,j])
-               colrh = reform(rtot_t[lgrid,*,j])
+               if sngcub eq 'all' or sngcub eq 'vr' then colvr = reform(vr_t[lgrid,*,j]) 
+               if sngcub eq 'all' or sngcub eq 'vz' then colvz = reform(vz_t[lgrid,*,j])
+               if sngcub eq 'all' or sngcub eq 'te' then colte = reform(te_t[lgrid,*,j])
+               if sngcub eq 'all' or sngcub eq 'rh' then colrh = reform(rtot_t[lgrid,*,j])
             endif else begin
-               colvr = reform(vr_t[kafix,lgrid,*,j]) 
-               colvz = reform(vz_t[kafix,lgrid,*,j])
-               colte = reform(te_t[kafix,lgrid,*,j])
-               colrh = reform(rtot_t[kafix,lgrid,*,j])
+               if sngcub eq 'all' or sngcub eq 'vr' then colvr = reform(vr_t[kafix,lgrid,*,j]) 
+               if sngcub eq 'all' or sngcub eq 'vz' then colvz = reform(vz_t[kafix,lgrid,*,j])
+               if sngcub eq 'all' or sngcub eq 'te' then colte = reform(te_t[kafix,lgrid,*,j])
+               if sngcub eq 'all' or sngcub eq 'rh' then colrh = reform(rtot_t[kafix,lgrid,*,j])
             endelse
             for k=0,dimz-1 do begin
-               col3dvr[k*ndist:(k+1)*ndist-1]=replicate(colvr[k],ndist)
-               col3dvz[k*ndist:(k+1)*ndist-1]=replicate(colvz[k],ndist)
-               col3dte[k*ndist:(k+1)*ndist-1]=replicate(colte[k],ndist)
-               col3drh[k*ndist:(k+1)*ndist-1]=replicate(colrh[k],ndist)
+               if sngcub eq 'all' or sngcub eq 'vr' then col3dvr[k*ndist:(k+1)*ndist-1]=replicate(colvr[k],ndist)
+               if sngcub eq 'all' or sngcub eq 'vz' then col3dvz[k*ndist:(k+1)*ndist-1]=replicate(colvz[k],ndist)
+               if sngcub eq 'all' or sngcub eq 'te' then col3dte[k*ndist:(k+1)*ndist-1]=replicate(colte[k],ndist)
+               if sngcub eq 'all' or sngcub eq 'rh' then col3drh[k*ndist:(k+1)*ndist-1]=replicate(colrh[k],ndist)
             endfor
-            vr_cube[Rl[Rl[l]:Rl[l+1]-1]] = col3dvr
-            vz_cube[Rl[Rl[l]:Rl[l+1]-1]] = col3dvz
-            te_cube[Rl[Rl[l]:Rl[l+1]-1]] = col3dte
-            rh_cube[Rl[Rl[l]:Rl[l+1]-1]] = col3drh
+            if sngcub eq 'all' or sngcub eq 'vr' then vr_cube[Rl[Rl[l]:Rl[l+1]-1]] = col3dvr
+            if sngcub eq 'all' or sngcub eq 'vz' then vz_cube[Rl[Rl[l]:Rl[l+1]-1]] = col3dvz
+            if sngcub eq 'all' or sngcub eq 'te' then te_cube[Rl[Rl[l]:Rl[l+1]-1]] = col3dte
+            if sngcub eq 'all' or sngcub eq 'rh' then rh_cube[Rl[Rl[l]:Rl[l+1]-1]] = col3drh
          endif
       endfor
       if sm eq 1 then begin
-         vr_cube_sm = vr_cube & vz_cube_sm = vz_cube & rh_cube_sm = rh_cube & te_cube_sm = te_cube
+         if sngcub eq 'all' or sngcub eq 'vr' then vr_cube_sm = vr_cube 
+         if sngcub eq 'all' or sngcub eq 'vz' then vz_cube_sm = vz_cube 
+         if sngcub eq 'all' or sngcub eq 'te' then te_cube_sm = te_cube 
+         if sngcub eq 'all' or sngcub eq 'rh' then rh_cube_sm = rh_cube 
          for i=0,dimx-1 do begin
-            vr_cube_sm[i,*,*]=smooth(reform(vr_cube[i,*,*]),[4,4])
-            vz_cube_sm[i,*,*]=smooth(reform(vz_cube[i,*,*]),[4,4])
-            rh_cube_sm[i,*,*]=smooth(reform(rh_cube[i,*,*]),[4,4])
-            te_cube_sm[i,*,*]=smooth(reform(te_cube[i,*,*]),[4,4])
+            if sngcub eq 'all' or sngcub eq 'vr' then vr_cube_sm[i,*,*]=smooth(reform(vr_cube[i,*,*]),[4,4])
+            if sngcub eq 'all' or sngcub eq 'vz' then vz_cube_sm[i,*,*]=smooth(reform(vz_cube[i,*,*]),[4,4])
+            if sngcub eq 'all' or sngcub eq 'rh' then rh_cube_sm[i,*,*]=smooth(reform(rh_cube[i,*,*]),[4,4])
+            if sngcub eq 'all' or sngcub eq 'te' then te_cube_sm[i,*,*]=smooth(reform(te_cube[i,*,*]),[4,4])
          endfor
       endif
       if sav eq 1 and sm eq 0 then begin
-         save,vr_cube,vz_cube,te_cube,rh_cube,filename=cubedir+'cubes_'+kanm+'_'+string(j,format="(i3.3)")+'.sav'
+         save,vr_cube,vz_cube,te_cube,rh_cube,filename=cubedir+'cubes_'+sngcub+'_'+kanm+'_'+string(j,format="(i3.3)")+'.sav'
       endif
       if sav eq 1 and sm eq 1 then begin
-         save,vr_cube_sm,vz_cube_sm,te_cube_sm,rh_cube_sm,filename=cubedir+'cubes_'+kanm+'_'+string(j,format="(i3.3)")+'.sav'
+         save,vr_cube_sm,vz_cube_sm,te_cube_sm,rh_cube_sm,filename=cubedir+'cubes_'+sngcub+'_'+kanm+'_'+string(j,format="(i3.3)")+'.sav'
       endif
       print,string(13b)+' % finished: ',float(j)*100./(dimt-1),format='(a,f4.0,$)'
    endfor

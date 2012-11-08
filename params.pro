@@ -47,15 +47,15 @@ endif
 ; NOTE: 
 ; If 2D model (set = 25) then only quantities with x and z values are returned
 
-if set eq 2 then begin dir = '/volume1/scratch/set2/' & kanm = 'ka2.24' & endif
+;if set eq 2 then begin dir = '/volume1/scratch/set2/' & kanm = 'ka2.24' & endif
 ;if set eq 3 then begin dir = '/volume1/scratch/set3/' & kanm = 'ka1.27' & endif
 
-;if set eq 2 then begin dir = '/users/cpa/pantolin/Modeling/cubes/set2/' & kanm = 'ka2.24' & endif
-if set eq 24 then begin dir = '/users/cpa/pantolin/Modeling/cubes/set2/' & kanm = 'ka2.24_hgres' & endif
-if set eq 21 then begin dir = '/users/cpa/pantolin/Modeling/cubes/set2/' & kanm = 'ka2.24_highT' & endif
-if set eq 22 then begin dir = '/users/cpa/pantolin/Modeling/cubes/set2/' & kanm = 'ka2.24_sm' & endif
-if set eq 25 then begin dir = '/users/cpa/pantolin/Modeling/cubes/set2/' & kanm = 'ka2.24_hgres2d' & endif
-if set eq 3 then begin dir = '/users/cpa/pantolin/Modeling/cubes/set3/' & kanm = 'ka1.25' & endif
+if set eq 2 then begin dir = '../cubes/set2/' & kanm = 'ka2.24' & endif
+if set eq 24 then begin dir = '../cubes/set2/' & kanm = 'ka2.24_hgres' & endif
+if set eq 21 then begin dir = '../cubes/set2/' & kanm = 'ka2.24_highT' & endif
+if set eq 22 then begin dir = '../cubes/set2/' & kanm = 'ka2.24_sm' & endif
+if set eq 25 then begin dir = '../cubes/set2/' & kanm = 'ka2.24_hgres2d' & endif
+if set eq 3 then begin dir = '../cubes/set3/' & kanm = 'ka1.25' & endif
 ;snum = fix(strmid(slize,11,3))
    
 ;   restore,'cubes_'+string(it,format='(i3.3)')+'.sav'

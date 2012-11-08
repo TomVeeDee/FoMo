@@ -56,9 +56,10 @@ if set eq 3 or set eq 31 then begin
 endif
    
 ;dir =  '/Volumes/Karmeliet/Data/modeling/cubes/'
-restore,dir+'cubes_'+ka_n+'_'+string(0,format="(i3.3)")+'.sav'
+if set ne 24 then restore,dir+'cubes_'+ka_n+'_'+string(0,format="(i3.3)")+'.sav' else restore,dir+'slice_rh_'+ka_n+'_'+string(0,format="(i3.3)")+string(0,format='(i3.3)')+'x'+'.sav'
 if set eq 22 then siz = size(rh_cube_sm) 
-if set eq 2 or set eq 23 or set eq 21 or set eq 24 or set eq 3 or set eq 25 or set eq 26 then siz = size(rh_cube)
+if set eq 2 or set eq 23 or set eq 21 or set eq 3 or set eq 25 or set eq 26 then siz = size(rh_cube)
+if set eq 24 then siz = size(rho)
 if set eq 25 or set eq 26 then ldimz = 1 else ldimz = 2
 restore,dir+'params_'+ka_n+'.sav'
 
@@ -75,8 +76,10 @@ if set ne 25 and set ne 26 then begin
    rh_cube_t = fltarr(siz[2],siz[3],dimt)
    rh_cube_t_ext = fltarr(siz[2],siz[3]*ndz,dimt)
    te_cube_t = fltarr(siz[2],siz[3],dimt)
-   vr_cube_t = fltarr(siz[2],siz[3],dimt)
-   vz_cube_t = fltarr(siz[2],siz[3],dimt)
+   if set ne 24 then begin
+      vr_cube_t = fltarr(siz[2],siz[3],dimt)
+      vz_cube_t = fltarr(siz[2],siz[3],dimt)
+   endif
    gridz_ext = fltarr(siz[3]*ndz)
 endif else begin
    rh_cube_t = fltarr(siz[1],siz[2],dimt)
@@ -87,13 +90,27 @@ endif else begin
    gridz_ext = fltarr(siz[2]*ndz)
 endelse
 
-if set eq 2 or set eq 23 or set eq 21 or set eq 24 or set eq 3 then begin
+if set eq 2 or set eq 23 or set eq 21 or set eq 3 then begin
    for i=0,dimt-1 do begin
       restore,dir+'cubes_'+ka_n+'_'+string(i,format="(i3.3)")+'.sav'
       rh_cube_t[*,*,i]=rh_cube[dimx/2,*,*]
       te_cube_t[*,*,i]=te_cube[dimx/2,*,*]
       vr_cube_t[*,*,i]=vr_cube[dimx/2,*,*]
       vz_cube_t[*,*,i]=vz_cube[dimx/2,*,*]
+      print,string(13b)+' % finished: ',float(i)*100./(dimt-1),format='(a,f4.0,$)'
+   endfor
+endif
+if set eq 24 then begin
+   j=dimx/2
+   for i=0,dimt-1 do begin
+      restore,dir+'slice_rh_'+ka_n+'_'+string(i,format="(i3.3)")+string(j,format='(i3.3)')+'x'+'.sav'
+      rh_cube_t[*,*,i]=rho[0,*,*]
+      restore,dir+'slice_te_'+ka_n+'_'+string(i,format="(i3.3)")+string(j,format='(i3.3)')+'x'+'.sav'
+      te_cube_t[*,*,i]=te[0,*,*]
+;      restore,dir+'slice_vr_'+ka_n+'_'+string(i,format="(i3.3)")+string(j,format='(i3.3)')+'x'+'.sav'
+;      vr_cube_t[*,*,i]=vr[0,*,*]
+;      restore,dir+'slice_vz_'+ka_n+'_'+string(i,format="(i3.3)")+string(j,format='(i3.3)')+'x'+'.sav'
+;      vz_cube_t[*,*,i]=vz[0,*,*]
       print,string(13b)+' % finished: ',float(i)*100./(dimt-1),format='(a,f4.0,$)'
    endfor
 endif

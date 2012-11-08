@@ -29,12 +29,12 @@ endif
 if keyword_set(no_init) then initial = 0 else initial = 1
 if keyword_set(high_t) then val = 1 else val = 0
 
-RESTORE,'/users/cpa/tomvd/data/forwardmodelling/sausage_marcin2/imagesave0000integratey.sav'
-;RESTORE,'./imagesave0000integratey.sav' 
-RESTORE,'/users/cpa/tomvd/data/forwardmodelling/sausage_marcin2/forpatrick.sav'
-;RESTORE,'./forpatrick.sav'
+;RESTORE,'/users/cpa/tomvd/data/forwardmodelling/sausage_marcin2/imagesave0000integratey.sav'
+RESTORE,'../imagesave0000integratey.sav' 
+;RESTORE,'/users/cpa/tomvd/data/forwardmodelling/sausage_marcin2/forpatrick.sav'
+RESTORE,'../forpatrick.sav'
 ;RESTORE,'/users/cpa/pantolin/Modeling/Bfield.sav'
-RESTORE,'/users/cpa/pantolin/Modeling/Bfield_s.sav'
+RESTORE,'../Bfield_s.sav'
 
 rho = data.rho
 rho = reform(rho[0:201:20,*,0:100:2,0])

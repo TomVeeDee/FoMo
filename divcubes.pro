@@ -1,10 +1,10 @@
 
 
-pro divcubes,dimt=dimt,dimx=dimx,dimy=dimy,model=model,smooth=smooth
+pro divcubes,dimt=dimt,dimx=dimx,dimy=dimy,model=model,sngcub=sngcub,smooth=smooth
 
 if n_params(0) lt 1 then begin
    print,'Check input and output directories first'
-   print,'divcubes,dimt=dimt,dimx=dimx,dimy=dimy,model=model,[smooth=smooth]'
+   print,'divcubes,dimt=dimt,dimx=dimx,dimy=dimy,model=model[,smooth=smooth]'
    return
 endif
 
@@ -33,29 +33,29 @@ endif
   if model eq 'highT' then kanm = 'ka2.24highT'
 
 ; INPUT DIRECTORY:
-  cubedir='/users/cpa/pantolin/Modeling/cubes/set2/'
+  cubedir='../cubes/set2/'
 ; OUTPUT DIRECTORY:
-  savedir='/users/cpa/pantolin/Modeling/cubes/set2/'
+  savedir='../cubes/set2/'
 ;  dir = '/volume1/scratch/set3/'
 
   for i=0,dimt-1 do begin
      restore,cubedir+'cubes_'+kanm+'_'+string(i,format='(i3.3)')+'.sav'
      if sm eq 0 then begin
         for j=0,dimx/2 do begin
-           te = te_cube[j,*,*]
-           rho = rh_cube[j,*,*]
-           vr = vr_cube[j,*,*]
-           vz = vz_cube[j,*,*]
-           save,te,rho,vr,vz,filename=savedir+'slice_'+kanm+'_'+string(i,format='(i3.3)')+'t_'+string(j,format='(i3.3)')+'x'+'.sav'
+           if sngcub eq 'all' or sngcub eq 'te' then te = te_cube[j,*,*]
+           if sngcub eq 'all' or sngcub eq 'rh' then rho = rh_cube[j,*,*]
+           if sngcub eq 'all' or sngcub eq 'vr' then vr = vr_cube[j,*,*]
+           if sngcub eq 'all' or sngcub eq 'vz' then vz = vz_cube[j,*,*]
+           save,te,rho,vr,vz,filename=savedir+'slice_'+sngcub+'_'+kanm+'_'+string(i,format='(i3.3)')+'t_'+string(j,format='(i3.3)')+'x'+'.sav'
         endfor
      endif
      if sm eq 1 then begin
         for j=0,dimx/2 do begin
-           te = te_cube_sm[j,*,*]
-           rho = rh_cube_sm[j,*,*]
-           vr = vr_cube_sm[j,*,*]
-           vz = vz_cube_sm[j,*,*]
-           save,te,rho,vr,vz,filename=savedir+'slice_'+kanm+'_'+string(i,format='(i3.3)')+'t_'+string(j,format='(i3.3)')+'x'+'.sav'
+           if sngcub eq 'all' or sngcub eq 'te' then te = te_cube_sm[j,*,*]
+           if sngcub eq 'all' or sngcub eq 'rh' then rho = rh_cube_sm[j,*,*]
+           if sngcub eq 'all' or sngcub eq 'vr' then vr = vr_cube_sm[j,*,*]
+           if sngcub eq 'all' or sngcub eq 'vz' then vz = vz_cube_sm[j,*,*]
+           save,te,rho,vr,vz,filename=savedir+'slice_'+sngcub+'_'+kanm+'_'+string(i,format='(i3.3)')+'t_'+string(j,format='(i3.3)')+'x'+'.sav'
         endfor
      endif
      print,string(13b)+' % finished: ',float(i)*100./(dimt-1),format='(a,f4.0,$)'

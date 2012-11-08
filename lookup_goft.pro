@@ -16,7 +16,7 @@ endif
 ; goft_mat: G(T,n) function evaluated at (n_e, t)
 
 ; INPUT DIRECTORY:
-dirgot = '/users/cpa/pantolin/Modeling/'
+dirgot = '../'
 
   n_e_min = 1.e8
   n_e_max = 1.e10

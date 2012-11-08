@@ -147,7 +147,7 @@ pro prl_slices,set=set, mua_d=mua_d, ion=ion, imaging=imaging
            if imaging eq 0 then begin
               integrateemission,emission=emission_goft_ext,n_gridx=n_gridz_ext,n_gridy=n_gridy_ext,ngrid=ngrid_ext,wave=wave,w0=w0,direction=direction,losvel=losvel_ext,imaging=imaging,image
            endif else begin
-              integrateemission,emission=intens,n_gridx=n_gridz_ext,n_gridy=n_gridy_ext,ngrid=ngrid_ext,wave=wave,w0=w0,direction=direction,losvel=losvel_ext,imaging=imaging,image
+              integrateemission,emission=intens_ext,n_gridx=n_gridz_ext,n_gridy=n_gridy_ext,ngrid=ngrid_ext,wave=wave,w0=w0,direction=direction,losvel=losvel_ext,imaging=imaging,image
            endelse
            if mua eq 0.  then image00d_ext=image
            if mua eq 30. then image30d_ext=image
@@ -159,7 +159,7 @@ pro prl_slices,set=set, mua_d=mua_d, ion=ion, imaging=imaging
         if imaging eq 0 then begin
            save,wave,gridx,gridy,gridz_ext,emission_goft,image00d_ext,image30d_ext,image45d_ext,image60d_ext,filename=dir+'rslt_'+savn+'.sav' 
         endif else begin
-           save,wave,gridx,gridy,gridz_ext,intens,image00d_ext,image30d_ext,image45d_ext,image60d_ext,filename=dir+'rslt_'+savn+'.sav'
+           save,wave,gridx,gridy,gridz_ext,image00d_ext,image30d_ext,image45d_ext,image60d_ext,filename=dir+'rslt_'+savn+'.sav'
      endif
   endfor
 

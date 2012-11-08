@@ -27,17 +27,22 @@ velmod_wt, waka_root=waka_root, ka_root=ka_root, gridx=gridx, dimt=dimt, reg3=re
 ; if smooth profile case then run smprof_cubes.pro:
 ;smprof_cubes, dimz, dimt, gridx, rtot_t, te_t, rtot_sm_t, te_sm_t
 ; specify first the wavelength in datacubes_wt.pro (add /smooth keyword for smooth profile)
-stop
+
+; define whether to work with all variables (='all') or with single
+; variables (='vr', 'vz', 'rh', or 'te')
+sngcub = 'rh'
+
 ; 2d or 3d with no smoothing:
-datacubes_wt, rho_int=ro, rho_ext=re, valfv_int=va, valv_ext=vae, cs_int=co, cs_ext=ce, radius = aa, gridx=gridx, gridz=gridz, dimt=dimt, tarr=tarr, ka_rt=ka_rt, kafix=kafix, wk_rt=wk_rt, vr_t=vr_t, vz_t=vz_t, rtot_t=rtot_t, te_t=te_t, model=model, vr_cube, vz_cube, te_cube, rh_cube, /save_cubes
+datacubes_wt, rho_int=ro, rho_ext=re, valfv_int=va, valv_ext=vae, cs_int=co, cs_ext=ce, radius = aa, gridx=gridx, gridz=gridz, dimt=dimt, tarr=tarr, ka_rt=ka_rt, kafix=kafix, wk_rt=wk_rt, vr_t=vr_t, vz_t=vz_t, rtot_t=rtot_t, te_t=te_t, model=model, vr_cube, vz_cube, te_cube, rh_cube, sngcub=sngcub, /save_cubes
 
 ; with smoothing:
 ;datacubes_wt, rho_int=ro, rho_ext=re, valfv_int=va, valv_ext=vae,
 ;cs_int=co, cs_ext=ce, radius = aa, gridx=gridx, gridz=gridz, dimt=dimt, tarr=tarr, ka_rt=ka_rt, kafix=kafix, wk_rt=wk_rt, vr_t=vr_t, vz_t=vz_t, rtot_t=rtot_sm_t, te_t=te_sm_t, model=model,vr_cube, vz_cube, te_cube, rh_cube
 
 ; for 3d datasets, divide in 2D (radial) slices:
-divcubes,dimt=dimt,dimx=dimx,dimy=dimy,model=model;,[/smooth]
+divcubes,dimt=dimt,dimx=dimx,dimy=dimy,model=model,sngcub=sngcub;,[/smooth]
 
+stop
 ;----------------
 ; GENERATE INTENSITY CUBES FROM DATA
 
@@ -49,7 +54,7 @@ divcubes,dimt=dimt,dimx=dimx,dimy=dimy,model=model;,[/smooth]
 ;       set = 24 -> hgres model (base model with high spatial resolution)
 ;       set = 25 -> hgres2d model (2D base model with high spatial resolution)
 ;       set = 3 -> long lambda model (longer wavelength, ka = 1.25)
-set=25
+set=2
 
 ; Proceed with intensity calculation:
 
