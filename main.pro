@@ -7,7 +7,7 @@ rotmat, dimx, dimy, dimz, ro, re, va, vae, co, ce, waka_ini
 tubemodes, rho_int=ro, rho_ext=re, valfv_int=va, valv_ext=vae, cs_int=co, cs_ext=ce, waka_ini=waka_ini, waka_root, ka_root
 
 ; set dimensions of your model
-dimx=204*10 & dimy=204*10
+dimx=204 & dimy=204
 
 vel_modes, waka_root=waka_root, ka_root=ka_root, dimx=dimx, dimy=dimy, reg0, reg1, reg2, reg3, reg4, gridx, vr_md, vt_md, vz_md, pr_md, rr_md
 dimt=30
@@ -30,7 +30,7 @@ velmod_wt, waka_root=waka_root, ka_root=ka_root, gridx=gridx, dimt=dimt, reg3=re
 
 ; define whether to work with all variables (='all') or with single
 ; variables (='vr', 'vz', 'rh', or 'te')
-sngcub = 'rh'
+sngcub = 'all'
 
 ; 2d or 3d with no smoothing:
 datacubes_wt, rho_int=ro, rho_ext=re, valfv_int=va, valv_ext=vae, cs_int=co, cs_ext=ce, radius = aa, gridx=gridx, gridz=gridz, dimt=dimt, tarr=tarr, ka_rt=ka_rt, kafix=kafix, wk_rt=wk_rt, vr_t=vr_t, vz_t=vz_t, rtot_t=rtot_t, te_t=te_t, model=model, vr_cube, vz_cube, te_cube, rh_cube, sngcub=sngcub, /save_cubes
@@ -42,7 +42,9 @@ datacubes_wt, rho_int=ro, rho_ext=re, valfv_int=va, valv_ext=vae, cs_int=co, cs_
 ; for 3d datasets, divide in 2D (radial) slices:
 divcubes,dimt=dimt,dimx=dimx,dimy=dimy,model=model,sngcub=sngcub;,[/smooth]
 
+print,'for continuing type .c'
 stop
+
 ;----------------
 ; GENERATE INTENSITY CUBES FROM DATA
 
@@ -65,7 +67,7 @@ mua_d = [0.,30.,45.,60.]
 ; define ion:
 ion = 'fe_9'
 ; choose whether imaging (=1) or spectroscopic (=0) data:
-imaging = 1
+imaging = 0
 ; wrapper for intensity calculation:
 prl_slices, set=set, mua_d=mua_d, ion=ion, imaging=imaging
 
