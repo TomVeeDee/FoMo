@@ -1,10 +1,10 @@
 
-pro readcubes,set=set,rh_cube_t,te_cube_t,vr_cube_t,vz_cube_t,br_cube_t,bz_cube_t,aa,gridx,gridy,gridz,gridz_ext,co,ce,ro,re,va,vae,dimt,tarr,r0,ka_rt,wk_rt,rh_cube_t_ext,wave,dim00d,dim30d,dim45d,dim60d,mag=mag
+pro readcubes,set=set,rh_cube_t,te_cube_t,vr_cube_t,vz_cube_t,br_cube_t,bz_cube_t,aa,gridx,gridy,gridz,gridz_ext,co,ce,ro,re,va,vae,bo,be,dimt,tarr,r0,ka_rt,wk_rt,rh_cube_t_ext,wave,dim00d,dim30d,dim45d,dim60d,mag=mag
 
 ; Reads cubes produced by datacubes_wt.pro
 
 if keyword_set(set) eq 0 then begin
- print,'readcubes,set=set,rh_cube_t,te_cube_t,vr_cube_t,vz_cube_t,br_cube_t,bz_cube_t,aa,gridx,gridy,gridz,gridz_ext,co,ce,ro,re,va,vae,dimt,tarr,r0,ka_rt,wk_rt,rh_cube_t_ext,wave,dim00d,dim30d,dim45d,dim60d [,mag=mag]'
+ print,'readcubes,set=set,rh_cube_t,te_cube_t,vr_cube_t,vz_cube_t,br_cube_t,bz_cube_t,aa,gridx,gridy,gridz,gridz_ext,co,ce,ro,re,va,vae,bo,be,dimt,tarr,r0,ka_rt,wk_rt,rh_cube_t_ext,wave,dim00d,dim30d,dim45d,dim60d [,mag=mag]'
    return
 endif
 
