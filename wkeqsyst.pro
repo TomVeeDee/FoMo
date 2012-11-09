@@ -3,7 +3,7 @@ FUNCTION wkeqsyst,X
 ; Dispersion relation in Edwin & Roberts 1983
 ; returns L(w,k) where L is dispersion relation = 0
 
-  common vars1, A1, A2, A3, A4, B1, B2, B3, B4, n, ka
+  common vars1, A1, A2, A3, A4, A5, B1, B2, B3, B4, B5, n, ka
   dimx = n_elements(X)
   bslij = dblarr(dimx)
   bslky = dblarr(dimx)

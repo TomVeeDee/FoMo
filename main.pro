@@ -17,7 +17,7 @@ dimt=30
 velmod_wt, waka_root=waka_root, ka_root=ka_root, gridx=gridx, dimt=dimt, reg3=reg3, vr_md=vr_md, aa, wk_rt, ka_rt, kafix, dimz, tarr, gridz, vr_t, vz_t, rr_t, rtot_t, ptot_t, dispr, te_t, br_t, bz_t ;mag=mag
 
 ; set model = string with name of treated model:
-;      model = 'base'corresponds to ka = 2.24, 
+;      model = 'base' corresponds to ka = 2.24, 
 ;      model = 'long' corresponds to ka = 1.25
 ;      model = 'high_res' corresponds to ka = 2.24, high spatial resolution
 ;      model = 'high_res2d' corresponds to ka = 2.24, high 2D spatial resolution
@@ -43,7 +43,7 @@ datacubes_wt, rho_int=ro, rho_ext=re, valfv_int=va, valv_ext=vae, cs_int=co, cs_
 ; for 3d datasets, divide in 2D (radial) slices:
 divcubes,dimt=dimt,dimx=dimx,dimy=dimy,model=model,sngcub=sngcub;,/mag,/smooth
 
-print,'for continuing type .c'
+print,'for continuing to intensity calculation type .c'
 stop
 
 ;----------------
@@ -51,22 +51,30 @@ stop
 
 ; set the model:
 ; set = case considered: 
-;       set = 2 -> base model ka = 2.24
+;       set = 2 -> base model - 171: ka = 2.24 with 171 intensity
+;       set = 23 -> base model - 193: ka = 2.24 with 193 intensity
 ;       set = 21 -> high T model (base model with high external temp.)
 ;       set = 22 -> smooth model (base model with smooth density prof.)
 ;       set = 24 -> hgres model (base model with high spatial resolution)
-;       set = 25 -> hgres2d model (2D base model with high spatial resolution)
+;       set = 25 -> hgres2d model-171 (2D base model with high spatial
+;       set = 26 -> hgres2d model-193 (2D base model with high spatial
+;       resolution and 193 intensity)
 ;       set = 3 -> long lambda model (longer wavelength, ka = 1.25)
-set=2
+set = 2
 
 ; Proceed with intensity calculation:
 
-;!!!! .r ch_synthetic  -> change parenthesis for brackets in line 1021
+;!!!! .r ch_synthetic  -> changed parenthesis for brackets in line 1021
 
 ; define line-of-sight angles:
 mua_d = [0.,30.,45.,60.]
 ; define ion:
-ion = 'fe_9'
+if set eq 2 then ion = 'fe_9'
+if set eq 23 then ion = 'fe_12'
+if set eq 3 then ion = 'fe_9'
+if set eq 25 then ion ='fe_9'
+if set eq 26 then ion = 'fe_12'
+
 ; choose whether imaging (=1) or spectroscopic (=0) data:
 imaging = 0
 ; wrapper for intensity calculation:
