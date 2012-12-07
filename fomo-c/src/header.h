@@ -14,11 +14,11 @@ typedef tcoord * tgrid;
 typedef vector<double> tphysvar;
 typedef tphysvar * tvars;
 
-const int nvars=5;
-
 enum EqType 
 {
-	builtin,
+	builtineq,
+	gofttable,
+	emisscube,
 	empty,
 };
 
@@ -33,7 +33,7 @@ class cube
 		tgrid grid;
 		tvars vars;
 	public:
-		cube(const int invars, const int ingrid);
+		cube(const int invars, const int ingrid, const int = 3);
 		~cube();
 		int readngrid();
 		int readnvars();
@@ -41,8 +41,13 @@ class cube
 		EqType readtype();
 		void setgrid(tgrid ingrid);
 		tgrid readgrid();
+		void setvar(const int, const tphysvar);
+		tphysvar readvar(const int);
 		void fillcube();
 };
+
+//external functions in readframe.cpp
+extern tphysvar log10(tphysvar);
 
 // external functions in getarg.cpp
 extern void getarg(int, char* array[]);
@@ -95,5 +100,9 @@ extern double length, width, magfield, rhoint, contrast, thickness, alpha;
 extern double l, b;
 
 // external functions in equilibrium.cpp
+extern const int eqx, eqy, eqz;
 extern cube equilibrium();
 extern void builtingrid(const int, const int, const int, tgrid);
+
+// external functions from emissioncube.cpp
+extern cube emissionfromdatacube(cube);

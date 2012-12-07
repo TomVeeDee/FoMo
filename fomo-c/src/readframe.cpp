@@ -3,9 +3,20 @@
 #include <cstdlib>
 #include <cstdio>
 
-cube::cube(const int invars, const int ingrid)
+tphysvar log10(tphysvar in)
 {
-	dim=3;
+	tphysvar out;
+	vector<double>::iterator init=in.begin();
+	for (; init != in.end(); ++init)
+	{
+		out.push_back(log10(*init));
+	}
+	return out;
+}
+
+cube::cube(const int invars, const int ingrid, const int indim )
+{
+	dim=indim;
 	qtype=empty;
 	nvars=invars;
 	ng=ingrid;
@@ -51,16 +62,31 @@ tgrid cube::readgrid()
 	return grid;
 };
 
+void cube::setvar(const int nvar, const tphysvar var)
+{
+	vars[nvar]=var;
+}
+
+tphysvar cube::readvar(const int nvar)
+{
+	tphysvar var=vars[nvar];
+	return var;
+}
+
 void cube::fillcube()
 {
 	switch (qtype) {
-		case builtin:
-			builtingrid(x_pixel, y_pixel, z_pixel, grid);
+		case builtineq:
+			builtingrid(eqx, eqy, eqz, grid);
 			for (int i=0; i<ng; i++)
 			{
-				double x=grid[0][i];
-				double y=grid[1][i];
-				double z=grid[2][i];
+				double xacc=grid[0][i];
+				double yacc=grid[1][i];
+				double zacc=grid[2][i];
+				const double psi = 0;
+		                double x = (cos(psi)*cos(l)-sin(psi)*sin(l)*sin(b))*xacc+(-sin(psi)*cos(b))*yacc+(-cos(psi)*sin(l)-sin(psi)*cos(l)*sin(b))*zacc;
+		                double y = (sin(psi)*cos(l)+cos(psi)*sin(l)*sin(b))*xacc+(cos(psi)*cos(b))*yacc+(-sin(psi)*sin(l)+cos(psi)*cos(l)*sin(b))*zacc;
+		                double z = (sin(l)*cos(b))*xacc+(-sin(b))*yacc+(cos(l)*cos(b))*zacc;
 				double R = length*1000./M_PI;
 		                double r = sqrt(pow(sqrt(pow(x,2)+pow(z,2))-R,2)+pow(y,2));
 //		                r/=width*1000./0.02; // normalize r to 0 -> 1
@@ -81,7 +107,7 @@ void cube::fillcube()
 			}
 			break;
 		case empty:
-			cout << "Error: first set the type of the equilibrium with datacube.settype(char*)\n";
+			cout << "Error: first set the type of the equilibrium with datacube.settype(EqType)\n";
 			exit(EXIT_FAILURE);
 			break;
 		default:

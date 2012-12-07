@@ -2,24 +2,9 @@
 #include <cmath>
 #include <cstdlib>
 
-/*void functoint(int npointz, int np, double func[][4])
-{
-	double filter[filterlength][2], filterval;
-	const int f = 3; // 171 filter
-	readfilters(f,filter);
-	for (int i=0; i<np*npointz; i++)
-	{
-		int l=0;
-		while ((filter[l][0]<func[i][3])&&(l<filterlength-1)) l++;
-		if (l==0) filterval = 0.;
-		else if (l==filterlength-1) filterval = 0;
-		else filterval = filter[l][1]+(filter[l][1]-filter[l-1][1])/(filter[l][0]-filter[l-1][0])*(func[i][3]-filter[l][0]);
-		func[i][2]=pow(func[i][2],2)*filterval;
-	}
-}*/
 
-const int y_pixel = 100;
-const int x_pixel = 101;
+const int y_pixel = 200;
+const int x_pixel = 201;
 //pixelsize in kilometers, corresponds to 0.5 arcsecond
 // in contradiction with Schrijver et al. (99)? They claim a spatial resolution of 1,25 arcseconds, which corresponds to 900km.
 const double size_pixel = 727.22;
@@ -158,17 +143,11 @@ void mpi_getcoords(int & x1, int & x2, int & y1, int & y2)
 #endif
 }
 
-double filter(const double r, const double phi, const double z)
-{
-	return 1.;
-}
-
 void mpi_calculatemypart(double* results, const int x1, const int x2, const int y1, const int y2, const double t, cube datacube)
 {
 //
 // results is an array of at least dimension (x2-x1+1)*(y2-y1+1) and must be initialized to zero
 // 
-//	functoint(npointz,np,func);
 // determine contributions per pixel
 	int commrank;
 #ifdef HAVEMPI
@@ -178,7 +157,8 @@ void mpi_calculatemypart(double* results, const int x1, const int x2, const int 
 #endif
 	if (commrank==0) cout << "building frame: ";
 	double R = length*1000./M_PI;
-	int np = datacube.readngrid();
+	cube goftcube=emissionfromdatacube(datacube);
+	tgrid grid = datacube.readgrid();
 	for (int i=y1; i<y2+1; i++)
 		for (int j=x1; j<x2+1; j++)
 			for (int k=0; k<z_pixel; k++) // scanning through ccd
@@ -206,7 +186,7 @@ void mpi_calculatemypart(double* results, const int x1, const int x2, const int 
 		if (z_or<0) z_or++;  // atan returns a value between -pi/2 and pi/2
 		if (z>=0.)
 		{
-			results[(i-y1)*(x2-x1+1)+j-x1]+=filter(r,phi,z_or)*pow(density(r,phi,z_or),2);
+			results[(i-y1)*(x2-x1+1)+j-x1]+=pow(density(r,phi,z_or),2);
 		}
 		// print progress
 		if ((commrank==0)&&(j==x1)&&(k==0)) 

@@ -1,17 +1,22 @@
 #include "header.h"
 #include <cmath>
 
-void builtingrid(const int x_pixel, const int y_pixel, const int z_pixel, tgrid grid)
+const int eqx=150;
+const int eqy=170;
+const int eqz=190;
+
+void builtingrid(const int x, const int y, const int z, tgrid grid)
 {
-	int ng=x_pixel*y_pixel*z_pixel;
-	for (int i=0; i<x_pixel; i++)
-		for (int j=0; j<y_pixel; j++)
-			for (int k=0; k<z_pixel; k++)
+// x, y, z are the number of pixels in the respective direction (usually you'd want to use eqx, eqy, eqz)
+	double mmperpixel=.72;
+	for (int i=0; i<x; i++)
+		for (int j=0; j<y; j++)
+			for (int k=0; k<z; k++)
 			{
-				int index=i*(y_pixel*z_pixel)+j*z_pixel+k;
-				grid[0][index]=i;
-				grid[1][index]=j;
-				grid[2][index]=k;
+				int index=i*(y*z)+j*z+k;
+				grid[0][index]=(i-x/2)*mmperpixel*1000.;
+				grid[1][index]=(j-y/2)*mmperpixel*1000.;
+				grid[2][index]=(k-z/2)*mmperpixel*1000.;
 			}
 };
 

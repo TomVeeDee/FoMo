@@ -6,6 +6,7 @@
 #include <cstdlib>
 #include <cmath>
 
+
 int main(int argc, char* argv[])
 {
 // Initialize global paramters, get arguments and set physical parameters
@@ -54,9 +55,10 @@ int main(int argc, char* argv[])
 	ofstream s(imagefile);
 	for (int t=0.; t<nframes; t++)
 	{
-		int ng = x_pixel*y_pixel*z_pixel;
+		int ng = eqx*eqy*eqz;
+		int nvars = 5; // \rho, T, vx, vy, vz
 		cube datacube(nvars,ng);
-		EqType qtype=builtin;
+		EqType qtype=builtineq;
 		datacube.settype(qtype);
 		datacube.fillcube();
 		if (commsize>1)
