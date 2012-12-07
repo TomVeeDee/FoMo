@@ -21,11 +21,10 @@ void user_warning_fn(png_structp, png_const_charp warning_msg)
 }
 #endif
 
-int writepng(double * const * const ccd, const double t)
+int writepng(double * const * const ccd, const int t)
 {
 #ifdef HAVEPNG
-	double period = 2*M_PI/frequency.imag();
-	int seqnum = (int)floor(t*nframes/period+0.5);
+	int seqnum = t;
 	stringstream ss;
 	ss << "outputfile.t" << seqnum << ".png";
 	string graphic_out=ss.str();

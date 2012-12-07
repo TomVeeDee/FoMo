@@ -1,6 +1,7 @@
 #include "../config.h"
 #include <iostream>
 #include <complex>
+#include <vector>
 
 #ifdef HAVEMPI
 #include <mpi.h>
@@ -8,43 +9,64 @@
 
 using namespace std;
 
-// fortran-subroutines in eigenfunction.f90
-extern "C" {
- 	void readng_(int*);
-	void eigvfk_(const int*, const int*, const int*, double func[][4]);
-}
+typedef vector<double> tcoord;
+typedef tcoord * tgrid;
+typedef vector<double> tphysvar;
+typedef tphysvar * tvars;
+
+const int nvars=5;
+
+enum EqType 
+{
+	builtin,
+	empty,
+};
+
+// cube class
+class cube 
+{
+	protected:
+                EqType qtype;
+                int dim;
+		int ng;
+		int nvars;
+		tgrid grid;
+		tvars vars;
+	public:
+		cube(const int invars, const int ingrid);
+		~cube();
+		int readngrid();
+		int readnvars();
+		void settype(EqType intype);
+		EqType readtype();
+		void setgrid(tgrid ingrid);
+		tgrid readgrid();
+		void fillcube();
+};
 
 // external functions in getarg.cpp
 extern void getarg(int, char* array[]);
 
 // external functions in io.cpp
+extern int nframes;
 extern void getfile();
 extern void writefile();
 extern void writeparameters(ostream&,char);
 extern const int filterlength;
 extern void readfilters(const int, double filter[][2]);
 
-//external functions in calculatepollux.cpp
-extern void calculatepollux();
-extern void readfrequency();
-
-//external functions in PARALLEL.f90
-extern "C" {
-	void calcpollux_(const double*, const double*, const double*, const double*, const double*, const double*, double*, double*);
-}
-
 //external functions in equilibrium.cpp
 extern double density(const double, const double, const double);
 extern double temperature(const double, const double, const double);
 
 //external functions in writepng.cpp
-extern int writepng(double * const * const image, const double);
+extern int writepng(double * const * const image, const int);
 
 //external functions in writemovie.cpp
-extern void writemovie(char*, const double, const double);
+extern void writemovie(char*, const double, const int);
 
 //external functions in writearray.cpp
-extern void writearray(double * const * const, const double);
+extern void writearray(double * const * const, const int);
 
 //external functions in fillccd.cpp
 extern const int x_pixel;
@@ -57,23 +79,10 @@ extern double findmax(double * const * const, int *, int *);
 extern double findmin(double * const * const, int *, int *);
 extern void fillccd(double * const * const image, const double*, const int, const int, const int, const int);
 extern void mpi_getcoords(int &, int &, int &, int &);
-extern void mpi_calculatemypart(double*, const int, const int, const int, const int, const double, double **);
-
-//external functions in perturbation.cpp
-extern const int ncols; // ncols determines the number of columns in the perturbed loop.
-// for now the columns contain:
-// 1: x coordinate
-// 2: y coordinate --> in the cylindrical coordinate system aligned with the coronal loop
-// 3: z coordinate
-// 4: perturbed density
-// 5: perturbed temperature
-extern const int npointz, npointphi;
-extern int ngridpoints();
-extern void physicalquants(double **, const double);
-extern double perturbeddensity(const double, const double, const double, const double, double **, const int);
+extern void mpi_calculatemypart(double*, const int, const int, const int, const int, const double, cube);
 
 //external functions in writetime.cpp
-extern void writetime(double * const * const, const double);
+extern void writetime(double * const * const, const int);
 
 //external functions in progressbar.cpp
 extern void progressbar(const int, const int, const int);
@@ -82,8 +91,9 @@ extern void progressbar(const int, const int, const int);
 // reuse controls whether to compute a new problem or just to reuse the old outputfiles
 extern int reuse, png, mpeg, array;
 // physical parameters of the problem
-extern double length, width, beta, magfield, rhoint, contrast, thickness, alpha, ampl, phase;
-extern double psi, l, b;
-extern double nperiods, nframes;
-extern complex<double> frequency;
+extern double length, width, magfield, rhoint, contrast, thickness, alpha;
+extern double l, b;
 
+// external functions in equilibrium.cpp
+extern cube equilibrium();
+extern void builtingrid(const int, const int, const int, tgrid);

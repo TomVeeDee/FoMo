@@ -27,9 +27,9 @@ AC_ARG_WITH([png],
   [png=$withval],
   [png=yes])
 AS_CASE(["$png"],
-  [yes], [PKG_CHECK_MODULES([libpng], [libpng12], [HAVE_LIBPNG=1])],
+  [yes], [PKG_CHECK_MODULES([libpng], [libpng], [HAVE_LIBPNG=1])],
   [no], [HAVE_LIBPNG=0],
-  [PKG_CHECK_MODULES([libpng], [libpng12], [HAVE_LIBPNG=1], [HAVE_LIBPNG=0])])
+  [PKG_CHECK_MODULES([libpng], [libpng], [HAVE_LIBPNG=1], [HAVE_LIBPNG=0])])
 # use this line to conditionally include code
 #AM_CONDITIONAL([USE_LIBPNG], [test "$png" != no -a "$HAVE_LIBPNG" -eq 1])
 AS_IF([test "$png" = yes -a "$HAVE_LIBPNG" -eq 1], [AC_DEFINE([HAVEPNG], [1], [Define if using libpng.])
@@ -38,13 +38,26 @@ LDFLAGS+=" $libpng_LIBS"
 ])
 
 # check if mpeg is wanted
-AC_ARG_WITH(mpeg,
-[AC_HELP_STRING([--with-mpeg],[include MPEG support])],
-mpeg=$withval,mpeg="no")
-if test "a$mpeg" = "ayes" ; then
-   AC_CHECK_HEADER(avcodec.h, [],AC_MSG_ERROR([MPEG header not found]))
-   AC_SEARCH_LIBS(avcodec_init,[avcodec],[],AC_MSG_ERROR([MPEG libraries not found]))
-fi
+AC_ARG_WITH([mpeg],
+  [AS_HELP_STRING([--with-mpeg],
+    [support mpeg files @<:@default=yes@:>@])],
+  [mpeg=$withval],
+  [mpeg=yes])
+AS_CASE(["$mpeg"],
+  [yes], [PKG_CHECK_MODULES([libavcodec], [libavcodec], [HAVE_LIBAVCODEC=1])],
+  [no], [HAVE_LIBPNG=0],
+  [PKG_CHECK_MODULES([libavcodec], [libavcodec], [HAVE_LIBAVCODEC=1], [HAVE_LIBAVCODEC=0])])
+# use this line to conditionally include code
+#AM_CONDITIONAL([USE_LIBAVCODEC], [test "$mpeg" != no -a "$HAVE_LIBAVCODEC" -eq 1])
+AS_IF([test "$mpeg" = yes -a "$HAVE_LIBAVCODEC" -eq 1], [AC_DEFINE([HAVEMPEG], [1], [Define if using ffmpeg.])
+CXXFLAGS+=" $libavcodec_CFLAGS"
+LDFLAGS+=" $libavcodec_LIBS"
+])
+
+#if test "a$mpeg" = "ayes" ; then
+#   AC_CHECK_HEADER(avcodec.h, [],AC_MSG_ERROR([MPEG header not found]))
+#   AC_SEARCH_LIBS(avcodec_init,[avcodec],[],AC_MSG_ERROR([MPEG libraries not found]))
+#fi
 
 # write the Makefiles
 AC_OUTPUT(Makefile src/Makefile)

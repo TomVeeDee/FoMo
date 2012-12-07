@@ -3,10 +3,9 @@
 #include <fstream>
 #include <cmath>
 
-void writearray(double * const * const image, const double t)
+void writearray(double * const * const image, const int t)
 {
-	double period = 2*M_PI/frequency.imag();
-	int seqnum = (int)floor(t*nframes/period+0.5);
+	int seqnum = t;
 	stringstream ss;
 	ss << "outputarray.t" << seqnum << ".txt";
 	string graphic_out=ss.str();

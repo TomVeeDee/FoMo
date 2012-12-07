@@ -21,18 +21,11 @@ int main(int argc, char* argv[])
 	commsize = 1;
 #endif
 	getarg(argc,argv);
-	if (reuse) {
-		readfrequency();
-	}
-	else {
-		if (commrank==0) calculatepollux();
-	}
 	writeparameters(cout,'v');
 	writefile();
 #ifdef HAVEMPI
 	MPI_Barrier(MPI_COMM_WORLD);
 #endif
-	if (commrank==0) cout << "frequency = " << frequency.real() << " " << frequency.imag() << endl;
 // allocate image
 	double **image;
 	image = (double **)malloc(y_pixel*sizeof(double *));
@@ -44,7 +37,8 @@ int main(int argc, char* argv[])
 			image[row][j]=0;
         }
 	// here starts mpi
-	const int workheight = 1;
+	int workheight = y_pixel;
+	if (commsize>1)	workheight = 1;
 	int maxsize = x_pixel*workheight;
 	double *results;
 	// results is a one dimensional array with all data from rectangle [x1,x2]*[y1,y2]
@@ -58,15 +52,13 @@ int main(int argc, char* argv[])
 	globalmax = 0.; globalmin = 0.;
 	{ // only ofstream s in this scope
 	ofstream s(imagefile);
-	double period = 2*M_PI/frequency.imag();
-	for (double t=0.; t<nperiods*period; t+=period/nframes)
+	for (int t=0.; t<nframes; t++)
 	{
-		int np = ngridpoints();
-		double ** perts;
-		perts = new double*[np*npointz*npointphi];
-		for (int k=0; k<np*npointz*npointphi; k++)
-	        	perts[k]=new double[ncols];
-		physicalquants(perts,t);
+		int ng = x_pixel*y_pixel*z_pixel;
+		cube datacube(nvars,ng);
+		EqType qtype=builtin;
+		datacube.settype(qtype);
+		datacube.fillcube();
 		if (commsize>1)
 		{
 #ifdef HAVEMPI
@@ -76,7 +68,6 @@ int main(int argc, char* argv[])
 				for (int j=0; j<4; j++)
 					coords[i][j]=0;
 			MPI_Status status;
-			//probably perts should be calculated here and passed as an argument to mpi_calculatemypart
 			if (commrank==0) //we're the master, let's give the slaves some work
 			{
 				for (int r=1; r<commsize; r++)
@@ -133,9 +124,6 @@ int main(int argc, char* argv[])
 					// process the received results
 					fillccd(image,results,x1,x2,y1,y2);
 				}
-				for (int k=0; k<np*npointz*npointphi; k++)
-					delete [] perts[k];
-				delete [] perts;
 			}
 			else //oh no, we're a slave, work to do
 			{
@@ -146,19 +134,16 @@ int main(int argc, char* argv[])
 					if (coords[0][0]>=0) 
 					{
 					for (int i=0; i<maxsize; i++) results[i]=0.;
-					mpi_calculatemypart(results,coords[0][0],coords[0][1],coords[0][2],coords[0][3],t,perts);
+					mpi_calculatemypart(results,coords[0][0],coords[0][1],coords[0][2],coords[0][3],t,datacube);
 					MPI_Send(results,maxsize,MPI_DOUBLE,0,RESULTTAG,MPI_COMM_WORLD);
 					}
 				}
-				for (int k=0; k<np*npointz*npointphi; k++)
-					delete [] perts[k];
-				delete [] perts;
 			}
 #endif
 		}
 		else
 		{
-			mpi_calculatemypart(results,0,x_pixel-1,0,y_pixel-1,t,perts);
+			mpi_calculatemypart(results,0,x_pixel-1,0,y_pixel-1,t,datacube);
 			fillccd(image,results,0,x_pixel-1,0,y_pixel-1);
 		}
 		if (commrank==0)

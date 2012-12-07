@@ -125,10 +125,9 @@ void writedigit(double * const * const image, const int pos, const int i)
 	}
 }
 
-void writetime(double * const * const image, const double t)
+void writetime(double * const * const image, const int t)
 {
-	double period = 2*M_PI/frequency.imag();
-        int seqnum = (int)floor(t*nframes/period+0.5);
+        int seqnum = t;
 	int a,b,c;
 	a = seqnum/100;
 	b = (seqnum-a*100)/10;

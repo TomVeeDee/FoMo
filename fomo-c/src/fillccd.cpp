@@ -18,8 +18,8 @@
 	}
 }*/
 
-const int y_pixel = 1024;
-const int x_pixel = 1024;
+const int y_pixel = 100;
+const int x_pixel = 101;
 //pixelsize in kilometers, corresponds to 0.5 arcsecond
 // in contradiction with Schrijver et al. (99)? They claim a spatial resolution of 1,25 arcseconds, which corresponds to 900km.
 const double size_pixel = 727.22;
@@ -163,7 +163,7 @@ double filter(const double r, const double phi, const double z)
 	return 1.;
 }
 
-void mpi_calculatemypart(double* results, const int x1, const int x2, const int y1, const int y2, const double t, double ** perts)
+void mpi_calculatemypart(double* results, const int x1, const int x2, const int y1, const int y2, const double t, cube datacube)
 {
 //
 // results is an array of at least dimension (x2-x1+1)*(y2-y1+1) and must be initialized to zero
@@ -178,7 +178,7 @@ void mpi_calculatemypart(double* results, const int x1, const int x2, const int 
 #endif
 	if (commrank==0) cout << "building frame: ";
 	double R = length*1000./M_PI;
-	int np = ngridpoints();
+	int np = datacube.readngrid();
 	for (int i=y1; i<y2+1; i++)
 		for (int j=x1; j<x2+1; j++)
 			for (int k=0; k<z_pixel; k++) // scanning through ccd
@@ -186,6 +186,7 @@ void mpi_calculatemypart(double* results, const int x1, const int x2, const int 
 		double xacc = (j-x_pixel/2)*size_pixel;
 		double yacc = (i-y_pixel/2)*size_pixel;
 		double zacc = (k-z_pixel/2)*size_z_pixel; 
+		const double psi=0;
 		double x = (cos(psi)*cos(l)-sin(psi)*sin(l)*sin(b))*xacc+(-sin(psi)*cos(b))*yacc+(-cos(psi)*sin(l)-sin(psi)*cos(l)*sin(b))*zacc;
 		double y = (sin(psi)*cos(l)+cos(psi)*sin(l)*sin(b))*xacc+(cos(psi)*cos(b))*yacc+(-sin(psi)*sin(l)+cos(psi)*cos(l)*sin(b))*zacc;
 		double z = (sin(l)*cos(b))*xacc+(-sin(b))*yacc+(cos(l)*cos(b))*zacc;
@@ -203,18 +204,16 @@ void mpi_calculatemypart(double* results, const int x1, const int x2, const int 
 			z_or = .5; // does not matter which value is taken here, because it is the singular point of the coordinate system
 		}
 		if (z_or<0) z_or++;  // atan returns a value between -pi/2 and pi/2
-		double pd;
 		if (z>=0.)
 		{
-#ifdef PERTURBATIONS
-			pd = perturbeddensity(r,phi,z_or,t,perts,np);
-			results[(i-y1)*(x2-x1+1)+j-x1]+=filter(r,phi,z_or)*pow(pd,2);
-#else
 			results[(i-y1)*(x2-x1+1)+j-x1]+=filter(r,phi,z_or)*pow(density(r,phi,z_or),2);
-#endif
 		}
 		// print progress
-		if ((commrank==0)&&(j==x1)&&(k==0)) progressbar(i,y1,y2);
+		if ((commrank==0)&&(j==x1)&&(k==0)) 
+		{
+			progressbar(i,y1,y2);
+			//cout << "i" << i << "y1" << y1 << "y2" << y2;
+		}
 	}
 	if (commrank==0) cout << " finished!" << endl;
 }
