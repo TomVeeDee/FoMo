@@ -17,12 +17,17 @@ pro rays, set=set, gridy=gridy, n_gridy=n_gridy, n_gridz=n_gridz, ngrid=ngrid, n
   if set eq 2 or set eq 21 or set eq 22 or set eq 23 or set eq 24 or set eq 25 or set eq 26 then begin
      siz = size(vr_cube_t)
      dimz = n_elements(gridz)
-     vr_cube_t_ext = fltarr(siz[1],siz[2]*3,siz[3])
-     vr_cube_t_ext[*,0:dimz-1,*] = vr_cube_t
-     vr_cube_t_ext[*,dimz:2*dimz-1,*] = vr_cube_t
-     vr_cube_t_ext[*,2*dimz:*,*] = vr_cube_t
-     z0 = ([min(abs(vr_cube_t_ext[siz[1]/2,round(siz[2]*5/4):siz[2]*7/4,0])),!c])[1]+round(siz[2]*5/4) & y0=dimy/2
-     z1 = ([max(abs(vr_cube_t_ext[siz[1]/2,round(siz[2]*6/4):siz[2]*8/4,0])),!c])[1]+round(siz[2]*6/4) & y1=dimy/2
+     if set ne 24 then begin
+        vr_cube_t_ext = fltarr(siz[1],siz[2]*3,siz[3])
+        vr_cube_t_ext[*,0:dimz-1,*] = vr_cube_t
+        vr_cube_t_ext[*,dimz:2*dimz-1,*] = vr_cube_t
+        vr_cube_t_ext[*,2*dimz:*,*] = vr_cube_t
+        z0 = ([min(abs(vr_cube_t_ext[siz[1]/2,round(siz[2]*5/4):siz[2]*7/4,0])),!c])[1]+round(siz[2]*5/4) & y0=dimy/2
+        z1 = ([max(abs(vr_cube_t_ext[siz[1]/2,round(siz[2]*6/4):siz[2]*8/4,0])),!c])[1]+round(siz[2]*6/4) & y1=dimy/2
+     endif else begin
+        z0 = 1712 & z1 = 1998
+        y0 = dimy/2 & y1 = dimy/2
+     endelse
 ;     z0 = ([min(abs(vr_cube_t_ext[siz[1]/2,150:200,0])),!c])[1]+150 & y0=dimy/2
 ;     z1 = ([max(abs(vr_cube_t_ext[siz[1]/2,180:220,0])),!c])[1]+180 & y1=dimy/2
 ;     z0 = 170 & y0 = 101

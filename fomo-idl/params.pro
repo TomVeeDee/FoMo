@@ -57,24 +57,45 @@ if set eq 22 then begin dir = '../cubes/set2/' & kanm = 'ka2.24_sm' & endif
 if set eq 25 then begin dir = '../cubes/set2/' & kanm = 'ka2.24_hgres2d' & endif
 if set eq 3 then begin dir = '../cubes/set3/' & kanm = 'ka1.25' & endif
 ;snum = fix(strmid(slize,11,3))
-   
+;if set eq 24 then begin
+;   dimx = 2040
+;   dimy = 2040
+;   dimz = 1142
+;   dimt = 30
+;   z_u = 27.9875
+;   gridx = findgen(dimx)/float(dimx-1)*50.
+;   gridy = findgen(dimy)/float(dimy-1)*50.
+;   gridz = findgen(dimz)/(dimz-1.)*z_u
+;   r0 = gridx[dimx-1]/2.
+;   t_u = 4.57641
+;   tarr = findgen(dimt)/(dimt-1.)*t_u
+;   aa = 10.
+;endif
+
 ;   restore,'cubes_'+string(it,format='(i3.3)')+'.sav'
 
 if set ne 25 then begin
    restore,dir+'params_'+kanm+'.sav'
-   restore, dir+'slice_'+kanm+'_'+string(it,format='(i3.3)')+'t_'+string(ix,format='(i3.3)')+'x'+'.sav'
+   if set ne 24 then begin
+      restore, dir+'slice_'+kanm+'_'+string(it,format='(i3.3)')+'t_'+string(ix,format='(i3.3)')+'x'+'.sav'
+   endif else begin
+      restore, dir+'slice_rh_'+kanm+'_'+string(it,format='(i3.3)')+'t_'+string(ix,format='(i4.4)')+'x'+'.sav'
+      restore, dir+'slice_te_'+kanm+'_'+string(it,format='(i3.3)')+'t_'+string(ix,format='(i4.4)')+'x'+'.sav'
+   endelse
    gridx0=gridx[ix]
 ;   gridx = gridx0[ix]
    sizes = size(te)
    dimx0 = sizes[1] & dimy = sizes[2] & dimz = sizes[3]
    dimx = dimy
-   velx = fltarr(dimx0,dimy,dimz)
-   vely = fltarr(dimx0,dimy,dimz)
-   velz = fltarr(dimx0,dimy,dimz)
-   for j=0,dimy-1 do begin
-      velx[0,j,*] = vr[0,j,*]*(gridx0[0]-r0)/sqrt((gridx0[0]-r0)^2+(gridy[j]-r0)^2)
-      vely[0,j,*] = vr[0,j,*]*(gridy[j]-r0)/sqrt((gridx0[0]-r0)^2+(gridy[j]-r0)^2)
-   endfor
+   if set ne 24 then begin
+      velx = fltarr(dimx0,dimy,dimz)
+      vely = fltarr(dimx0,dimy,dimz)
+      velz = fltarr(dimx0,dimy,dimz)
+      for j=0,dimy-1 do begin
+         velx[0,j,*] = vr[0,j,*]*(gridx0[0]-r0)/sqrt((gridx0[0]-r0)^2+(gridy[j]-r0)^2)
+         vely[0,j,*] = vr[0,j,*]*(gridy[j]-r0)/sqrt((gridx0[0]-r0)^2+(gridy[j]-r0)^2)
+      endfor
+   endif
 endif else begin
    restore,dir+'params_'+kanm+'.sav'
    restore, dir+'cubes_'+kanm+'_'+string(it,format='(i3.3)')+'.sav'

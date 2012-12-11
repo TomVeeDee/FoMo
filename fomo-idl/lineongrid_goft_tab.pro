@@ -77,20 +77,11 @@ endif
 if (~(keyword_set(nwave))) then begin
    nwave=100
 endif
-if ion eq 'fe_9' then w0 = 171.073 ; wave center
-if ion eq 'fe_12' then w0 = 193.509
-if (~(keyword_set(minwave))) then begin
-   if ion eq 'fe_9' then minwave = w0-0.07
-   if ion eq 'fe_12' then minwave = w0-0.07
-endif
-if (~(keyword_set(maxwave))) then begin
-   if ion eq 'fe_9' then maxwave = w0+0.07
-   if ion eq 'fe_12' then maxwave = w0+0.07
-endif
-
-if (~(keyword_set(wave))) then begin
-   wave=findgen(nwave)/(nwave-1)*(maxwave-minwave)+minwave
-endif
+;if ion eq 'fe_9' then w0 = 171.073 ; wave center
+;if ion eq 'fe_12' then w0 = 193.509
+minwave = w0-0.07
+maxwave = w0+0.07
+wave=findgen(nwave)/(nwave-1)*(maxwave-minwave)+minwave
 
 if (dims eq 2) then emission_goft=dblarr(nx,nz,nwave)
 if (dims eq 3) then emission_goft=dblarr(nx,ny,nz,nwave)

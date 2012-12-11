@@ -39,6 +39,14 @@ endif
      ka_n = '_ka2.24_sm'
      ion = '_fe9'
   endif
+  if set eq 24 then begin
+;     dim00d = 342 & dim30d = 398 & dim45d = 386 & dim60d = 348
+     dir = '/users/cpa/pantolin/Modeling/cubes/set2/'
+     dir2 = dir
+;     dir2 = '/users/cpa/pantolin/Modeling/cubes/set2/'
+     ka_n = '_ka2.24_hgres'
+     ion = '_fe9'
+  endif
   if set eq 25 then begin
 ;     dim00d = 342 & dim30d = 398 & dim45d = 386 & dim60d = 348
 ;     dir = '/users/cpa/pantolin/Modeling/cubes/set2/'

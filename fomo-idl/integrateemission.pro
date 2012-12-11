@@ -20,11 +20,15 @@ pro integrateemission,emission=emission,n_gridx=n_gridx,n_gridy=n_gridy,ngrid=ng
 if keyword_set(imaging) eq 0 then imaging = 0
 
 sizes=size(emission)
-dims=sizes[0]-1
-nx=sizes[1]
-ny=sizes[2]
+if imaging eq 0 then dims = sizes[0]-1 else dims = sizes[0]
+nx = sizes[1]
+ny = sizes[2]
 if dims eq 2 then nz=1 else nz = sizes[3]
-if dims eq 2 then nwave = sizes[3] else nwave=sizes[4]
+if imaging eq 0 then begin
+   if dims eq 2 then nwave = sizes[3] else nwave=sizes[4]
+endif else begin
+   nwave = 1
+endelse
 
 c=299792000./1.e5
 doppleremission=emission
@@ -69,6 +73,7 @@ if imaging eq 0 then begin
       emipk = reform(emission[0,*,*,lemmx])
    endif else begin
       lemmx = ([max(emission[nx/2,ny/2,*]),!c])[1]
+      if lemmx eq 0. then lemmx=nwave/2.
       emipk = reform(emission[*,*,lemmx])
    endelse
 
@@ -106,11 +111,11 @@ endif else begin
       if dims eq 2 then image = dblarr(n_elements(ngrid)-1,nwave) else image = dblarr(nx,n_elements(ngrid)-1,nwave)
       for i=0., n_elements(ngrid)-2 do begin
          if (dims eq 2) then begin
-            for j=0,nwave-1 do image[i,j] = total(interpolate(reform(doppleremission[*,*,j]),n_gridy[ngrid[i]:ngrid[i+1]-1],n_gridx[ngrid[i]:ngrid[i+1]-1]))
+            for j=0,nwave-1 do image[i,j] = total(interpolate(reform(doppleremission[*,*,j]),n_gridx[ngrid[i]:ngrid[i+1]-1],n_gridy[ngrid[i]:ngrid[i+1]-1]))
          endif
          if (dims eq 3) then begin
             for k=0,nx-1 do begin
-               for j=0,nwave-1 do image[k,i,j] = total(interpolate(reform(doppleremission[k,*,*,j]),n_gridy[ngrid[i]:ngrid[i+1]-1],n_gridx[ngrid[i]:ngrid[i+1]-1]),/double)
+               for j=0,nwave-1 do image[k,i,j] = total(interpolate(reform(doppleremission[k,*,*,j]),n_gridx[ngrid[i]:ngrid[i+1]-1],n_gridy[ngrid[i]:ngrid[i+1]-1]),/double)
             endfor
          endif
          print,string(13b)+' % finished: ',float(i)*100./(n_elements(ngrid)-2),format='(a,f4.0,$)'

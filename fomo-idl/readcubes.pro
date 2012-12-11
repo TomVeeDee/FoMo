@@ -18,9 +18,9 @@ if set eq 2 or set eq 23 then begin
 endif
 if set eq 24 then begin
    ka_n = 'ka2.24_hgres'
-   dir = '/volume1/scratch/set2/hgres/'
+;   dir = '/volume1/scratch/set2/hgres/'
    ndz = 3
-;   dir = '/users/cpa/pantolin/Modeling/cubes/set2/'
+   dir = '/users/cpa/pantolin/Modeling/cubes/set2/'
    dir2 = dir
 ;   dir2 = '/volume1/scratch/set2/'
 endif
@@ -56,7 +56,7 @@ if set eq 3 or set eq 31 then begin
 endif
    
 ;dir =  '/Volumes/Karmeliet/Data/modeling/cubes/'
-if set ne 24 then restore,dir+'cubes_'+ka_n+'_'+string(0,format="(i3.3)")+'.sav' else restore,dir+'slice_rh_'+ka_n+'_'+string(0,format="(i3.3)")+string(0,format='(i3.3)')+'x'+'.sav'
+if set ne 24 then restore,dir+'cubes_'+ka_n+'_'+string(0,format="(i3.3)")+'.sav' else restore,dir+'slice_rh_'+ka_n+'_'+string(0,format="(i3.3)")+'t_'+string(601,format='(i4.4)')+'x'+'.sav'
 if set eq 22 then siz = size(rh_cube_sm) 
 if set eq 2 or set eq 23 or set eq 21 or set eq 3 or set eq 25 or set eq 26 then siz = size(rh_cube)
 if set eq 24 then siz = size(rho)
@@ -67,10 +67,12 @@ if set ne 25 and set ne 26 then files = file_search(dir2+'rslt_slice_*.sav',coun
 if set eq 25 then files = file_search(dir2+'rslt_cubes_'+ka_n+'.fe9'+'*.sav',count=nfiles,/fully_qualify_path)
 if set eq 26 then files = file_search(dir2+'rslt_cubes_'+ka_n+'.fe12'+'*.sav',count=nfiles,/fully_qualify_path)
 restore,files[0]
-dim00d = (size(image00d_ext))[ldimz]
-dim30d = (size(image30d_ext))[ldimz]
-dim45d = (size(image45d_ext))[ldimz]
-dim60d = (size(image60d_ext))[ldimz]
+if set ne 24 then dim00d = (size(image00d_ext))[ldimz] else dim00d = siz[3]*ndz
+if set ne 24 then begin
+   dim30d = (size(image30d_ext))[ldimz]
+   dim45d = (size(image45d_ext))[ldimz]
+   dim60d = (size(image60d_ext))[ldimz]
+endif
 
 if set ne 25 and set ne 26 then begin 
    rh_cube_t = fltarr(siz[2],siz[3],dimt)
@@ -115,9 +117,9 @@ endif
 if set eq 24 then begin
    j=dimx/2
    for i=0,dimt-1 do begin
-      restore,dir+'slice_rh_'+ka_n+'_'+string(i,format="(i3.3)")+string(j,format='(i3.3)')+'x'+'.sav'
+      restore,dir+'slice_rh_'+ka_n+'_'+string(i,format="(i3.3)")+'t_'+string(j,format='(i4.4)')+'x'+'.sav'
       rh_cube_t[*,*,i]=rho[0,*,*]
-      restore,dir+'slice_te_'+ka_n+'_'+string(i,format="(i3.3)")+string(j,format='(i3.3)')+'x'+'.sav'
+      restore,dir+'slice_te_'+ka_n+'_'+string(i,format="(i3.3)")+'t_'+string(j,format='(i4.4)')+'x'+'.sav'
       te_cube_t[*,*,i]=te[0,*,*]
 ;      restore,dir+'slice_vr_'+ka_n+'_'+string(i,format="(i3.3)")+string(j,format='(i3.3)')+'x'+'.sav'
 ;      vr_cube_t[*,*,i]=vr[0,*,*]
