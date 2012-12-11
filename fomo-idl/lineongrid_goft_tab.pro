@@ -69,10 +69,10 @@ endif else begin
    nz = sizes[2]
 endelse
 
-if (~(keyword_set(ion))) then begin
-   ion='fe_9'  
+;if (~(keyword_set(ion))) then begin
+;   ion='fe_9'  
 ;   ion = 'fe_12'
-endif
+;endif
 
 if (~(keyword_set(nwave))) then begin
    nwave=100
@@ -98,7 +98,7 @@ Tlg_sorted = logT[ne_sort]
 
 ; Read tabulated G(ne,T) values for given number density (n_e_lg) and
 ; temperature (t_lg) arrays
-lookup_goft, ion=ion, n_e_lg=n_e_lg, logt=t_lg, goft_mat=goft_mat
+lookup_goft, ion=ion, w0=w0, n_e_lg=n_e_lg, logt=t_lg, goft_mat=goft_mat
 
 ; create a ch_synthetic structure called "singleline"
 ch_synthetic,min(wave),max(wave),output=singleline,density=max(n_e),logt_isothermal=max(alog10(T)),ioneq_name=ioneq_name,sngl_ion=ion
