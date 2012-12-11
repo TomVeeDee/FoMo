@@ -28,7 +28,7 @@ if file_test(dirgot+filegot) eq 0 then filename = dialog_pickfile(filter='*.dat'
 
 
   n_e_min = 1.e8
-  n_e_max = 1.e10
+  n_e_max = 1.e11 ; for goft_table_frt_193.dat or goft_table_f2rt_171.dat choose n_e_max = 1.e10
 ;  steplg = 0.005
   steplg = 0.001
   num = alog10(n_e_max/n_e_min)/steplg

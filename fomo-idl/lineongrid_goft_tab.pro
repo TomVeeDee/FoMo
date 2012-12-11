@@ -127,7 +127,7 @@ if way eq 2 then begin
    for i=0.,n_elements(n_e)-1 do begin
       lc_ne = ([min(abs(n_e_lg-alog10(n_e_sorted[i]))),!c])[1]
       lc_te = ([min(abs(t_lg-tlg_sorted[i])),!c])[1]
-      goft[ne_sort[i]] = interpol(goft_mat[lc_ne,*],t_lg,tlg_sorted[i])
+      if tlg_sorted[i] lt min(t_lg) or tlg_sorted[i] gt max(t_lg) then goft[ne_sort[i]] = 0. else goft[ne_sort[i]] = interpol(goft_mat[lc_ne,*],t_lg,tlg_sorted[i])
       emi[ne_sort[i]] = goft[ne_sort[i]]*n_e_sorted[i]^2
       print,string(13b)+' % finished: ',float(i)*100./(n_elements(n_e)-1),format='(a,f4.0,$)'
    endfor
