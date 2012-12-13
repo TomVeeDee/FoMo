@@ -45,7 +45,7 @@ AC_ARG_WITH([mpeg],
   [mpeg=yes])
 AS_CASE(["$mpeg"],
   [yes], [PKG_CHECK_MODULES([libavcodec], [libavcodec], [HAVE_LIBAVCODEC=1])],
-  [no], [HAVE_LIBPNG=0],
+  [no], [HAVE_LIBAVCODEC=0],
   [PKG_CHECK_MODULES([libavcodec], [libavcodec], [HAVE_LIBAVCODEC=1], [HAVE_LIBAVCODEC=0])])
 # use this line to conditionally include code
 #AM_CONDITIONAL([USE_LIBAVCODEC], [test "$mpeg" != no -a "$HAVE_LIBAVCODEC" -eq 1])
@@ -58,6 +58,8 @@ LDFLAGS+=" $libavcodec_LIBS"
 #   AC_CHECK_HEADER(avcodec.h, [],AC_MSG_ERROR([MPEG header not found]))
 #   AC_SEARCH_LIBS(avcodec_init,[avcodec],[],AC_MSG_ERROR([MPEG libraries not found]))
 #fi
+
+AC_CHECK_HEADER([gsl/gsl_const_mksa.h],[],AC_MSG_ERROR([GSL physical constants not found]))
 
 # write the Makefiles
 AC_OUTPUT(Makefile src/Makefile)

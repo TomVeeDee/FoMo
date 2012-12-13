@@ -3,13 +3,35 @@
 #include <cstdlib>
 #include <cstdio>
 
-tphysvar log10(tphysvar in)
+tphysvar log10(tphysvar const & in)
 {
 	tphysvar out;
-	vector<double>::iterator init=in.begin();
+	tphysvar::const_iterator init=in.begin();
 	for (; init != in.end(); ++init)
 	{
 		out.push_back(log10(*init));
+	}
+	return out;
+}
+
+tphysvar sqrt(tphysvar const & in)
+{
+	tphysvar out;
+	tphysvar::const_iterator init=in.begin();
+	for (; init != in.end(); ++init)
+	{
+		out.push_back(sqrt(*init));
+	}
+	return out;
+}
+
+tphysvar operator*(double const& c, tphysvar const& in)
+{
+	tphysvar out;
+	tphysvar::const_iterator init=in.begin();
+	for (; init != in.end(); ++init)
+	{
+		out.push_back(c*(*init));
 	}
 	return out;
 }

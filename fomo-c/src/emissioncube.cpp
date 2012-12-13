@@ -1,9 +1,17 @@
 #include "header.h"
 #include <fstream>
 #include <cstdlib>
+#include <gsl/gsl_const_mksa.h>
 
 // This should become part of the input options, or based on the choice of line position.
 const char* chiantifile="chiantitables/goft_table_f2rt_171.dat";
+
+// Physical constants
+const double alphaconst=1.0645; // alpha=\sqrt{2\pi}/2/\sqrt{2ln2}
+const double kb=GSL_CONST_MKSA_BOLTZMANN; // Boltzmann constant
+const double mh=GSL_CONST_MKSA_MASS_PROTON; // hydrogen mass
+const double c=GSL_CONST_MKSA_SPEED_OF_LIGHT; // speed of light
+
 
 tphysvar goft(const tphysvar T, const tphysvar logrho, const cube gofttab)
 {
@@ -12,7 +20,7 @@ tphysvar goft(const tphysvar T, const tphysvar logrho, const cube gofttab)
 	return g;
 }
 
-cube readgoftfromchianti(const char* chiantifile)
+cube readgoftfromchianti(const char* chiantifile, string & ion, double & lambda0, double & atweight)
 {
 	ifstream in(chiantifile);
 	if (!in) {
@@ -25,6 +33,13 @@ cube readgoftfromchianti(const char* chiantifile)
 	int nrho=0;
 	double field;
 	tphysvar temprho, tempt, tempgoft;
+// this should be inserted after Patrick has updated the G(T) tables.
+//	in >> ion;
+//	in >> lambda0;
+//	in >> atweight;
+	ion="feIX";
+	lambda0=171.073;
+	atweight=56.;
 	while (in >> templogrho)
 	{
 		nrho++;
@@ -60,10 +75,10 @@ cube readgoftfromchianti(const char* chiantifile)
 	return gofttab;
 }
 
-tphysvar linewidth(const tphysvar T, const cube gofttab)
+tphysvar linefwhm(const tphysvar T, const double lambda0, const double atweight)
 {
-	tphysvar w=T;
-	return T;
+	tphysvar w=2*sqrt(2*log(2))*sqrt(kb/mh/atweight)*lambda0/c*sqrt(T);
+	return w;
 }
 
 cube emissionfromdatacube(cube datacube)
@@ -88,14 +103,16 @@ cube emissionfromdatacube(cube datacube)
 	tphysvar logrho = log10(datacube.readvar(0));
 	tphysvar T = datacube.readvar(1);
 	
-
-	cube gofttab=readgoftfromchianti(chiantifile);
+	string ion="";
+	double lambda0=.0;
+	double atweight=1;
+	cube gofttab=readgoftfromchianti(chiantifile,ion,lambda0,atweight);
 
 	tphysvar fittedgoft=goft(T,logrho,gofttab);
 
 	emission.setvar(0,fittedgoft);
 
-	tphysvar fittedwidth=linewidth(T,gofttab);
+	tphysvar fittedwidth=linefwhm(T,lambda0,atweight);
 
 	emission.setvar(1,fittedwidth);
 
