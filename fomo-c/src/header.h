@@ -35,19 +35,19 @@ class cube
 	public:
 		cube(const int invars, const int ingrid, const int = 3);
 		~cube();
-		int readngrid();
-		int readnvars();
+		int readngrid() const;
+		int readnvars() const;
 		void settype(EqType intype);
-		EqType readtype();
+		EqType readtype() const;
 		void setgrid(tgrid ingrid);
-		tgrid readgrid();
+		tgrid readgrid() const;
 		void setvar(const int, const tphysvar);
-		tphysvar readvar(const int);
+		tphysvar readvar(const int) const;
 		void fillcube();
 };
 
 //external functions in readframe.cpp
-extern tphysvar log10(tphysvar const&);
+extern tphysvar log10(tphysvar );
 extern tphysvar operator*(double const &, tphysvar const &);
 extern tphysvar sqrt(tphysvar const&);
 
@@ -74,6 +74,7 @@ extern void writemovie(char*, const double, const int);
 
 //external functions in writearray.cpp
 extern void writearray(double * const * const, const int);
+extern void writearray(tphysvar const &, string);
 
 //external functions in fillccd.cpp
 extern const int x_pixel;

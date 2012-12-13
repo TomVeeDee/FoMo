@@ -15,3 +15,14 @@ void writearray(double * const * const image, const int t)
 			s << image[j][k] << endl;
 }
 
+void writearray(tphysvar const& var, string varname)
+{
+	stringstream ss;
+	ss << "outputarray." << varname << ".txt";
+	string graphic_out=ss.str();
+	ofstream s(graphic_out.c_str());
+	tphysvar::const_iterator init=var.begin();
+	for (; init != var.end(); ++init)
+			s << *init << endl;
+}
+

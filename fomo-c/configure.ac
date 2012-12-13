@@ -10,9 +10,10 @@ mpi=$withval,mpi="no")
 if test "a$mpi" = "ayes" ; then
    CXXCOMP="[mpicxx]"
 else
-   CXXCOMP="[icc]"
+   CXXCOMP="[g++]"
 fi
 AC_PROG_CXX($CXXCOMP)
+AC_PROG_CXXCPP([cpp])
 AC_LANG(C++)
 PKG_PROG_PKG_CONFIG
 #check if MPI is available
@@ -60,6 +61,10 @@ LDFLAGS+=" $libavcodec_LIBS"
 #fi
 
 AC_CHECK_HEADER([gsl/gsl_const_mksa.h],[],AC_MSG_ERROR([GSL physical constants not found]))
+AC_CHECK_HEADER([CGAL/Delaunay_triangulation_2.h],[],AC_MSG_ERROR([CGAL Delaunay headers not found]))
+#AC_SEARCH_LIBS(a_function_what?,[CGAL],[],AC_MSG_ERROR([CGAL libraries not found]))
+LDFLAGS+="-lCGAL"
+CXXFLAGS+="-frounding-math"
 
 # write the Makefiles
 AC_OUTPUT(Makefile src/Makefile)

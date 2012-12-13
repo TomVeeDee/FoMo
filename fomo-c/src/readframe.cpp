@@ -7,8 +7,10 @@ tphysvar log10(tphysvar const & in)
 {
 	tphysvar out;
 	tphysvar::const_iterator init=in.begin();
+		cout << "a" << *init;
 	for (; init != in.end(); ++init)
 	{
+		cout << "a" << *init;
 		out.push_back(log10(*init));
 	}
 	return out;
@@ -54,12 +56,12 @@ cube::cube(const int invars, const int ingrid, const int indim )
 cube::~cube()
 {};
 
-int cube::readngrid()
+int cube::readngrid() const
 {
 	return ng;
 };
 
-int cube::readnvars()
+int cube::readnvars() const
 {
 	return nvars;
 };
@@ -69,7 +71,7 @@ void cube::settype(EqType input)
 	qtype=input;
 };
 
-EqType cube::readtype()
+EqType cube::readtype() const
 {
 	return qtype;
 };
@@ -79,7 +81,7 @@ void cube::setgrid(tgrid ingrid)
 	grid=ingrid;
 };
 
-tgrid cube::readgrid()
+tgrid cube::readgrid() const
 {
 	return grid;
 };
@@ -89,7 +91,7 @@ void cube::setvar(const int nvar, const tphysvar var)
 	vars[nvar]=var;
 }
 
-tphysvar cube::readvar(const int nvar)
+tphysvar cube::readvar(const int nvar) const
 {
 	tphysvar var=vars[nvar];
 	return var;
