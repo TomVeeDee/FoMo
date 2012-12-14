@@ -1,4 +1,4 @@
-pro integrateemission,emission=emission,n_gridx=n_gridx,n_gridy=n_gridy,ngrid=ngrid,wave=wave,w0=w0,direction=direction,losvel=losvel,imaging=imaging,image
+pro integrateemission,emission=emission,logt=logt,n_gridx=n_gridx,n_gridy=n_gridy,ngrid=ngrid,wave=wave,w0=w0,direction=direction,losvel=losvel,imaging=imaging,watom=watom,image, wayemi=wayemi
 
 ; INPUT:	
 ; emission = output of lineongrid.pro , array of emission (x,y,(z),lambda)
@@ -19,40 +19,20 @@ pro integrateemission,emission=emission,n_gridx=n_gridx,n_gridy=n_gridy,ngrid=ng
 
 if keyword_set(imaging) eq 0 then imaging = 0
 
-sizes=size(emission)
-if imaging eq 0 then dims = sizes[0]-1 else dims = sizes[0]
+sizes=size(logt)
+dims = sizes[0]
 nx = sizes[1]
 ny = sizes[2]
-if dims eq 2 then nz=1 else nz = sizes[3]
+if dims eq 3 then nz = sizes[3] else nz = 1
 if imaging eq 0 then begin
-   if dims eq 2 then nwave = sizes[3] else nwave=sizes[4]
+   nwave = n_elements(wave)
 endif else begin
    nwave = 1
 endelse
-
-c=299792000./1.e5
-doppleremission=emission
-
-; calculating doppler shifts point by point:
-;for i=0,nx-1 do begin
-;	print,'doing i=',i
-;	for j=0,ny-1 do begin
-;		if (dims eq 2) then begin
-;			line=reform(doppleremission[i,j,*])
-;			newwave=wave+losvel[i,j]/c*mean(wave)
-;			newline=interpol(line,wave,newwave,/spline)
-;			doppleremission[i,j,*]=newline
-;		endif
-;		if (dims eq 3) then begin
-;			for k=0,nz-1 do begin
-;				line=reform(doppleremission[i,j,k,*])
-;				newwave=wave+losvel[i,j,k]/c*mean(wave)
-;				newline=interpol(line,wave,newwave,/spline)
-;				doppleremission[i,j,k,*]=newline
-;			endfor
-;		endif
-;	endfor
-;endfor
+proton=1.67262158*10^(-27.)
+kboltz = 1.380658*10^(-23.)
+c=299792000.d/1.e5
+if dims eq 3 then doppleremission = fltarr(nx,ny,nz,nwave) else doppleremission = fltarr(nx,ny,nwave)
 
 if imaging eq 0 then begin
 
@@ -60,26 +40,25 @@ if imaging eq 0 then begin
    bsize = 0.005
    nhlosvel = histogram(losvel,binsize=bsize,locations=histvel,reverse_indices=R)
    nhist = n_elements(nhlosvel)
-   if dims eq 3 then begin
-      nlosvel = fltarr(nx,ny,nz,nwave) 
-      for i=0,nwave-1 do nlosvel[*,*,*,i]=losvel
-   endif else begin 
-      nlosvel = fltarr(nx,ny,nwave)
-      for i=0,nwave-1 do nlosvel[*,*,i]=losvel
-   endelse
-   nnhlosvel = histogram(nlosvel,binsize=bsize,reverse_indices=Rn)
-   if dims eq 3 then begin
-      lemmx = ([max(emission[nx/2,ny/2,nz/2,*]),!c])[1]
-      emipk = reform(emission[0,*,*,lemmx])
+
+   if wayemi ne 4 then begin
+      if dims eq 3 then begin
+         lemmx = ([max(emission[nx/2,ny/2,nz/2,*]),!c])[1]
+         if lemmx eq 0. then lemmx=nwave/2.
+         emipk = reform(emission[0,*,*,lemmx])
+      endif else begin
+         lemmx = ([max(emission[nx/2,ny/2,*]),!c])[1]
+         if lemmx eq 0. then lemmx=nwave/2.
+         emipk = reform(emission[*,*,lemmx])
+      endelse
    endif else begin
-      lemmx = ([max(emission[nx/2,ny/2,*]),!c])[1]
-      if lemmx eq 0. then lemmx=nwave/2.
-      emipk = reform(emission[*,*,lemmx])
+      emipk = emission
    endelse
 
    for i=0.,nhist-1 do begin
       losv = histvel[i]
       newwave = wave+losv/c*w0  ;mean(wave)
+      wdop = w0+double(losv/c*w0)
       if R[i] ne R[i+1] then begin
          nR = n_elements(R[R[i]:R[i+1]-1])
          emi = emipk[R[R[i]:R[i+1]-1]]
@@ -89,18 +68,25 @@ if imaging eq 0 then begin
          nhemi = n_elements(hemi)
          for j=0.,nhemi-1 do begin
             if Re[j] ne Re[j+1] then begin
+               mnlgt = mean(logt[indx[0,Re[Re[j]:Re[j+1]-1]],indx[1,Re[Re[j]:Re[j+1]-1]]])
+               sigma = sqrt(kboltz/proton/watom*w0^2/(c*1.e5)^2*10^(mnlgt))
+               prms =[lhemi[j],wdop,sigma]
+               dopemi = gaussian(wave,prms)
                if dims eq 3 then begin
-                  dopemi=interpol(emission[0,indx[0,Re[Re[j]]],indx[1,Re[Re[j]]],*],wave,newwave,/spline) 
+;                  dopemi=interpol(emission[0,indx[0,Re[Re[j]]],indx[1,Re[Re[j]]],*],wave,newwave,/spline) 
                   for k=0.,hemi[j]-1 do doppleremission[0,indx[0,Re[Re[j]+k]],indx[1,Re[Re[j]+k]],*]=dopemi
                endif else begin 
-                  dopemi=interpol(emission[indx[0,Re[Re[j]]],indx[1,Re[Re[j]]],*],wave,newwave,/spline)
+                  
+;                  dopemi=interpol(emission[indx[0,Re[Re[j]]],indx[1,Re[Re[j]]],*],wave,newwave,/spline)
                   for k=0.,hemi[j]-1 do doppleremission[indx[0,Re[Re[j]+k]],indx[1,Re[Re[j]+k]],*]=dopemi
                endelse
             endif
          endfor
       endif
    endfor
-endif
+endif else begin
+   doppleremission = emission
+endelse
 
 ; then sum up over rays:
 
@@ -123,7 +109,6 @@ endif else begin
 	print,' '
    endif else begin
       print,'direction for LOS integration higher than dimension'
-      image=doppleremission
    endelse
 
 endelse

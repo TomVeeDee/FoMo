@@ -41,7 +41,7 @@ case ion of
 ; Si VII 197.7684
    'si_7': begin
       case w0 of
-         197.7684: begin
+         197.768: begin
             enum = 14
             inum = 7
             ind = 591
@@ -69,13 +69,13 @@ case ion of
 ; C IV 1548.189 & 1550.775
    'c_4': begin
       case w0 of
-         1548.189: begin
+         1548.1899: begin
             ind = 16
             enum = 6
             inum = 4
             logTm = 5.0         
          end
-         1550.775: begin
+         1550.78: begin ;1550.775
             ind = 17
             enum = 6
             inum = 4
