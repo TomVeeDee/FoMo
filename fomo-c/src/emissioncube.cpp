@@ -63,6 +63,9 @@ tphysvar goft(const tphysvar logT, const tphysvar logrho, const cube gofttab)
 	tphysvar::const_iterator logtit=logT.begin();
 	tphysvar::const_iterator logrhoit=logrho.begin();
 	tphysvar g;
+	int i=0;
+	int ng=logT.size();
+	cout << "Doing interpolation:";
 	for (; logtit != logT.end(); ++logtit)
 	{
 		Point p(*logtit,*logrhoit);
@@ -74,7 +77,8 @@ tphysvar goft(const tphysvar logT, const tphysvar logrho, const cube gofttab)
 
 		Coord_type res =  CGAL::linear_interpolation(coords.begin(), coords.end(),
                                                norm,
-                                               Value_access(function_values));	*/
+                                               Value_access(function_values));	
+		g.push_back(res); */
 
 // let's do nearest neighbour
 
@@ -84,8 +88,11 @@ tphysvar goft(const tphysvar logT, const tphysvar logrho, const cube gofttab)
 		std::pair<Coord_type,bool> funcval=tempmap(nearest);
 		g.push_back(funcval.first);
 		
+		progressbar(i,0,ng-1);
 		++logrhoit;
+		i++;
 	}
+	cout << "Done!" << endl;
 
 	return g;
 }
@@ -128,7 +135,7 @@ cube readgoftfromchianti(const char* chiantifile, string & ion, double & lambda0
 	}
 
 	int ntnrho=nt*nrho;
-	int nvars=2; // G(T) and width
+	int nvars=1; // G(T) and width
 	cube gofttab(nvars,ntnrho,2); //only 2 dimensions
 	gofttab.settype(gofttable);
 	
@@ -139,8 +146,6 @@ cube readgoftfromchianti(const char* chiantifile, string & ion, double & lambda0
 	
 	gofttab.setgrid(tempgrid);
 	gofttab.setvar(0,tempgoft);
-
-	// This would be the place to read in the width of the lines
 
 	return gofttab;
 }
@@ -170,7 +175,7 @@ cube emissionfromdatacube(cube datacube)
 		tphysvar velcomp=datacube.readvar(i);
 		emission.setvar(i,velcomp);
 	};
-
+	
 	tphysvar logrho = log10(datacube.readvar(0));
 	tphysvar T = datacube.readvar(1);
 	tphysvar logT = log10(T);

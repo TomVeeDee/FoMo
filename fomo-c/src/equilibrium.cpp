@@ -14,9 +14,9 @@ void builtingrid(const int x, const int y, const int z, tgrid grid)
 			for (int k=0; k<z; k++)
 			{
 				int index=i*(y*z)+j*z+k;
-				grid[0][index]=(i-x/2)*mmperpixel*1000.;
-				grid[1][index]=(j-y/2)*mmperpixel*1000.;
-				grid[2][index]=(k-z/2)*mmperpixel*1000.;
+				grid[0].push_back((i-x/2)*mmperpixel*1000.);
+				grid[1].push_back((j-y/2)*mmperpixel*1000.);
+				grid[2].push_back((k-z/2)*mmperpixel*1000.);
 			}
 };
 

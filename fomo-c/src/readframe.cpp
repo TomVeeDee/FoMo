@@ -7,10 +7,8 @@ tphysvar log10(tphysvar const & in)
 {
 	tphysvar out;
 	tphysvar::const_iterator init=in.begin();
-		cout << "a" << *init;
 	for (; init != in.end(); ++init)
 	{
-		cout << "a" << *init;
 		out.push_back(log10(*init));
 	}
 	return out;
@@ -46,11 +44,15 @@ cube::cube(const int invars, const int ingrid, const int indim )
 	ng=ingrid;
 	grid = new tcoord[dim];
 	for (int k=0; k<dim; k++)
+	{
 		grid[k].reserve(ng);
+	}
 //	cout << "Maximum size vector" << grid[0].max_size() << "\n Current size" << grid[0].size() << "\n Capacity" << grid[0].capacity() << "\n";
 	vars = new tphysvar[nvars];
 	for (int k=0; k<nvars; k++)
+	{
 		vars[k].reserve(ng);
+	}	
 };
 
 cube::~cube()
@@ -126,8 +128,11 @@ void cube::fillcube()
 		                        z_or = .5; // does not matter which value is taken here, because it is the singular point of the coordinate system
 		                }
 		                if (z_or<0) z_or++;  // atan returns a value between -pi/2 and pi/2
-				vars[0][i]=density(r,phi,z_or);
-				vars[1][i]=temperature(r,phi,z_or);
+				vars[0].push_back(density(r,phi,z_or));
+				vars[1].push_back(temperature(r,phi,z_or));
+				vars[2].push_back(0.);
+				vars[3].push_back(0.);
+				vars[4].push_back(0.);
 			}
 			break;
 		case empty:
