@@ -1,4 +1,4 @@
-pro lineongrid_int_tab, rh_s, te_s, wave=wave,nwave=nwave,minwave=minwave,maxwave=maxwave,ion=ion, w0=w0, intens=intens
+pro lineongrid_int_tab, rh_s, te_s, wave=wave,nwave=nwave,minwave=minwave,maxwave=maxwave,ion=ion, w0=w0, logt=logt,watom=watom,intens=intens
 
 if n_params(0) lt 1 then begin
    print,'Check input directories'
@@ -92,8 +92,7 @@ Tlg_sorted = logT[ne_sort]
 
 ; Read tabulated G(ne,T) values for given number density (n_e_lg) and
 ; temperature (t_lg) arrays
-lookup_goft, ion=ion, w0=w0, n_e_lg=n_e_lg, logt=t_lg, goft_mat=goft_mat
-
+lookup_goft, ion=ion, w0=w0, n_e_lg=n_e_lg, logt=t_lg, goft_mat=goft_mat,watom=watom
 elements,w0=w0, ion=ion, logTm=logTm, enum=enum, inum=inum, ind=ind
 
 goft=n_e*0.
@@ -105,7 +104,7 @@ intens=n_e*0.
 for i=0.,n_elements(n_e)-1 do begin
    lc_ne = ([min(abs(n_e_lg-alog10(n_e_sorted[i]))),!c])[1]
    lc_te = ([min(abs(t_lg-tlg_sorted[i])),!c])[1]
-   goft[ne_sort[i]] = interpol(goft_mat[lc_ne,*],t_lg,tlg_sorted[i])
+   if tlg_sorted[i] lt min(t_lg) or tlg_sorted[i] gt max(t_lg) then goft[ne_sort[i]] = 0. else goft[ne_sort[i]] = interpol(goft_mat[lc_ne,*],t_lg,tlg_sorted[i])
    intens[ne_sort[i]] = goft[ne_sort[i]]*n_e_sorted[i]^2*line_abunds
    print,string(13b)+' % finished: ',float(i)*100./(n_elements(n_e)-1),format='(a,f4.0,$)'
 endfor

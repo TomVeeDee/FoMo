@@ -137,7 +137,7 @@ pro prl_slices,set=set, mua_d=mua_d, ion=ion, w0=w0, imaging=imaging, dx=dx, dy=
         print,'Doing slice:',slize
         params, set=set, it=ntsl, ix=nxsl, ro=ro, re=re, valfven=va, vae=vae, co=co, ce=ce, aa=aa, r0=r0, gridx=gridx, gridy=gridy, gridz=gridz, dimx=dimx, dimy=dimy, dimz=dimz, tarr=tarr, kafix=kafix, ka_rt=ka_rt, wk_rt=wk_rt, te=te, rho=rho, vr=vr, vz=vz, velx=velx, vely=vely, velz=velz
         if imaging eq 1 then begin
-           lineongrid_int_tab, rho, te, wave=wave,nwave=nwave,minwave=minwave,maxwave=maxwave,ion=ion, w0=w0, intens=intens
+           lineongrid_int_tab, rho, te, wave=wave,nwave=nwave,minwave=minwave,maxwave=maxwave,ion=ion, w0=w0, logt=logt, watom=watom,intens=intens
         endif else begin
            lineongrid_goft_tab, rho, te, wave=wave,nwave=nwave,minwave=minwave,maxwave=maxwave,ion=ion, w0=w0, emission_goft=emission_goft,wayemi=2
         endelse
