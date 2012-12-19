@@ -13,8 +13,6 @@
 
 
 
-// This should become part of the input options, or based on the choice of line position.
-const char* chiantifile="chiantitables/goft_table_fe_12_0194.dat";
 
 // Physical constants
 const double alphaconst=1.0645; // alpha=\sqrt{2\pi}/2/\sqrt{2ln2}
@@ -96,6 +94,11 @@ tphysvar goft(const tphysvar logT, const tphysvar logrho, const cube gofttab)
 	return g;
 }
 
+double abundfromchianti(const char* abundfile, const string & ion)
+{
+	// read the abundfile and return the value that goes with the ion string
+}
+
 cube readgoftfromchianti(const char* chiantifile, string & ion, double & lambda0, double & atweight)
 {
 	ifstream in(chiantifile);
@@ -110,6 +113,7 @@ cube readgoftfromchianti(const char* chiantifile, string & ion, double & lambda0
 	double field;
 	tphysvar temprho, tempt, tempgoft;
 
+	cout << "Reading G(T) from " << chiantifile << " ...";
 	// read in header (ion name, rest wavelength, atomic weight, number of grid points in density direction, number of grid points in temperature direction)
 	in >> ion;
 	in >> lambda0;
@@ -156,6 +160,9 @@ cube readgoftfromchianti(const char* chiantifile, string & ion, double & lambda0
 	
 	gofttab.setgrid(tempgrid);
 	gofttab.setvar(0,tempgoft);
+
+	cout << "Done!" << endl;
+	cout.flush();
 
 	return gofttab;
 }

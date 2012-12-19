@@ -109,3 +109,5 @@ extern void builtingrid(const int, const int, const int, tgrid);
 
 // external functions from emissioncube.cpp
 extern cube emissionfromdatacube(cube);
+extern char* chiantifile;
+extern char* abundfile;

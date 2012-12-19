@@ -8,12 +8,17 @@
 int reuse = 0, png = 0, mpeg = 0, array = 0;
 double length = 200, width = 5, magfield = 15, rhoint = 1.4, contrast = 3, thickness = 2, alpha = 0.78, ampl = 0.2, phase=0.;
 double l=M_PI/6., b=M_PI/3.;
+char* chiantifile="chiantitables/goft_table_fe_12_0194.dat";
+char* abundfile="test";
 
 void printusage(const char* programname){
 // print the usage of the program
 	printf("Usage: %s [--reuse] [--help] [--parameter value] \n\n",programname);
 	printf("  --reuse       Reuse the previous results. Setting the physical parameters does not have any effect!\n");
 	printf("  --help        Print this message\n\n");
+	printf("CHIANTI parameters:\n");
+	printf("  --goftfile   Filename containing the table with the G(T) written by CHIANTI\n");
+	printf("  --abundfile  Filename containing the table with the abundances\n\n");
 	printf("Equilibrium parameters:\n");
 	printf("  --length      Length (in Mm)\n");
 	printf("  --width       Width (in Mm)\n");
@@ -41,9 +46,11 @@ void getarg(int argc, char* argv[])
 {
 // Get arguments and set parameters
 // If reuse is different from 0, everything else is unused
-	char* optstr="L:w:t:c:a:B:i:l:q:GMy:r?";
+	char* optstr="C:A:L:w:t:c:a:B:i:l:q:GMy:r?";
 	struct option longopts[]={
 // name, require argument, flag, value
+		{"goftfile",1,0,'C'},
+		{"abundfile",1,0,'A'},
 		{"length",1,0,'L'},
 		{"width",1,0,'w'},
 		{"thickness",1,0,'t'},
@@ -70,6 +77,13 @@ void getarg(int argc, char* argv[])
 	int opt = getopt_long(argc, argv, optstr, longopts, &longindex);
 	while (opt != -1){
 		switch (opt){
+			// CHIANTI parameters
+			case 'C':
+				chiantifile=optarg;
+				break;
+			case 'A':
+				abundfile=optarg;
+				break;
 			// physical parameters
 			case 'L':
 				if (reuse!=1) length = atof(optarg);
