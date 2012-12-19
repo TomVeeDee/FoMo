@@ -63,12 +63,15 @@ tphysvar goft(const tphysvar logT, const tphysvar logrho, const cube gofttab)
 	tphysvar::const_iterator logtit=logT.begin();
 	tphysvar::const_iterator logrhoit=logrho.begin();
 	tphysvar g;
-	int i=0;
 	int ng=logT.size();
-	cout << "Doing interpolation:";
-	for (; logtit != logT.end(); ++logtit)
+	// the reservation of the size is necessary, otherwise the vector reallocates in the openmp threads with segfaults as consequence
+	g.reserve(ng);
+	cout << "Doing G(T) interpolation:";
+#pragma omp parallel for 
+	for (long i=0; i<ng; i++)
 	{
-		Point p(*logtit,*logrhoit);
+	//	cout << "test" << i << endl;
+		Point p(logT[i],logrho[i]);
 // a possible linear interpolation, perhaps we should check if this eats a lot of time
 // see http://www.cgal.org/Manual/latest/doc_html/cgal_manual/Interpolation/Chapter_main.html#Subsection_70.3.3
 /*  
@@ -89,8 +92,6 @@ tphysvar goft(const tphysvar logT, const tphysvar logrho, const cube gofttab)
 		g.push_back(funcval.first);
 		
 		progressbar(i,0,ng-1);
-		++logrhoit;
-		i++;
 	}
 	cout << "Done!" << endl;
 
