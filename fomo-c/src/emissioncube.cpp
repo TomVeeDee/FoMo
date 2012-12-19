@@ -14,7 +14,7 @@
 
 
 // This should become part of the input options, or based on the choice of line position.
-const char* chiantifile="chiantitables/goft_table_f2rt_171.dat";
+const char* chiantifile="chiantitables/goft_table_fe_9_0171.dat";
 
 // Physical constants
 const double alphaconst=1.0645; // alpha=\sqrt{2\pi}/2/\sqrt{2ln2}
@@ -106,35 +106,46 @@ cube readgoftfromchianti(const char* chiantifile, string & ion, double & lambda0
 	}
 
 	double templogrho;
-	int nt;
-	int nrho=0;
+	double nrhotemp;
+	int nrho, nt;
 	double field;
 	tphysvar temprho, tempt, tempgoft;
-// this should be inserted after Patrick has updated the G(T) tables.
-//	in >> ion;
-//	in >> lambda0;
-//	in >> atweight;
-	ion="feIX";
-	lambda0=171.073;
-	atweight=56.;
+
+	// read in header (ion name, rest wavelength, atomic weight, number of grid points in density direction, number of grid points in temperature direction)
+	in >> ion;
+	in >> lambda0;
+	in >> atweight;
+	in >> nrhotemp;
+	nrho=round(nrhotemp);
+	in >> nt;
+
+	// read in the temperature grid points
+	tphysvar tvec;
+
+	for (int i=0; i<nt; i++)
+	{
+		in >> field;
+		tvec.push_back(field);
+	}
+
 	while (in >> templogrho)
 	{
-		nrho++;
-		in >> nt;
 		for (int i=0; i<nt; i++)
 		{
 			in >> field;
-			tempt.push_back(field);
+			// we also need to push back the density and temperature (iterate over the temperature tvec with iterators?)
+			tempt.push_back(tvec[i]);
 			temprho.push_back(templogrho);
-		}
-		for (int i=0; i<nt; i++)
-		{
-			in >> field;
 			tempgoft.push_back(field);
 		}
 	}
 
-	int ntnrho=nt*nrho;
+	unsigned int ntnrho=nt*nrho;
+	if (tempt.size() != ntnrho) 
+	{
+		cout << "Error: CHIANTI table not read in properly!"<< endl;
+		exit(EXIT_FAILURE);
+	}
 	int nvars=1; // G(T) and width
 	cube gofttab(nvars,ntnrho,2); //only 2 dimensions
 	gofttab.settype(gofttable);

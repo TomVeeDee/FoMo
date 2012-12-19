@@ -63,7 +63,7 @@ LDFLAGS+=" $libavcodec_LIBS"
 AC_CHECK_HEADER([gsl/gsl_const_mksa.h],[],AC_MSG_ERROR([GSL physical constants not found]))
 AC_CHECK_HEADER([CGAL/Delaunay_triangulation_2.h],[],AC_MSG_ERROR([CGAL Delaunay headers not found]))
 #AC_SEARCH_LIBS(a_function_what?,[CGAL],[],AC_MSG_ERROR([CGAL libraries not found]))
-LDFLAGS+="-lCGAL"
+LDFLAGS+="-lCGAL -lgmp"
 CXXFLAGS+="-frounding-math"
 
 # write the Makefiles
