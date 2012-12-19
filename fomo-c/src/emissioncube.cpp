@@ -14,7 +14,7 @@
 
 
 // This should become part of the input options, or based on the choice of line position.
-const char* chiantifile="chiantitables/goft_table_fe_9_0171.dat";
+const char* chiantifile="chiantitables/goft_table_fe_12_0194.dat";
 
 // Physical constants
 const double alphaconst=1.0645; // alpha=\sqrt{2\pi}/2/\sqrt{2ln2}
@@ -69,18 +69,19 @@ tphysvar goft(const tphysvar logT, const tphysvar logrho, const cube gofttab)
 	for (int i=0; i<ng; i++)
 	{
 		Point p(logT[i],logrho[i]);
-// a possible linear interpolation, perhaps we should check if this eats a lot of time
+// a possible linear interpolation
 // see http://www.cgal.org/Manual/latest/doc_html/cgal_manual/Interpolation/Chapter_main.html#Subsection_70.3.3
-/*  
-  		std::vector< std::pair< Point, Coord_type > > coords;
+  
+/*  		std::vector< std::pair< Point, Coord_type > > coords;
 		Coord_type norm = CGAL::natural_neighbor_coordinates_2(DT, p,std::back_inserter(coords)).second;
 
 		Coord_type res =  CGAL::linear_interpolation(coords.begin(), coords.end(),
                                                norm,
                                                Value_access(function_values));	
-		g.push_back(res); */
+		g[i]=res; */
 
 // let's do nearest neighbour
+// it is much faster than the linear interpolation
 
 		Delaunay_triangulation::Vertex_handle v=DT.nearest_vertex(p);
 		Value_access tempmap=Value_access(function_values);
@@ -131,7 +132,7 @@ cube readgoftfromchianti(const char* chiantifile, string & ion, double & lambda0
 		for (int i=0; i<nt; i++)
 		{
 			in >> field;
-			// we also need to push back the density and temperature (iterate over the temperature tvec with iterators?)
+			// we also need to push back the density and temperature
 			tempt.push_back(tvec[i]);
 			temprho.push_back(templogrho);
 			tempgoft.push_back(field);
