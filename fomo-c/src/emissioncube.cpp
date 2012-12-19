@@ -60,17 +60,14 @@ tphysvar goft(const tphysvar logT, const tphysvar logrho, const cube gofttab)
         Delaunay_triangulation DT;
 	DT.insert(delaunaygrid.begin(),delaunaygrid.end());
 
-	tphysvar::const_iterator logtit=logT.begin();
-	tphysvar::const_iterator logrhoit=logrho.begin();
 	tphysvar g;
 	int ng=logT.size();
 	// the reservation of the size is necessary, otherwise the vector reallocates in the openmp threads with segfaults as consequence
-	g.reserve(ng);
+	g.resize(ng);
 	cout << "Doing G(T) interpolation:";
 #pragma omp parallel for 
-	for (long i=0; i<ng; i++)
+	for (int i=0; i<ng; i++)
 	{
-	//	cout << "test" << i << endl;
 		Point p(logT[i],logrho[i]);
 // a possible linear interpolation, perhaps we should check if this eats a lot of time
 // see http://www.cgal.org/Manual/latest/doc_html/cgal_manual/Interpolation/Chapter_main.html#Subsection_70.3.3
@@ -89,7 +86,7 @@ tphysvar goft(const tphysvar logT, const tphysvar logrho, const cube gofttab)
 		Value_access tempmap=Value_access(function_values);
 		Point nearest=v->point();
 		std::pair<Coord_type,bool> funcval=tempmap(nearest);
-		g.push_back(funcval.first);
+		g[i]=funcval.first;
 		
 		progressbar(i,0,ng-1);
 	}
