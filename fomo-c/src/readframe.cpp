@@ -3,13 +3,65 @@
 #include <cstdlib>
 #include <cstdio>
 
+tphysvar pow(const double base, tphysvar const & in)
+{
+	tphysvar out;
+	int s=in.size();
+	out.resize(s);
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
+	for (int i=0; i<s; i++)
+	{
+		out[i]=pow(base,in[i]);
+	}
+
+	return out;
+}
+
+tphysvar operator/(tphysvar const & a, tphysvar const & b)
+{
+	tphysvar out;
+	int s=a.size();
+	out.resize(s);
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
+	for (int i=0; i<s; i++)
+	{
+		out[i]=a[i]/b[i];
+	}
+
+	return out;
+}
+
+tphysvar operator*(tphysvar const & a, tphysvar const & b)
+{
+	tphysvar out;
+	int s=a.size();
+	out.resize(s);
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
+	for (int i=0; i<s; i++)
+	{
+		out[i]=a[i]*b[i];
+	}
+
+	return out;
+}
+
 tphysvar log10(tphysvar const & in)
 {
 	tphysvar out;
-	tphysvar::const_iterator init=in.begin();
-	for (; init != in.end(); ++init)
+	int s=in.size();
+	out.resize(s);
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
+	for (int i=0; i<s; i++)
 	{
-		out.push_back(log10(*init));
+		out[i]=log10(in[i]);
 	}
 	return out;
 }
@@ -17,10 +69,14 @@ tphysvar log10(tphysvar const & in)
 tphysvar sqrt(tphysvar const & in)
 {
 	tphysvar out;
-	tphysvar::const_iterator init=in.begin();
-	for (; init != in.end(); ++init)
+	int s=in.size();
+	out.resize(s);
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
+	for (int i=0; i<s; i++)
 	{
-		out.push_back(sqrt(*init));
+		out[i]=sqrt(in[i]);
 	}
 	return out;
 }
@@ -28,10 +84,14 @@ tphysvar sqrt(tphysvar const & in)
 tphysvar operator*(double const& c, tphysvar const& in)
 {
 	tphysvar out;
-	tphysvar::const_iterator init=in.begin();
-	for (; init != in.end(); ++init)
+	int s=in.size();
+	out.resize(s);
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
+	for (int i=0; i<s; i++)
 	{
-		out.push_back(c*(*init));
+		out[i]=c*in[i];
 	}
 	return out;
 }
@@ -103,7 +163,17 @@ void cube::fillcube()
 {
 	switch (qtype) {
 		case builtineq:
+			cout << "Setting up built-in equilibrium ... ";
+			cout.flush();
 			builtingrid(eqx, eqy, eqz, grid);
+			for (int i=0; i<nvars; i++)
+			{
+				vars[i].resize(ng);
+			}
+
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
 			for (int i=0; i<ng; i++)
 			{
 				double xacc=grid[0][i];
@@ -128,12 +198,14 @@ void cube::fillcube()
 		                        z_or = .5; // does not matter which value is taken here, because it is the singular point of the coordinate system
 		                }
 		                if (z_or<0) z_or++;  // atan returns a value between -pi/2 and pi/2
-				vars[0].push_back(density(r,phi,z_or));
-				vars[1].push_back(temperature(r,phi,z_or));
-				vars[2].push_back(0.);
-				vars[3].push_back(0.);
-				vars[4].push_back(0.);
+				vars[0][i]=density(r,phi,z_or);
+				vars[1][i]=temperature(r,phi,z_or);
+				vars[2][i]=0.;
+				vars[3][i]=0.;
+				vars[4][i]=0.;
 			}
+			cout << "Done!" << endl;
+			cout.flush();
 			break;
 		case empty:
 			cout << "Error: first set the type of the equilibrium with datacube.settype(EqType)\n";
@@ -144,4 +216,4 @@ void cube::fillcube()
 			exit(EXIT_FAILURE);
 			break;
 	}
-};
+}

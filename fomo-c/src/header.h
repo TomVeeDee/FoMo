@@ -47,6 +47,9 @@ class cube
 };
 
 //external functions in readframe.cpp
+extern tphysvar pow(const double, tphysvar const&);
+extern tphysvar operator/(tphysvar const&, tphysvar const&);
+extern tphysvar operator*(tphysvar const&, tphysvar const&);
 extern tphysvar log10(tphysvar const&);
 extern tphysvar operator*(double const &, tphysvar const &);
 extern tphysvar sqrt(tphysvar const&);

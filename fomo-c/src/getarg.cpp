@@ -9,7 +9,7 @@ int reuse = 0, png = 0, mpeg = 0, array = 0;
 double length = 200, width = 5, magfield = 15, rhoint = 1.4, contrast = 3, thickness = 2, alpha = 0.78, ampl = 0.2, phase=0.;
 double l=M_PI/6., b=M_PI/3.;
 char* chiantifile="chiantitables/goft_table_fe_12_0194.dat";
-char* abundfile="test";
+char* abundfile="/users/cpa/tomvd/ssw/packages/chianti/dbase/abundance/sun_coronal.abund";
 
 void printusage(const char* programname){
 // print the usage of the program

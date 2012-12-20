@@ -20,6 +20,51 @@ const double boltzmannconstant=GSL_CONST_MKSA_BOLTZMANN; // Boltzmann constant
 const double massproton=GSL_CONST_MKSA_MASS_PROTON; // hydrogen mass
 const double speedoflight=GSL_CONST_MKSA_SPEED_OF_LIGHT; // speed of light
 
+double abundfromchianti(const char* abundfile, const string & ion)
+{
+	// read the abundfile and return the value that goes with the ion string
+	ifstream in(abundfile);
+	if (!in) {
+		cout << "Error: no CHIANTI abundance file exists\n";
+		exit(EXIT_FAILURE);
+	}
+	cout << "Reading abundances from " << abundfile << " ... ";
+	cout.flush();
+
+	int nelement;
+	double value,hvalue,ionvalue;
+	hvalue=0;
+	ionvalue=0;
+	string element;
+	size_t endion=ion.find_first_of("_");
+	string ionname=ion.substr(0,endion);
+	in >> nelement;
+	while (nelement >= 0)
+	{
+		in >> value;
+		in >> element;
+		if ((element.size() == 1) && (strncasecmp(element.c_str(),"h",1) == 0))
+		{
+			hvalue=value;
+		}
+		if ((element.size() == ionname.size()) && (strncasecmp(element.c_str(),ionname.c_str(),ionname.size()) == 0))
+		{
+			ionvalue=value;
+		}
+		in >> nelement;
+	}
+	if ( (hvalue == 0.) || (ionvalue == 0.) ) 
+	{
+		cout << "Error: invalid CHIANTI abundance file\n";
+		exit(EXIT_FAILURE);
+	}
+	cout << "Done!" << endl;
+	cout.flush();
+
+	value = pow(10.,(ionvalue - hvalue));
+
+	return value;
+}
 
 tphysvar goft(const tphysvar logT, const tphysvar logrho, const cube gofttab)
 {
@@ -63,7 +108,9 @@ tphysvar goft(const tphysvar logT, const tphysvar logrho, const cube gofttab)
 	// the reservation of the size is necessary, otherwise the vector reallocates in the openmp threads with segfaults as consequence
 	g.resize(ng);
 	cout << "Doing G(T) interpolation:";
+#ifdef _OPENMP
 #pragma omp parallel for 
+#endif
 	for (int i=0; i<ng; i++)
 	{
 		Point p(logT[i],logrho[i]);
@@ -94,11 +141,6 @@ tphysvar goft(const tphysvar logT, const tphysvar logrho, const cube gofttab)
 	return g;
 }
 
-double abundfromchianti(const char* abundfile, const string & ion)
-{
-	// read the abundfile and return the value that goes with the ion string
-}
-
 cube readgoftfromchianti(const char* chiantifile, string & ion, double & lambda0, double & atweight)
 {
 	ifstream in(chiantifile);
@@ -114,6 +156,7 @@ cube readgoftfromchianti(const char* chiantifile, string & ion, double & lambda0
 	tphysvar temprho, tempt, tempgoft;
 
 	cout << "Reading G(T) from " << chiantifile << " ...";
+	cout.flush();
 	// read in header (ion name, rest wavelength, atomic weight, number of grid points in density direction, number of grid points in temperature direction)
 	in >> ion;
 	in >> lambda0;
@@ -203,19 +246,21 @@ cube emissionfromdatacube(cube datacube)
 	double atweight=1;
 	cube gofttab=readgoftfromchianti(chiantifile,ion,lambda0,atweight);
 
+// fit the G(T) function to the data points
 	tphysvar fittedgoft=goft(logT,logrho,gofttab);
-	string varname="goft";
-	writearray(fittedgoft,varname);
-	varname="logt";
-	writearray(logT,varname);
-	varname="logrho";
-	writearray(logrho,varname);
-
-	emission.setvar(0,fittedgoft);
-
+// calculate the line width at each data point
 	tphysvar fittedwidth=linefwhm(T,lambda0,atweight);
 
+// calculate the maximum of the emission profile at each grid point
+	double abund=abundfromchianti(abundfile, ion);
+	tphysvar fittedemission=abund/alphaconst*pow(10.,2.*logrho)*fittedgoft;
+	fittedemission=fittedemission/fittedwidth;
+
+// load the emission and width into the emission-cube variable	
+	emission.setvar(0,fittedemission);
+
 	emission.setvar(1,fittedwidth);
+
 
 	return emission;
 };
