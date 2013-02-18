@@ -1,9 +1,9 @@
 
-pro datacubes_wt, rho_int=ro, rho_ext=re, valfv_int=va, valv_ext=vae, cs_int=co, cs_ext=ce, radius = aa, gridx=gridx, gridz=gridz, dimt=dimt, tarr=tarr, ka_rt=ka_rt, kafix=kafix, wk_rt=wk_rt, vr_t=vr_t, vz_t=vz_t, rtot_t=rtot_t, te_t=te_t, model=model, vr_cube, vz_cube, te_cube, rh_cube, br_cube, bz_cube, sngcub=sngcub, mag=mag, smooth=smooth, save_cubes=save_cubes
+pro datacubes_wt, rho_int=ro, rho_ext=re, valfv_int=va, valv_ext=vae, cs_int=co, cs_ext=ce, b_int=bo, b_ext=be, radius = aa, gridx=gridx, gridz=gridz, dimt=dimt, tarr=tarr, ka_rt=ka_rt, kafix=kafix, wk_rt=wk_rt, vr_t=vr_t, vz_t=vz_t, rtot_t=rtot_t, te_t=te_t, br_t=br_t, bz_t=bz_t, model=model, vr_cube, vz_cube, te_cube, rh_cube, br_cube, bz_cube, sngcub=sngcub, mag=mag, smooth=smooth, save_cubes=save_cubes
 
 if n_params(0) lt 1 then begin
    print,'Check output directories first'
-   print,'datacubes_wt,rho_int=ro, rho_ext=re, valfv_int=va, valv_ext=vae, cs_int=co, cs_ext=ce, radius=aa, gridx=gridx, gridz=gridz, dimt=dimt, tarr=tarr, ka_rt=ka_rt, kafix=kafix, wk_rt=wk_rt, vr_t=vr_t, vz_t=vz_t, rtot_t=rtot_t, te_t=te_t, model=model, vr_cube, vz_cube, te_cube, rh_cube [,sngcub=sngcub,mag=mag,smooth=smooth, save_cubes=save_cubes]'
+   print,'datacubes_wt,rho_int=ro, rho_ext=re, valfv_int=va, valv_ext=vae, cs_int=co, cs_ext=ce, b_int=bo, b_ext=be, radius=aa, gridx=gridx, gridz=gridz, dimt=dimt, tarr=tarr, ka_rt=ka_rt, kafix=kafix, wk_rt=wk_rt, vr_t=vr_t, vz_t=vz_t, rtot_t=rtot_t, te_t=te_t, br_t=br_t, bz_t=bz_t, model=model, vr_cube, vz_cube, te_cube, rh_cube [,sngcub=sngcub,mag=mag,smooth=smooth, save_cubes=save_cubes]'
    return
 endif
 
