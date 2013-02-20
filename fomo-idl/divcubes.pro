@@ -2,7 +2,7 @@
 
 pro divcubes,dimt=dimt,dimx=dimx,dimy=dimy,model=model,sngcub=sngcub,mag=mag,smooth=smooth
 
-if n_params(0) lt 1 then begin
+if keyword_set(model) eq 0 then begin
    print,'Check input and output directories first'
    print,'divcubes,dimt=dimt,dimx=dimx,dimy=dimy,model=model[,mag=mag,smooth=smooth]'
    return
