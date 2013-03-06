@@ -2,7 +2,7 @@
 
 pro divcubes,dimt=dimt,dimx=dimx,dimy=dimy,model=model,sngcub=sngcub,mag=mag,smooth=smooth
 
-if keyword_set(model) eq 0 then begin
+if n_params(0) lt 1 then begin
    print,'Check input and output directories first'
    print,'divcubes,dimt=dimt,dimx=dimx,dimy=dimy,model=model[,mag=mag,smooth=smooth]'
    return
@@ -49,17 +49,6 @@ endif
            if sngcub eq 'all' or sngcub eq 'vz' then vz = vz_cube[j,*,*]
            if (keyword_set(mag) and (sngcub eq 'all' or sngcub eq 'bz')) then bz = bz_cube[j,*,*]
            if (keyword_set(mag) and (sngcub eq 'all' or sngcub eq 'br')) then br = br_cube[j,*,*]
-           save,te,rho,vr,vz,br,bz,filename=savedir+'slice_'+sngcub+'_'+kanm+'_'+string(i,format='(i3.3)')+'t_'+string(j,format='(i3.3)')+'x'+'.sav'
-        endfor
-     endif
-     if sm eq 1 then begin
-        for j=0,dimx/2 do begin
-           if sngcub eq 'all' or sngcub eq 'te' then te = te_cube_sm[j,*,*]
-           if sngcub eq 'all' or sngcub eq 'rh' then rho = rh_cube_sm[j,*,*]
-           if sngcub eq 'all' or sngcub eq 'vr' then vr = vr_cube_sm[j,*,*]
-           if sngcub eq 'all' or sngcub eq 'vz' then vz = vz_cube_sm[j,*,*]
-           if (keyword_set(mag) and (sngcub eq 'all' or sngcub eq 'bz')) then bz = bz_cube_sm[j,*,*]
-           if (keyword_set(mag) and (sngcub eq 'all' or sngcub eq 'br')) then br = br_cube_sm[j,*,*]
            save,te,rho,vr,vz,br,bz,filename=savedir+'slice_'+sngcub+'_'+kanm+'_'+string(i,format='(i3.3)')+'t_'+string(j,format='(i3.3)')+'x'+'.sav'
         endfor
      endif
