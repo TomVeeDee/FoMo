@@ -80,6 +80,7 @@ print,'phase speed: ',wk_rt[kafix]*100,' km/s'
 print,'length of loop: ',z_u/aa,' Mm'
 print,'Period of oscillation: ',t_u/60,' min'
 
+print,'Type .c to continue'
 stop
 
 ; quantities in time:
