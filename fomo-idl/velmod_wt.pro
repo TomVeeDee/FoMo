@@ -68,7 +68,7 @@ kafix = kfixar[kfloc]
 t_u = 2*!pi/(wk_rt[kafix]*ka_rt[kafix])*aa
 tarr = findgen(dimt)/(dimt-1.)*t_u
 if n eq 0 then z_u = 2*!pi/(ka_rt[kafix])*aa else z_u = !pi/(ka_rt[kafix])*aa
-if keyword_set(uniform) then dimz = round(z_u*dimr/gridr[n_elements(gridr)-1]) else dimz = dimx
+if keyword_set(uniform) then dimz = round(z_u*dimx/gridx[dimx-1]) else dimz = dimx
 gridz = findgen(dimz)/(dimz-1.)*z_u
 if n eq 0 then diml = 1 else diml = dimx
 l_u = 2*!pi
