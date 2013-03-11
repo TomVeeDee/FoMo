@@ -1,7 +1,7 @@
-pro velmod_wt, waka_root=waka_root, ka_root=ka_root, gridx=gridx, gridr=gridr, dimt=dimt, reg3=reg3, vr_md=vr_md, aa, wk_rt, ka_rt, kafix, diml, dimz, theta, tarr, gridz, vr_t, vt_t, vz_t, rr_t, rtot_t, ptot_t, dispr, te_t, br_t, bt_t, bz_t, mag=mag, nmode=nmode, no_standing=no_standing,uniform=uniform
+pro velmod_wt, waka_root=waka_root, ka_root=ka_root, gridx=gridx, gridr=gridr, dimt=dimt, reg3=reg3, vr_md=vr_md, aa, wk_rt, ka_rt, kafix, diml, dimz, theta, tarr, gridz, vr_t, vt_t, vz_t, rr_t, rtot_t, ptot_t, dispr, te_t, br_t, bt_t, bz_t, btot_t, mag=mag, nmode=nmode, no_standing=no_standing,uniform=uniform
 
 if n_params(0) lt 1 then begin
-   print,'velmod_wt, waka_root=waka_root, ka_root=ka_root, gridx=gridx, gridr=gridr, dimt=dimt, reg3=reg3, vr_md=vr_md, aa, wk_rt, ka_rt, kafix, diml, dimz, theta, tarr, gridz, vr_t, vt_t, vz_t, rr_t, rtot_t, ptot_t, dispr, te_t, br_t, bt_t, bz_t, mag=mag, nmode=nmode, no_standing=no_standing,uniform=uniform'
+   print,'velmod_wt, waka_root=waka_root, ka_root=ka_root, gridx=gridx, gridr=gridr, dimt=dimt, reg3=reg3, vr_md=vr_md, aa, wk_rt, ka_rt, kafix, diml, dimz, theta, tarr, gridz, vr_t, vt_t, vz_t, rr_t, rtot_t, ptot_t, dispr, te_t, br_t, bt_t, bz_t, btot_t, mag=mag, nmode=nmode, no_standing=no_standing,uniform=uniform'
    return
 endif
 
@@ -96,6 +96,7 @@ if keyword_set(mag) then begin
    br_t = fltarr(dimr,diml,dimz,dimt)
    bt_t = fltarr(dimr,diml,dimz,dimt)
    bz_t = fltarr(dimr,diml,dimz,dimt)
+   btot_t = fltarr(dimr,diml,dimz,dimt)
 endif
 
 nummor2 = (co^2-wk_rt^2)*(va^2-wk_rt^2)
@@ -149,6 +150,7 @@ if standing eq 1 then begin
                         bt_t[i,l,j,k] = amp*bo/wk_rt[kafix]*(-(va^2+co^2-va^2*co^2/wk_rt[kafix]^2)*aa0*n*beselj(sqrt(sigi*mor2),n,/double)/((wk_rt[kafix]*ka_rt[kafix])^2-va^2*ka_rt[kafix]^2)/abs(displac1)*aa^2)*sin(wk_rt[kafix]*ka_rt[kafix]*tarr[k]/aa)*sin(n*theta[l])*cos(ka_rt[kafix]*gridz[j]/aa)
                      endelse
                      bz_t[i,l,j,k] = amp*bo/wk_rt[kafix]/ka_rt[kafix]*aa*(1.-co^2/wk_rt[kafix]^2)*aa0*beselj(sqrt(sigi*mor2),n,/double)*sin(wk_rt[kafix]*ka_rt[kafix]*tarr[k]/aa)*cos(n*theta[l])*sin(ka_rt[kafix]*gridz[j]/aa)
+                     btot_t[i,l,j,k] = sqrt(br_t[i,l,j,k]^2+bt_t[i,l,j,k]^2+bz_t[i,l,j,k]^2+2*bo*bz_t[i,l,j,k]+bo^2)
                   endif
                endif else begin
 ;		  if i ne 0 then if abs(gridr[i-1]-dispr[i-1,l,j,k]) lt aa then loca = i-1
@@ -171,12 +173,13 @@ if standing eq 1 then begin
                      br_t[i,l,j,k] = amp*be/wk_rt[kafix]*((vae^2+ce^2)*(wk_rt[kafix]^2-cte^2)/(wk_rt[kafix]^2*(wk_rt[kafix]^2-vae^2))*aa1*sqrt(sigk*mea2[kafix]/aa^2)*dbeselk(sqrt(sigk*mer2),n)*(aa/ka_rt[kafix])^2)*sin(wk_rt[kafix]*ka_rt[kafix]*tarr[k]/aa)*cos(n*theta[l])*cos(ka_rt[kafix]*gridz[j]/aa)
                      bt_t[i,l,j,k] = amp*be/wk_rt[kafix]*(-(vae^2+ce^2-vae^2*ce^2/wk_rt[kafix]^2)*aa1*n*beselk(sqrt(sigk*mer2),n,/double)/((wk_rt[kafix]*ka_rt[kafix])^2-vae^2*ka_rt[kafix]^2)/abs(displac1)*aa^2)*sin(wk_rt[kafix]*ka_rt[kafix]*tarr[k]/aa)*sin(n*theta[l])*cos(ka_rt[kafix]*gridz[j]/aa)
                      bz_t[i,l,j,k] = amp*(be/wk_rt[kafix]/ka_rt[kafix]*aa*(1.-ce^2/wk_rt[kafix]^2)*aa1*beselk(sqrt(sigk*mer2),n,/double))*sin(wk_rt[kafix]*ka_rt[kafix]*tarr[k]/aa)*cos(n*theta[l])*sin(ka_rt[kafix]*gridz[j]/aa)
+                     btot_t[i,l,j,k] = sqrt(br_t[i,l,j,k]^2+bt_t[i,l,j,k]^2+bz_t[i,l,j,k]^2+2*be*bz_t[i,l,j,k]+be^2)
                   endif
                endelse
             endfor
          endfor      
       endfor 
-      if n ne 0 then print,string(13b)+' % finished: ',float(k)*100./(dimt-1),format='(a,f4.0,$)'
+      print,string(13b)+' % finished: ',float(k)*100./(dimt-1),format='(a,f4.0,$)'
 ;stop
    endfor
 endif else begin
@@ -218,6 +221,7 @@ if keyword_set(mag) eq 1 then begin
    br_t = reform(br_t)
    bt_t = reform(bt_t)
    bz_t = reform(bz_t)
+   btot_t = reform(btot_t)
 endif
 
 end

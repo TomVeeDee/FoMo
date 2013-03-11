@@ -1,8 +1,8 @@
 
-pro vel_modes, waka_root=waka_root, ka_root=ka_root, dimx=dimx, reg0, reg1, reg2, reg3, reg4, vr_md, vt_md, vz_md, pr_md, ptot_md, rr_md, br_md, bt_md, bz_md, gridr=gridr, gridx=gridx, nmode=nmode
+pro vel_modes, waka_root=waka_root, ka_root=ka_root, dimx=dimx, reg0, reg1, reg2, reg3, reg4, vr_md, vt_md, vz_md, pr_md, ptot_md, rr_md, br_md, bt_md, bz_md, btot_md, gridr=gridr, gridx=gridx, nmode=nmode
 
 if n_params(0) lt 1 then begin
-   print,'vel_modes, waka_root=waka_root, ka_root=ka_root, dimx=dimx, reg0, reg1, reg2, reg3, reg4, vr_md, vt_md, vz_md, pr_md, ptot_md, rr_md, br_md, bt_md, bz_md, gridr=gridr, gridx=gridx, nmode=nmode'
+   print,'vel_modes, waka_root=waka_root, ka_root=ka_root, dimx=dimx, reg0, reg1, reg2, reg3, reg4, vr_md, vt_md, vz_md, pr_md, ptot_md, rr_md, br_md, bt_md, bz_md, btot_md, gridr=gridr, gridx=gridx, nmode=nmode'
    return
 endif
 
@@ -59,6 +59,7 @@ rr_md = fltarr(dim,dimr)
 br_md = fltarr(dim,dimr)
 bt_md = fltarr(dim,dimr)
 bz_md = fltarr(dim,dimr)
+btot_md = fltarr(dim,dimr)
 mor2 = fltarr(dim,dimr)
 mer2 = fltarr(dim,dimr)
 R = fltarr(dim,dimr)
@@ -96,31 +97,6 @@ reg2 = where(moa2 gt thrs and mea2 lt -thrs)
 reg3 = where(moa2 lt -thrs and mea2 gt thrs)
 reg4 = where(moa2 lt -thrs and mea2 lt -thrs)
 
-if reg0[0] ne -1 then begin
-   aa1[reg0] = 0.
-   for i=0,nlocin-1 do begin
-      vr_md[reg0,locin[i]] = 0.
-      vt_md[reg0,locin[i]] = 0.
-      vz_md[reg0,locin[i]] = 0.
-      pr_md[reg0,locin[i]] = 0.;ro*aa0/ka_root[reg0]
-      ptot_md[reg0,locin[i]] = 0.
-      rr_md[reg0,locin[i]] = 0.
-      br_md[reg0,locin[i]] = 0.
-      bt_md[reg0,locin[i]] = 0.
-      bz_md[reg0,locin[i]] = 0.
-   endfor
-   for i=0,nlocout-1 do begin
-      vr_md[reg0,locout[i]] = 0.
-      vt_md[reg0,locout[i]] = 0.
-      vz_md[reg0,locout[i]] = 0.
-      pr_md[reg0,locout[i]] = 0.;re*aa1/ka_root[reg0]
-      ptot_md[reg0,locout[i]] = 0.
-      rr_md[reg0,locout[i]] = 0.
-      br_md[reg0,locout[i]] = 0.
-      bt_md[reg0,locout[i]] = 0.
-      bz_md[reg0,locout[i]] = 0.
-   endfor
-endif
 if reg1[0] ne -1 then begin
    sigi[reg1] = 1.
    sigk[reg1] = 1.
@@ -139,6 +115,7 @@ if reg1[0] ne -1 then begin
       br_md[reg1,locin[i]] = bo/waka_root[reg1]*vr_md[reg1,locin[i]]
       bt_md[reg1,locin[i]] = bo/waka_root[reg1]*vt_md[reg1,locin[i]]
       bz_md[reg1,locin[i]] = bo/waka_root[reg1]/ka_root[reg1]*aa*(1.-co^2/waka_root[reg1]^2)*aa0[reg1]*beseli(sqrt(sigi[reg1]*mor2[reg1,locin[i]]),n,/double)
+      btot_md[reg1,locin[i]] = sqrt(br_md[reg1,locin[i]]^2+bt_md[reg1,locin[i]]^2+bz_md[reg1,locin[i]]^2+2*bo*bz_md[reg1,locin[i]]+bo^2)
       ptot_md[reg1,locin[i]] = (co^2+va^2-co^2*va^2/waka_root[reg1]^2)*ro/waka_root[reg1]/ka_root[reg1]*aa*aa0[reg1]*beseli(sqrt(sigi[reg1]*mor2[reg1,locin[i]]),n,/double)
    endfor
    for i=0,nlocout-1 do begin
@@ -151,6 +128,7 @@ if reg1[0] ne -1 then begin
       br_md[reg1,locout[i]] = be/waka_root[reg1]*vr_md[reg1,locout[i]]
       bt_md[reg1,locout[i]] = be/waka_root[reg1]*vt_md[reg1,locout[i]]
       bz_md[reg1,locout[i]] = be/waka_root[reg1]/ka_root[reg1]*aa*(1.-ce^2/waka_root[reg1]^2)*aa1[reg1]*beselk(sqrt(sigk[reg1]*mer2[reg1,locout[i]]),n,/double)
+      btot_md[reg1,locout[i]] = sqrt(br_md[reg1,locout[i]]^2+bt_md[reg1,locout[i]]^2+bz_md[reg1,locout[i]]^2+2*be*bz_md[reg1,locout[i]]+be^2)
       ptot_md[reg1,locout[i]] = (ce^2+vae^2-ce^2*vae^2/waka_root[reg1]^2)*re/waka_root[reg1]/ka_root[reg1]*aa*aa1[reg1]*beselk(sqrt(sigk[reg1]*mer2[reg1,locout[i]]),n,/double)
    endfor
 endif
@@ -173,6 +151,7 @@ if reg2[0] ne -1 then begin
       br_md[reg2,locin[i]] = bo/waka_root[reg2]*vr_md[reg2,locin[i]]
       bt_md[reg2,locin[i]] = bo/waka_root[reg2]*vt_md[reg2,locin[i]]
       bz_md[reg2,locin[i]] = bo/waka_root[reg2]/ka_root[reg2]*aa*(1.-co^2/waka_root[reg2]^2)*aa0[reg2]*beseli(sqrt(sigi[reg2]*mor2[reg2,locin[i]]),n,/double)
+      btot_md[reg2,locin[i]] = sqrt(br_md[reg2,locin[i]]^2+bt_md[reg2,locin[i]]^2+bz_md[reg2,locin[i]]^2+2*bo*bz_md[reg2,locin[i]]+bo^2)
       ptot_md[reg2,locin[i]] = (co^2+va^2-co^2*va^2/waka_root[reg2]^2)*ro/waka_root[reg2]/ka_root[reg2]*aa*aa0[reg2]*beseli(sqrt(sigi[reg2]*mor2[reg2,locin[i]]),n,/double)
    endfor
    for i=0,nlocout-1 do begin
@@ -185,6 +164,7 @@ if reg2[0] ne -1 then begin
       br_md[reg2,locout[i]] = be/waka_root[reg2]*vr_md[reg2,locout[i]]
       bt_md[reg2,locout[i]] = be/waka_root[reg2]*vt_md[reg2,locout[i]]
       bz_md[reg2,locout[i]] = be/waka_root[reg2]/ka_root[reg2]*aa*(1.-ce^2/waka_root[reg2]^2)*aa1[reg2]*besely(sqrt(sigk[reg2]*mer2[reg2,locout[i]]),n,/double)
+      btot_md[reg2,locout[i]] = sqrt(br_md[reg2,locout[i]]^2+bt_md[reg2,locout[i]]^2+bz_md[reg2,locout[i]]^2+2*be*bz_md[reg2,locout[i]]+be^2)
       ptot_md[reg2,locout[i]] = (ce^2+vae^2-ce^2*vae^2/waka_root[reg2]^2)*re/waka_root[reg2]/ka_root[reg2]*aa*aa1[reg2]*besely(sqrt(sigk[reg2]*mer2[reg2,locout[i]]),n,/double)
    endfor
 endif
@@ -207,6 +187,7 @@ if reg3[0] ne -1 then begin
       br_md[reg3,locin[i]] = bo/waka_root[reg3]*vr_md[reg3,locin[i]]
       bt_md[reg3,locin[i]] = bo/waka_root[reg3]*vt_md[reg3,locin[i]]
       bz_md[reg3,locin[i]] = bo/waka_root[reg3]/ka_root[reg3]*aa*(1.-co^2/waka_root[reg3]^2)*aa0[reg3]*beselj(sqrt(sigi[reg3]*mor2[reg3,locin[i]]),n,/double)
+      btot_md[reg3,locin[i]] = sqrt(br_md[reg3,locin[i]]^2+bt_md[reg3,locin[i]]^2+bz_md[reg3,locin[i]]^2+2*bo*bz_md[reg3,locin[i]]+bo^2)
       ptot_md[reg3,locin[i]] = (co^2+va^2-co^2*va^2/waka_root[reg3]^2)*ro/waka_root[reg3]/ka_root[reg3]*aa*aa0[reg3]*beselj(sqrt(sigi[reg3]*mor2[reg3,locin[i]]),n,/double)
    endfor
    for i=0,nlocout-1 do begin
@@ -219,6 +200,7 @@ if reg3[0] ne -1 then begin
       br_md[reg3,locout[i]] = be/waka_root[reg3]*vr_md[reg3,locout[i]]
       bt_md[reg3,locout[i]] = be/waka_root[reg3]*vt_md[reg3,locout[i]]
       bz_md[reg3,locout[i]] = be/waka_root[reg3]/ka_root[reg3]*aa*(1.-ce^2/waka_root[reg3]^2)*aa1[reg3]*beselk(sqrt(sigk[reg3]*mer2[reg3,locout[i]]),n,/double)
+      btot_md[reg3,locout[i]] = sqrt(br_md[reg3,locout[i]]^2+bt_md[reg3,locout[i]]^2+bz_md[reg3,locout[i]]^2+2*be*bz_md[reg3,locout[i]]+be^2)
       ptot_md[reg3,locout[i]] = (ce^2+vae^2-ce^2*vae^2/waka_root[reg3]^2)*re/waka_root[reg3]/ka_root[reg3]*aa*aa1[reg3]*beselk(sqrt(sigk[reg3]*mer2[reg3,locout[i]]),n,/double)
    endfor
 endif
@@ -241,6 +223,7 @@ if reg4[0] ne -1 then begin
       br_md[reg4,locin[i]] = bo/waka_root[reg4]*vr_md[reg4,locin[i]]
       bt_md[reg4,locin[i]] = bo/waka_root[reg4]*vt_md[reg4,locin[i]]
       bz_md[reg4,locin[i]] = bo/waka_root[reg4]/ka_root[reg4]*aa*(1.-co^2/waka_root[reg4]^2)*aa0[reg4]*beselj(sqrt(sigi[reg4]*mor2[reg4,locin[i]]),n,/double)
+      btot_md[reg4,locin[i]] = sqrt(br_md[reg4,locin[i]]^2+bt_md[reg4,locin[i]]^2+bz_md[reg4,locin[i]]^2+2*bo*bz_md[reg4,locin[i]]+bo^2)
       ptot_md[reg4,locin[i]] = (co^2+va^2-co^2*va^2/waka_root[reg4]^2)*ro/waka_root[reg4]/ka_root[reg4]*aa*aa0[reg4]*beselj(sqrt(sigi[reg4]*mor2[reg4,locin[i]]),n,/double)
    endfor
    for i=0,nlocout-1 do begin
@@ -253,6 +236,7 @@ if reg4[0] ne -1 then begin
       br_md[reg4,locout[i]] = be/waka_root[reg4]*vr_md[reg4,locout[i]]
       bt_md[reg4,locout[i]] = be/waka_root[reg4]*vt_md[reg4,locout[i]]
       bz_md[reg4,locout[i]] = be/waka_root[reg4]/ka_root[reg4]*aa*(1.-ce^2/waka_root[reg4]^2)*aa1[reg4]*besely(sqrt(sigk[reg4]*mer2[reg4,locout[i]]),n,/double)
+      btot_md[reg4,locout[i]] = sqrt(br_md[reg4,locout[i]]^2+bt_md[reg4,locout[i]]^2+bz_md[reg4,locout[i]]^2+2*bo*bz_md[reg4,locout[i]]+bo^2)
       ptot_md[reg4,locout[i]] = (ce^2+vae^2-ce^2*vae^2/waka_root[reg4]^2)*re/waka_root[reg4]/ka_root[reg4]*aa*aa1[reg4]*besely(sqrt(sigk[reg4]*mer2[reg4,locout[i]]),n,/double)
    endfor
 endif
