@@ -12,7 +12,7 @@ PRO gridlos, gridx=gridx, gridy=gridy, mua_d=mua_d, velx=velx, vely=vely, dx=dx,
 ; n_gridx = grid along new x direction (longitudinal direction)
 ; n_gridy = grid along new y direction (radial direction)
 ; ngrid = number of points in depth for each x,y position
-; losvel = line-of-sight velocity (in km/s)
+; losvel = line-of-sight velocity
 
 ; mua_d between -90 and 90 deg
 if (abs(mua_d) gt 90) then begin
@@ -69,8 +69,8 @@ endif else begin
       ls = (ds/dy)<1.
    endif
    if dy eq dx then begin
-      dl = 1.
-      ds = 1.
+      dl = dx
+      ds = dy
       ls = 1.
    endif
    

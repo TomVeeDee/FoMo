@@ -10,7 +10,7 @@ pro integrateemission,emission=emission,logt=logt,n_gridx=n_gridx,n_gridy=n_grid
 ; ngrid = output of gridlos.pro, number of points in depth for each
 ; x,y position
 ; direction = direction of the integration (1 = x, 2 = y, 3 = z, 4 = mua_d angle)
-; losvel = output of gridlos.pro, line-of-sight velocity (in km/s)
+; losvel = output of gridlos.pro, line-of-sight velocity (in 10^5 m/s unit)
 ; OPTIONAL:
 ; set keyword imaging to 1 for no doppler shift calculation (imaging
 ; case) (default = 1)
