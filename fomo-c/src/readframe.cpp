@@ -176,31 +176,26 @@ void cube::fillcube()
 #endif
 			for (int i=0; i<ng; i++)
 			{
-				double xacc=grid[0][i];
-				double yacc=grid[1][i];
-				double zacc=grid[2][i];
-				const double psi = 0;
-		                double x = (cos(psi)*cos(l)-sin(psi)*sin(l)*sin(b))*xacc+(-sin(psi)*cos(b))*yacc+(-cos(psi)*sin(l)-sin(psi)*cos(l)*sin(b))*zacc;
-		                double y = (sin(psi)*cos(l)+cos(psi)*sin(l)*sin(b))*xacc+(cos(psi)*cos(b))*yacc+(-sin(psi)*sin(l)+cos(psi)*cos(l)*sin(b))*zacc;
-		                double z = (sin(l)*cos(b))*xacc+(-sin(b))*yacc+(cos(l)*cos(b))*zacc;
+				double x=grid[0][i];
+				double y=grid[1][i];
+				double z=grid[2][i];
+				// curvature radius in Mm
 				double R = length*1000./M_PI;
+				// map the torus to a cylinder, using simple toroidal coordinates 
 		                double r = sqrt(pow(sqrt(pow(x,2)+pow(z,2))-R,2)+pow(y,2));
-//		                r/=width*1000./0.02; // normalize r to 0 -> 1
-		                double phi = atan(y/(sqrt(pow(x,2)+pow(z,2))-R));
-		                if (pow(x,2)+pow(z,2)<pow(R,2)) phi+=M_PI; // (x,z) lies inside the circle in the XZ-plane
+		                double phi = atan2(y,(sqrt(pow(x,2)+pow(z,2))-R));
 		                double z_or;
 		                if ((x>0.00001)||(x<-0.00001)) // x lies far enough from 0, no division problems
 		                {
-		                        z_or = atan(z/x)/M_PI;
+		                        z_or = atan2(z,x)/M_PI;
 		                }
 		                else
 		                {
 		                        z_or = .5; // does not matter which value is taken here, because it is the singular point of the coordinate system
 		                }
-		                if (z_or<0) z_or++;  // atan returns a value between -pi/2 and pi/2
 				vars[0][i]=density(r,phi,z_or);
 				vars[1][i]=temperature(r,phi,z_or);
-				vars[2][i]=0.;
+				vars[2][i]=30.;
 				vars[3][i]=0.;
 				vars[4][i]=0.;
 			}

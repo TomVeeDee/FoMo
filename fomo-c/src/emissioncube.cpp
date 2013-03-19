@@ -98,6 +98,7 @@ tphysvar goft(const tphysvar logT, const tphysvar logrho, const cube gofttab)
 		++rhoit;
 		++goftit;
 	}
+	Value_access tempmap=Value_access(function_values);
 
 	// compute the Delaunay triangulation
         Delaunay_triangulation DT;
@@ -129,7 +130,6 @@ tphysvar goft(const tphysvar logT, const tphysvar logrho, const cube gofttab)
 // it is much faster than the linear interpolation
 
 		Delaunay_triangulation::Vertex_handle v=DT.nearest_vertex(p);
-		Value_access tempmap=Value_access(function_values);
 		Point nearest=v->point();
 		std::pair<Coord_type,bool> funcval=tempmap(nearest);
 		g[i]=funcval.first;

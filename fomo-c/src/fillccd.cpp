@@ -170,24 +170,10 @@ void mpi_calculatemypart(double* results, const int x1, const int x2, const int 
 		double x = (cos(psi)*cos(l)-sin(psi)*sin(l)*sin(b))*xacc+(-sin(psi)*cos(b))*yacc+(-cos(psi)*sin(l)-sin(psi)*cos(l)*sin(b))*zacc;
 		double y = (sin(psi)*cos(l)+cos(psi)*sin(l)*sin(b))*xacc+(cos(psi)*cos(b))*yacc+(-sin(psi)*sin(l)+cos(psi)*cos(l)*sin(b))*zacc;
 		double z = (sin(l)*cos(b))*xacc+(-sin(b))*yacc+(cos(l)*cos(b))*zacc;
-		double r = sqrt(pow(sqrt(pow(x,2)+pow(z,2))-R,2)+pow(y,2));
-		r/=width*1000./0.02; // normalize r to 0 -> 1
-		double phi = atan(y/(sqrt(pow(x,2)+pow(z,2))-R));
-		if (pow(x,2)+pow(z,2)<pow(R,2)) phi+=M_PI; // (x,z) lies inside the circle in the XZ-plane
-		double z_or;
-		if ((x>0.00001)||(x<-0.00001)) // x lies far enough from 0, no division problems
-		{
-			z_or = atan(z/x)/M_PI;
-		}
-		else
-		{
-			z_or = .5; // does not matter which value is taken here, because it is the singular point of the coordinate system
-		}
-		if (z_or<0) z_or++;  // atan returns a value between -pi/2 and pi/2
-		if (z>=0.)
-		{
-			results[(i-y1)*(x2-x1+1)+j-x1]+=pow(density(r,phi,z_or),2);
-		}
+
+// on each point on the ray, put the Gaussian with doppler velocity and correct peak and width
+// sum the emission into results
+// results[(i-y1)*(x2-x1+1)+j-x1]+=pow(density(r,phi,z_or),2);
 		// print progress
 		if ((commrank==0)&&(j==x1)&&(k==0)) 
 		{
