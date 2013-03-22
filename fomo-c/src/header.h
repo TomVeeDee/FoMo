@@ -88,6 +88,7 @@ extern const double size_pixel;
 extern const double size_z_pixel;
 extern double findmax(double * const * const, int *, int *);
 extern double findmin(double * const * const, int *, int *);
+extern int MPE_Decomp1d(int , int , int, int *, int*);
 extern void fillccd(double * const * const image, const double*, const int, const int, const int, const int);
 extern void mpi_getcoords(int &, int &, int &, int &);
 extern void mpi_calculatemypart(double*, const int, const int, const int, const int, const double, cube);

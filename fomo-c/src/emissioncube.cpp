@@ -123,12 +123,18 @@ tphysvar goft(const tphysvar logT, const tphysvar logrho, const cube gofttab)
 	commrank = 0;
 	commsize = 1;
 #endif
-	int mpilength=ng/commsize;
+	int mpimin, mpimax;
+	// MPE_Decomp1d decomposes a vector into more or less equal parts
+	// The only restriction is that it takes the vector from 1:ng, rather than 0:ng-1
+	// Therefore, the mpimin and mpimax are decreases afterwards.
+	MPE_Decomp1d(ng,commsize, commrank, &mpimin, &mpimax);
+	mpimin--;
+	mpimax--;
 
 #ifdef _OPENMP
 #pragma omp parallel for 
 #endif
-	for (int i=commrank*mpilength; i<(commrank+1)*mpilength; i++)
+	for (int i=mpimin; i<mpimax; i++)
 	{
 		Point p(logT[i],logrho[i]);
 // a possible linear interpolation
