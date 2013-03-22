@@ -53,6 +53,8 @@ int main(int argc, char* argv[])
 	globalmax = 0.; globalmin = 0.;
 	{ // only ofstream s in this scope
 	ofstream s(imagefile);
+	// Let's first get the code working for a single frame. Later on, we can still change to more frames, although that 
+	const int nframes=1;
 	for (int t=0.; t<nframes; t++)
 	{
 		int ng = eqx*eqy*eqz;
@@ -61,6 +63,17 @@ int main(int argc, char* argv[])
 		EqType qtype=builtineq;
 		datacube.settype(qtype);
 		datacube.fillcube();
+		cube goftcube(1,1,1);
+		if (reuse!=1) 
+		{
+			goftcube=emissionfromdatacube(datacube);
+			writeemissioncube(goftcube);
+		}
+		else
+		{
+			goftcube=reademissioncube();
+		}
+
 		if (commsize>1)
 		{
 #ifdef HAVEMPI
@@ -136,7 +149,7 @@ int main(int argc, char* argv[])
 					if (coords[0][0]>=0) 
 					{
 					for (int i=0; i<maxsize; i++) results[i]=0.;
-					mpi_calculatemypart(results,coords[0][0],coords[0][1],coords[0][2],coords[0][3],t,datacube);
+					mpi_calculatemypart(results,coords[0][0],coords[0][1],coords[0][2],coords[0][3],t,goftcube);
 					MPI_Send(results,maxsize,MPI_DOUBLE,0,RESULTTAG,MPI_COMM_WORLD);
 					}
 				}
@@ -145,7 +158,7 @@ int main(int argc, char* argv[])
 		}
 		else
 		{
-			mpi_calculatemypart(results,0,x_pixel-1,0,y_pixel-1,t,datacube);
+			mpi_calculatemypart(results,0,x_pixel-1,0,y_pixel-1,t,goftcube);
 			fillccd(image,results,0,x_pixel-1,0,y_pixel-1);
 		}
 		if (commrank==0)

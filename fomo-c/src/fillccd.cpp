@@ -143,7 +143,7 @@ void mpi_getcoords(int & x1, int & x2, int & y1, int & y2)
 #endif
 }
 
-void mpi_calculatemypart(double* results, const int x1, const int x2, const int y1, const int y2, const double t, cube datacube)
+void mpi_calculatemypart(double* results, const int x1, const int x2, const int y1, const int y2, const double t, cube goftcube)
 {
 //
 // results is an array of at least dimension (x2-x1+1)*(y2-y1+1) and must be initialized to zero
@@ -157,16 +157,6 @@ void mpi_calculatemypart(double* results, const int x1, const int x2, const int 
 #endif
 	if (commrank==0) cout << "building frame: ";
 	double R = length*1000./M_PI;
-	cube goftcube(1,1,1);
-	if (reuse!=1) 
-	{
-		goftcube=emissionfromdatacube(datacube);
-		writeemissioncube(goftcube);
-	}
-	else
-	{
-		goftcube=reademissioncube();
-	}
 	tgrid grid = goftcube.readgrid();
 	for (int i=y1; i<y2+1; i++)
 		for (int j=x1; j<x2+1; j++)

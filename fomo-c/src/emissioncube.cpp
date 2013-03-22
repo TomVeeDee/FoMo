@@ -109,10 +109,26 @@ tphysvar goft(const tphysvar logT, const tphysvar logrho, const cube gofttab)
 	// the reservation of the size is necessary, otherwise the vector reallocates in the openmp threads with segfaults as consequence
 	g.resize(ng);
 	cout << "Doing G(T) interpolation:";
+
+#ifdef HAVEMPI
+	// If MPI is available, we should divide the work between nodes, we can just use a geometric division by the commsize
+	// I guess the MPI_Init only has to be used once, at the beginning of the program (mainprog.cpp)
+//	MPI_Init(&argc,&argv);
+#endif
+	int commrank,commsize;
+#ifdef HAVEMPI
+        MPI_Comm_rank(MPI_COMM_WORLD,&commrank);
+        MPI_Comm_size(MPI_COMM_WORLD,&commsize);
+#else
+	commrank = 0;
+	commsize = 1;
+#endif
+	int mpilength=ng/commsize;
+
 #ifdef _OPENMP
 #pragma omp parallel for 
 #endif
-	for (int i=0; i<ng; i++)
+	for (int i=commrank*mpilength; i<(commrank+1)*mpilength; i++)
 	{
 		Point p(logT[i],logrho[i]);
 // a possible linear interpolation
