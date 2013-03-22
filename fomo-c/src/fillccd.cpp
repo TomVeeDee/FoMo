@@ -157,8 +157,17 @@ void mpi_calculatemypart(double* results, const int x1, const int x2, const int 
 #endif
 	if (commrank==0) cout << "building frame: ";
 	double R = length*1000./M_PI;
-	cube goftcube=emissionfromdatacube(datacube);
-	tgrid grid = datacube.readgrid();
+	cube goftcube(1,1,1);
+	if (reuse!=1) 
+	{
+		goftcube=emissionfromdatacube(datacube);
+		writeemissioncube(goftcube);
+	}
+	else
+	{
+		goftcube=reademissioncube();
+	}
+	tgrid grid = goftcube.readgrid();
 	for (int i=y1; i<y2+1; i++)
 		for (int j=x1; j<x2+1; j++)
 			for (int k=0; k<z_pixel; k++) // scanning through ccd

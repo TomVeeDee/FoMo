@@ -2,8 +2,6 @@
 #include <fstream>
 #include <cstdlib>
 
-int nframes=1;
-
 char* configfile="fomo-c.conf";
 
 void getfile()
@@ -78,30 +76,99 @@ void writefile()
 	}
 }
 
-const int filterlength = 2149;
-
-void readfilters(const int i, double array[][2])
-// i is the selected filter
-// i=1: 195/171
-// i=2: 284/195
-// i=3: 171
-// i=4: 195
-// i=5: 284
+void writeemissioncube(const cube goftcube)
 {
-	char* file = "filter.dat";
-	ifstream in(file);
-	if (!in) {
-		cout << "No " << file << ": unable to determine filtervalues of TRACE";
-		exit(EXIT_FAILURE);
-	}
-	double temp[6];
-	int j=0;
-	in >> temp[0] >> temp[1] >> temp[2] >> temp[3] >> temp[4] >> temp[5];
-	while (!in.eof() )
+	// write out goftcube to file "emissionsave"
+	int commrank;
+	char* space=" ";
+#ifdef HAVEMPI
+        MPI_Comm_rank(MPI_COMM_WORLD,&commrank);
+#else
+	commrank = 0;
+#endif
+	if (commrank==0)
 	{
-		array[j][0]=temp[0];
-		array[j][1]=temp[i];
-		in >> temp[0] >> temp[1] >> temp[2] >> temp[3] >> temp[4] >> temp[5];
-		j++;
+		ofstream out(emissionsave,ios::binary|ios::ate);
+		if (out.is_open())
+		{
+			int nvars = goftcube.readnvars();
+			int dim = goftcube.readdim();
+			int intqtype=int(goftcube.readtype());
+			int ng = goftcube.readngrid();
+			out << dim << space;
+			out << intqtype << space;
+			out << ng << space;
+			out << nvars << space;
+			cout << dim << " " << intqtype << " " << ng << " " << nvars;
+			tgrid grid=goftcube.readgrid();
+			for (int i=0; i<dim; i++)
+				for (int j=0; j<ng; j++)
+				{ 
+					out << grid[i][j] << space;
+				}
+			for (int i=0; i<nvars; i++)
+			{
+				tphysvar var=goftcube.readvar(i);
+				for (int j=0; j<ng; j++)
+				{
+					out << var[j] << space;
+				}
+			}
+		}
+		else cout << "Unable to write to " << emissionsave << endl;
+		out.close();
 	}
+}
+
+cube reademissioncube()
+{
+	// read emission datacube from file "emissionsave" when the reuse parameter is switched on
+	int commrank;
+#ifdef HAVEMPI
+        MPI_Comm_rank(MPI_COMM_WORLD,&commrank);
+#else
+	commrank = 0;
+#endif
+	if (commrank==0)
+	{
+		int dim, ng, nvars, intqtype;
+
+		ifstream in(emissionsave,ios::binary);
+		if (in.is_open())
+		{
+			in >> dim;
+			in >> intqtype;
+			in >> ng;
+			in >> nvars;
+			cout << "test" << dim << " " << intqtype << " " << ng << " " << nvars;
+			cube goftcube(nvars,ng,dim);
+			goftcube.settype(EqType(intqtype));
+			return goftcube;
+			tgrid grid= new tcoord[dim];
+			for (int i=0; i<dim; i++)
+			{
+				grid[i].resize(ng);
+				for (int j=0; j<ng; j++)
+				{
+					in >> grid[i][j];
+				}
+			}
+			goftcube.setgrid(grid);
+			tphysvar var;
+			var.resize(ng);
+			for (int i=0; i<nvars; i++)
+			{
+				for (int j=0; j<ng; j++)
+				{
+					in >> var[j];
+				}
+				goftcube.setvar(i,var);
+			}
+			return goftcube;
+		}
+		else cout << "Unable to read " << emissionsave << endl;
+		in.close();
+	}
+	cube badcube(1,1,1);
+	return badcube;
 }

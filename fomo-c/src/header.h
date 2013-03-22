@@ -35,6 +35,7 @@ class cube
 	public:
 		cube(const int invars, const int ingrid, const int = 3);
 		~cube();
+		int readdim() const;
 		int readngrid() const;
 		int readnvars() const;
 		void settype(EqType intype);
@@ -58,12 +59,11 @@ extern tphysvar sqrt(tphysvar const&);
 extern void getarg(int, char* array[]);
 
 // external functions in io.cpp
-extern int nframes;
 extern void getfile();
 extern void writefile();
-extern void writeparameters(ostream&,char);
-extern const int filterlength;
-extern void readfilters(const int, double filter[][2]);
+extern void writeparameters(ostream&, char);
+extern cube reademissioncube();
+extern void writeemissioncube(const cube);
 
 //external functions in equilibrium.cpp
 extern double density(const double, const double, const double);
@@ -114,3 +114,4 @@ extern void builtingrid(const int, const int, const int, tgrid);
 extern cube emissionfromdatacube(cube);
 extern char* chiantifile;
 extern char* abundfile;
+extern char* emissionsave;

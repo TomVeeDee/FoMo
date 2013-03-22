@@ -118,6 +118,11 @@ cube::cube(const int invars, const int ingrid, const int indim )
 cube::~cube()
 {};
 
+int cube::readdim() const
+{
+	return dim;
+};
+
 int cube::readngrid() const
 {
 	return ng;

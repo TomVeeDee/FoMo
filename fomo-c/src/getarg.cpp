@@ -10,15 +10,17 @@ double length = 200, width = 5, magfield = 15, rhoint = 1.4, contrast = 3, thick
 double l=M_PI/6., b=M_PI/3.;
 char* chiantifile="chiantitables/goft_table_fe_12_0194.dat";
 char* abundfile="/users/cpa/tomvd/ssw/packages/chianti/dbase/abundance/sun_coronal.abund";
+char* emissionsave="fomo-c.emissionsave";
 
 void printusage(const char* programname){
 // print the usage of the program
 	printf("Usage: %s [--reuse] [--help] [--parameter value] \n\n",programname);
 	printf("  --reuse       Reuse the previous results. Setting the physical parameters does not have any effect!\n");
+	printf("  --emissionsave    When running without --reuse, this is the filename where the G(T) interpolated datacube will be stored. When running with --reuse, this is the file that will be read in\n");
 	printf("  --help        Print this message\n\n");
 	printf("CHIANTI parameters:\n");
-	printf("  --goftfile   Filename containing the table with the G(T) written by CHIANTI\n");
-	printf("  --abundfile  Filename containing the table with the abundances\n\n");
+	printf("  --goftfile    Filename containing the table with the G(T) written by CHIANTI\n");
+	printf("  --abundfile   Filename containing the table with the abundances\n\n");
 	printf("Equilibrium parameters:\n");
 	printf("  --length      Length (in Mm)\n");
 	printf("  --width       Width (in Mm)\n");
@@ -46,7 +48,7 @@ void getarg(int argc, char* argv[])
 {
 // Get arguments and set parameters
 // If reuse is different from 0, everything else is unused
-	char* optstr="C:A:L:w:t:c:a:B:i:l:q:GMy:r?";
+	char* optstr="C:A:L:w:t:c:a:B:i:l:q:GMy:rs:?";
 	struct option longopts[]={
 // name, require argument, flag, value
 		{"goftfile",1,0,'C'},
@@ -65,6 +67,7 @@ void getarg(int argc, char* argv[])
 		{"mpeg",0,0,'M'},
 		{"array",0,0,'y'},
 		{"reuse",0,0,'r'},
+		{"emissionsave",1,0,'s'},
 		{"help",0,0,'h'},
 		{NULL,0,NULL,0}
 		};
@@ -132,6 +135,9 @@ void getarg(int argc, char* argv[])
 				reuse = 1;
 				printf("Warning: reusing old parameters\n");
 				getfile();
+				break;
+			case 's':
+				emissionsave = optarg;
 				break;
 			case 'h':
 				printusage(argv[0]);
