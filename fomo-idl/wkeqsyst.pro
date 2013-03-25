@@ -1,4 +1,4 @@
-FUNCTION wkeqsyst,X
+FUNCTION wkeqsyst,X;,ka
 
 ; Dispersion relation in Edwin & Roberts 1983
 ; returns L(w,k) where L is dispersion relation = 0
@@ -48,10 +48,10 @@ FUNCTION wkeqsyst,X
      sigk[reg2] = -1.
   endif
   if reg3[0] ne -1 then begin
-     bslij[reg3] = beselj(sqrt(abs(moa2[reg3])),n,/double)
-     bslky[reg3] = beselk(sqrt(abs(mea2[reg3])),n,/double)
-     dbslij[reg3] = dbeselj(sqrt(abs(moa2[reg3])),n)
-     dbslky[reg3] = dbeselk(sqrt(abs(mea2[reg3])),n)
+     bslij[reg3] = beselj(sqrt(-moa2[reg3]),n,/double)
+     bslky[reg3] = beselk(sqrt(mea2[reg3]),n,/double)
+     dbslij[reg3] = dbeselj(sqrt(-moa2[reg3]),n)
+     dbslky[reg3] = dbeselk(sqrt(mea2[reg3]),n)
      fracij[reg3] = dbslij[reg3]/bslij[reg3]
      fracky[reg3] = dbslky[reg3]/bslky[reg3]
      sigi[reg3] = -1.
@@ -72,8 +72,8 @@ FUNCTION wkeqsyst,X
     ka^2*(B4*B2^2*sigi[reg1]*sqrt(abs(moa2[reg1]))*dbslij[reg1]*bslky[reg1]-A4*A2^2*sigk[reg1]*sqrt(abs(mea2[reg1]))*dbslky[reg1]*bslij[reg1])
   if reg2[0] ne -1 then L[reg2] = X[reg2]^2*(B4*sigi[reg2]*sqrt(abs(moa2[reg2]))*dbslij[reg2]*bslky[reg2]-A4*sigk[reg2]*sqrt(abs(mea2[reg2]))*dbslky[reg2]*bslij[reg2])-$
     ka^2*(B4*B2^2*sigi[reg2]*sqrt(abs(moa2[reg2]))*dbslij[reg2]*bslky[reg2]-A4*A2^2*sigk[reg2]*sqrt(abs(mea2[reg2]))*dbslky[reg2]*bslij[reg2])
-  if reg3[0] ne -1 then L[reg3] = X[reg3]^2*(B4*sigi[reg3]*sqrt(abs(moa2[reg3]))*dbslij[reg3]*bslky[reg3]-A4*sigk[reg3]*sqrt(abs(mea2[reg3]))*dbslky[reg3]*bslij[reg3])-$
-    ka^2*(B4*B2^2*sigi[reg3]*sqrt(abs(moa2[reg3]))*dbslij[reg3]*bslky[reg3]-A4*A2^2*sigk[reg3]*sqrt(abs(mea2[reg3]))*dbslky[reg3]*bslij[reg3])
+  if reg3[0] ne -1 then L[reg3] = X[reg3]^2*(B4*sqrt(sigi[reg3]*moa2[reg3])*dbslij[reg3]*bslky[reg3]-A4*sqrt(sigk[reg3]*mea2[reg3])*dbslky[reg3]*bslij[reg3])-$
+    ka^2*(B4*B2^2*sqrt(sigi[reg3]*moa2[reg3])*dbslij[reg3]*bslky[reg3]-A4*A2^2*sqrt(sigk[reg3]*mea2[reg3])*dbslky[reg3]*bslij[reg3])
   if reg4[0] ne -1 then L[reg4] = X[reg4]^2*(B4*sigi[reg4]*sqrt(abs(moa2[reg4]))*dbslij[reg4]*bslky[reg4]-A4*sigk[reg4]*sqrt(abs(mea2[reg4]))*dbslky[reg4]*bslij[reg4])-$
     ka^2*(B4*B2^2*sigi[reg4]*sqrt(abs(moa2[reg4]))*dbslij[reg4]*bslky[reg4]-A4*A2^2*sigk[reg4]*sqrt(abs(mea2[reg4]))*dbslky[reg4]*bslij[reg4])
 
