@@ -38,7 +38,7 @@ if keyword_set(nmode) then n = nmode else n = 0 ; default is sausage mode
 
 gamma = 5./3.
 mup=1.25663706*1.e-6
-nka = 400 ; number of roots
+nka = 1000 ; number of roots
 ka_ar = findgen(nka)/(nka-1.)*4. ; initial values for ka
 ka_root = fltarr(nka)
 waka_root = fltarr(nka)
