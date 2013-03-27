@@ -63,7 +63,7 @@ extern void getfile();
 extern void writefile();
 extern void writeparameters(ostream&, char);
 extern cube reademissioncube();
-extern void writeemissioncube(const cube);
+extern void writeemissioncube(const cube, const string);
 
 //external functions in equilibrium.cpp
 extern double density(const double, const double, const double);

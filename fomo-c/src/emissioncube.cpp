@@ -28,8 +28,7 @@ double abundfromchianti(const char* abundfile, const string & ion)
 		cout << "Error: no CHIANTI abundance file exists\n";
 		exit(EXIT_FAILURE);
 	}
-	cout << "Reading abundances from " << abundfile << " ... ";
-	cout.flush();
+	cout << "Reading abundances from " << abundfile << "... " << flush;
 
 	int nelement;
 	double value,hvalue,ionvalue;
@@ -58,8 +57,7 @@ double abundfromchianti(const char* abundfile, const string & ion)
 		cout << "Error: invalid CHIANTI abundance file\n";
 		exit(EXIT_FAILURE);
 	}
-	cout << "Done!" << endl;
-	cout.flush();
+	cout << "Done!" << endl << flush;
 
 	value = pow(10.,(ionvalue - hvalue));
 
@@ -108,7 +106,7 @@ tphysvar goft(const tphysvar logT, const tphysvar logrho, const cube gofttab)
 	int ng=logT.size();
 	// the reservation of the size is necessary, otherwise the vector reallocates in the openmp threads with segfaults as consequence
 	g.resize(ng);
-	cout << "Doing G(T) interpolation:";
+	cout << "Doing G(T) interpolation: " << flush;
 
 #ifdef HAVEMPI
 	// If MPI is available, we should divide the work between nodes, we can just use a geometric division by the commsize
@@ -158,7 +156,7 @@ tphysvar goft(const tphysvar logT, const tphysvar logrho, const cube gofttab)
 		
 		progressbar(i,0,ng-1);
 	}
-	cout << "Done!" << endl;
+	cout << " Done!" << endl << flush;
 
 	return g;
 }
@@ -177,8 +175,7 @@ cube readgoftfromchianti(const char* chiantifile, string & ion, double & lambda0
 	double field;
 	tphysvar temprho, tempt, tempgoft;
 
-	cout << "Reading G(T) from " << chiantifile << " ...";
-	cout.flush();
+	cout << "Reading G(T) from " << chiantifile << "... " << flush;
 	// read in header (ion name, rest wavelength, atomic weight, number of grid points in density direction, number of grid points in temperature direction)
 	in >> ion;
 	in >> lambda0;
@@ -226,8 +223,7 @@ cube readgoftfromchianti(const char* chiantifile, string & ion, double & lambda0
 	gofttab.setgrid(tempgrid);
 	gofttab.setvar(0,tempgoft);
 
-	cout << "Done!" << endl;
-	cout.flush();
+	cout << "Done!" << endl << flush;
 
 	return gofttab;
 }

@@ -55,23 +55,25 @@ int main(int argc, char* argv[])
 	ofstream s(imagefile);
 	// Let's first get the code working for a single frame. Later on, we can still change to more frames, although that 
 	const int nframes=1;
+	int ng = eqx*eqy*eqz;
+	int nvars = 5; // \rho, T, vx, vy, vz
 	for (int t=0.; t<nframes; t++)
 	{
-		int ng = eqx*eqy*eqz;
-		int nvars = 5; // \rho, T, vx, vy, vz
-		cube datacube(nvars,ng);
-		EqType qtype=builtineq;
-		datacube.settype(qtype);
-		datacube.fillcube();
 		cube goftcube(1,1,1);
 		if (reuse!=1) 
 		{
+			cube datacube(nvars,ng);
+			EqType qtype=builtineq;
+			datacube.settype(qtype);
+			datacube.fillcube();
 			goftcube=emissionfromdatacube(datacube);
-			writeemissioncube(goftcube);
+			writeemissioncube(goftcube,emissionsave);
 		}
 		else
 		{
+			if (commrank==0) cout << "Reading in data from previous run in file " << emissionsave << "... ";
 			goftcube=reademissioncube();
+			if (commrank==0) cout << "Done!" << endl;
 		}
 
 		if (commsize>1)

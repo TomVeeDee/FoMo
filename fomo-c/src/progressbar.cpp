@@ -23,13 +23,10 @@ void progressbar(const int i, const int mini, const int maxi)
 	for (int l=1; l<nperc; l++)
 		if (((i-mini-1)<l/nperc*range)&&(i-mini>=l/nperc*range)&&(threadrank==0))
 		{
-			cout << floor(l/nperc*1000+0.5)/10 << "%";
-			cout.flush();
+			cout << floor(l/nperc*1000+0.5)/10 << "%" << flush;
 		}
-	if (((i-mini)%(range/nstars)==0)&&(threadrank==0)) 
+	if (((range<nstars)||((i-mini)%(range/nstars)==0))&&(threadrank==0)&&(i!=mini)) 
 	{
-		cout << point;
-		// need a flush, otherwise everything is kept until the next endl
-		cout.flush();
+		cout << point << flush;
 	}
 }

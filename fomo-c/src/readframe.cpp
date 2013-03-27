@@ -168,8 +168,7 @@ void cube::fillcube()
 {
 	switch (qtype) {
 		case builtineq:
-			cout << "Setting up built-in equilibrium ... ";
-			cout.flush();
+			cout << "Setting up built-in equilibrium... " << flush;
 			builtingrid(eqx, eqy, eqz, grid);
 			for (int i=0; i<nvars; i++)
 			{
@@ -200,12 +199,11 @@ void cube::fillcube()
 		                }
 				vars[0][i]=density(r,phi,z_or);
 				vars[1][i]=temperature(r,phi,z_or);
-				vars[2][i]=30.;
-				vars[3][i]=0.;
+				vars[2][i]=0.;
+				vars[3][i]=30.*sin(M_PI*z_or);
 				vars[4][i]=0.;
 			}
-			cout << "Done!" << endl;
-			cout.flush();
+			cout << "Done!" << endl << flush;
 			break;
 		case empty:
 			cout << "Error: first set the type of the equilibrium with datacube.settype(EqType)\n";

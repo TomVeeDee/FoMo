@@ -76,7 +76,7 @@ void writefile()
 	}
 }
 
-void writeemissioncube(const cube goftcube)
+void writeemissioncube(const cube goftcube, const string filename)
 {
 	// write out goftcube to file "emissionsave"
 	int commrank;
@@ -88,7 +88,7 @@ void writeemissioncube(const cube goftcube)
 #endif
 	if (commrank==0)
 	{
-		ofstream out(emissionsave,ios::binary|ios::ate);
+		ofstream out(filename,ios::binary|ios::ate);
 		if (out.is_open())
 		{
 			int nvars = goftcube.readnvars();
@@ -99,7 +99,6 @@ void writeemissioncube(const cube goftcube)
 			out << intqtype << space;
 			out << ng << space;
 			out << nvars << space;
-			cout << dim << " " << intqtype << " " << ng << " " << nvars;
 			tgrid grid=goftcube.readgrid();
 			for (int i=0; i<dim; i++)
 				for (int j=0; j<ng; j++)
@@ -140,10 +139,8 @@ cube reademissioncube()
 			in >> intqtype;
 			in >> ng;
 			in >> nvars;
-			cout << "test" << dim << " " << intqtype << " " << ng << " " << nvars;
 			cube goftcube(nvars,ng,dim);
 			goftcube.settype(EqType(intqtype));
-			return goftcube;
 			tgrid grid= new tcoord[dim];
 			for (int i=0; i<dim; i++)
 			{

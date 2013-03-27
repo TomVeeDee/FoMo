@@ -1,6 +1,12 @@
 #include "header.h"
 #include <cmath>
 #include <cstdlib>
+#include <numeric>
+
+// CGAL
+#include <CGAL/Exact_predicates_inexact_constructions_kernel.h>
+#include <CGAL/Delaunay_triangulation_3.h>
+#include <CGAL/interpolation_functions.h>
 
 
 const int y_pixel = 200;
@@ -149,26 +155,112 @@ void mpi_calculatemypart(double* results, const int x1, const int x2, const int 
 // results is an array of at least dimension (x2-x1+1)*(y2-y1+1) and must be initialized to zero
 // 
 // determine contributions per pixel
+
+	typedef CGAL::Exact_predicates_inexact_constructions_kernel K;
+	typedef CGAL::Delaunay_triangulation_3<K>             Delaunay_triangulation;
+	typedef K::FT                                         Coord_type;
+	typedef K::Point_3                                    Point;
+        std::map<Point, Coord_type, K::Less_xyz_3> peakmap, fwhmmap, losvelmap;
+        typedef CGAL::Data_access< std::map<Point, Coord_type, K::Less_xyz_3 > >  Value_access;
+
 	int commrank;
 #ifdef HAVEMPI
 	MPI_Comm_rank(MPI_COMM_WORLD,&commrank);
 #else
 	commrank = 0;
 #endif
-	if (commrank==0) cout << "building frame: ";
-	double R = length*1000./M_PI;
 	tgrid grid = goftcube.readgrid();
+	int ng=goftcube.readngrid();
+
+	// We will calculate the maximum image coordinates by projecting the grid onto the image plane
+	// Rotate the grid over an angle -l (around z-axis), and -b (around y-axis)
+	// Take the min and max of the resulting coordinates, those are coordinates in the image plane
+	vector<double> xacc, yacc, zacc;
+	xacc.resize(ng);
+	yacc.resize(ng);
+	zacc.resize(ng);
+	vector<double> gridpoint;
+	gridpoint.resize(3);
+	vector<Point> delaunaygrid;
+	delaunaygrid.resize(ng);
+	Point temporarygridpoint;
+	// Define the unit vector along the line-of-sight
+	vector<double> unit = {cos(b)*cos(l), cos(b)*sin(l), sin(b)};
+	// Read the physical variables
+	tphysvar peakvec=goftcube.readvar(0);
+	tphysvar fwhmvec=goftcube.readvar(1);
+	tphysvar vx=goftcube.readvar(2);
+	tphysvar vy=goftcube.readvar(3);
+	tphysvar vz=goftcube.readvar(4);
+	double losvelval;
+
+	if (commrank==0) cout << "Rotating coordinates to POS reference... " << flush;
+// No openmp possible here
+// Because of the insertions at the end of the loop, we get segfaults :(
+/*#ifdef _OPENMP
+#pragma omp parallel for
+#endif*/
+	for (int i=0; i<ng; i++)
+	{
+		for (int j=0; j<3; j++)	gridpoint[j]=grid[j][i];
+		xacc[i]=gridpoint[0]*cos(b)*cos(l)-gridpoint[1]*cos(b)*sin(l)-gridpoint[2]*sin(b);
+		yacc[i]=gridpoint[0]*sin(l)+gridpoint[1]*cos(l);
+		zacc[i]=gridpoint[0]*sin(b)*cos(l)-gridpoint[1]*sin(b)*sin(l)+gridpoint[2]*cos(b);
+		temporarygridpoint=Point(xacc[i],yacc[i],zacc[i]);
+		delaunaygrid[i]=temporarygridpoint;
+		// also create the map function_values here
+		vector<double> velvec = {vx[i], vy[i], vz[i]};
+		losvelval = inner_product(unit.begin(),unit.end(),velvec.begin(),0.0),
+		/*losvelmap[temporarygridpoint]=Coord_type(losvelval);
+		peakmap[temporarygridpoint]=Coord_type(peakvec[i]);
+		fwhmmap[temporarygridpoint]=Coord_type(fwhmvec[i]);*/
+		peakmap.insert(make_pair(temporarygridpoint,Coord_type(peakvec[i])));
+		fwhmmap.insert(make_pair(temporarygridpoint,Coord_type(fwhmvec[i])));
+		losvelmap.insert(make_pair(temporarygridpoint,Coord_type(losvelval)));
+	}
+	double minz=*(min_element(zacc.begin(),zacc.end()));
+	double maxz=*(max_element(zacc.begin(),zacc.end()));
+	double minx=*(min_element(xacc.begin(),xacc.end()));
+	double maxx=*(max_element(xacc.begin(),xacc.end()));
+	double miny=*(min_element(yacc.begin(),yacc.end()));
+	double maxy=*(max_element(yacc.begin(),yacc.end()));
+	Value_access peak=Value_access(peakmap);
+	Value_access fwhm=Value_access(fwhmmap);
+	Value_access losvel=Value_access(losvelmap);
+	xacc.clear();
+	yacc.clear();
+	zacc.clear();
+	peakmap.clear();
+	fwhmmap.clear();
+	losvelmap.clear();
+	if (commrank==0) cout << "Done!" << endl;
+
+	// compute the Delaunay triangulation
+	cout << "Doing Delaunay triangulation for interpolation onto rays... " << flush;
+	Delaunay_triangulation DT;
+	DT.insert(delaunaygrid.begin(),delaunaygrid.end());
+	if (commrank==0) cout << "Done!" << endl << flush;
+	delaunaygrid.clear();
+
+	if (commrank==0) cout << "building frame: " << flush;
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
 	for (int i=y1; i<y2+1; i++)
 		for (int j=x1; j<x2+1; j++)
 			for (int k=0; k<z_pixel; k++) // scanning through ccd
 	{
-		double xacc = (j-x_pixel/2)*size_pixel;
-		double yacc = (i-y_pixel/2)*size_pixel;
-		double zacc = (k-z_pixel/2)*size_z_pixel; 
-		const double psi=0;
-		double x = (cos(psi)*cos(l)-sin(psi)*sin(l)*sin(b))*xacc+(-sin(psi)*cos(b))*yacc+(-cos(psi)*sin(l)-sin(psi)*cos(l)*sin(b))*zacc;
-		double y = (sin(psi)*cos(l)+cos(psi)*sin(l)*sin(b))*xacc+(cos(psi)*cos(b))*yacc+(-sin(psi)*sin(l)+cos(psi)*cos(l)*sin(b))*zacc;
-		double z = (sin(l)*cos(b))*xacc+(-sin(b))*yacc+(cos(l)*cos(b))*zacc;
+		double x = double(j)/x_pixel*(maxx-minx)+minx;
+		double y = double(i)/y_pixel*(maxy-miny)+miny;
+		double z = double(k)/z_pixel*(maxz-minz)+minz;
+		Point p(x,y,z);
+
+		Delaunay_triangulation::Vertex_handle v=DT.nearest_vertex(p);
+		Point nearest=v->point();
+		pair<Coord_type,bool> intpolpeak=peak(nearest);
+		pair<Coord_type,bool> intpolfwhm=fwhm(nearest);
+		pair<Coord_type,bool> intpollosvel=losvel(nearest);
+		
 
 // on each point on the ray, put the Gaussian with doppler velocity and correct peak and width
 // sum the emission into results
@@ -180,7 +272,7 @@ void mpi_calculatemypart(double* results, const int x1, const int x2, const int 
 			//cout << "i" << i << "y1" << y1 << "y2" << y2;
 		}
 	}
-	if (commrank==0) cout << " finished!" << endl;
+	if (commrank==0) cout << " finished!" << endl << flush;
 }
 
 void fillccd(double * const * const frame, const double *results, const int x1, const int x2, const int y1, const int y2)
