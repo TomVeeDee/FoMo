@@ -238,11 +238,16 @@ void mpi_calculatemypart(double* results, const int x1, const int x2, const int 
 	// compute the Delaunay triangulation
 	cout << "Doing Delaunay triangulation for interpolation onto rays... " << flush;
 	Delaunay_triangulation DT;
+	// The triangulation should go quicker if it is sorted
+	// CGAL::spatial_sort(delaunaygrid.begin(),delaunaygrid.end());
+	// but I don't know how this affects the values in the maps.
+	// Also, some test don't show a significant speedup.
 	DT.insert(delaunaygrid.begin(),delaunaygrid.end());
 	if (commrank==0) cout << "Done!" << endl << flush;
 	delaunaygrid.clear();
 
-	if (commrank==0) cout << "building frame: " << flush;
+	if (commrank==0) cout << "Building frame: " << flush;
+	Delaunay_triangulation::Locate_type lt; int li, lj;
 #ifdef _OPENMP
 #pragma omp parallel for
 #endif
@@ -254,12 +259,17 @@ void mpi_calculatemypart(double* results, const int x1, const int x2, const int 
 		double y = double(i)/y_pixel*(maxy-miny)+miny;
 		double z = double(k)/z_pixel*(maxz-minz)+minz;
 		Point p(x,y,z);
+		Delaunay_triangulation::Cell_handle c = DT.locate(p, lt, li, lj);
 
-		Delaunay_triangulation::Vertex_handle v=DT.nearest_vertex(p);
-		Point nearest=v->point();
-		pair<Coord_type,bool> intpolpeak=peak(nearest);
-		pair<Coord_type,bool> intpolfwhm=fwhm(nearest);
-		pair<Coord_type,bool> intpollosvel=losvel(nearest);
+		// Only look for the nearest point and interpolate, if the point p is inside the convex hull.
+		if (lt!=Delaunay_triangulation::OUTSIDE_CONVEX_HULL)
+		{
+			Delaunay_triangulation::Vertex_handle v=DT.nearest_vertex(p);
+			Point nearest=v->point();
+			pair<Coord_type,bool> intpolpeak=peak(nearest);
+			pair<Coord_type,bool> intpolfwhm=fwhm(nearest);
+			pair<Coord_type,bool> intpollosvel=losvel(nearest);
+		}
 		
 
 // on each point on the ray, put the Gaussian with doppler velocity and correct peak and width
@@ -272,7 +282,7 @@ void mpi_calculatemypart(double* results, const int x1, const int x2, const int 
 			//cout << "i" << i << "y1" << y1 << "y2" << y2;
 		}
 	}
-	if (commrank==0) cout << " finished!" << endl << flush;
+	if (commrank==0) cout << " Done! " << endl << flush;
 }
 
 void fillccd(double * const * const frame, const double *results, const int x1, const int x2, const int y1, const int y2)
