@@ -84,6 +84,7 @@ extern const int x_pixel;
 extern const int y_pixel;
 // z_pixel is not really a constant of the telescope, it can be adjusted to obtain a sufficient resolution
 extern const int z_pixel;
+extern const int lambda_pixel;
 extern const double size_pixel;
 extern const double size_z_pixel;
 extern double findmax(double * const * const, int *, int *);
@@ -116,3 +117,4 @@ extern cube emissionfromdatacube(cube);
 extern char* chiantifile;
 extern char* abundfile;
 extern char* emissionsave;
+extern double readgoftfromchianti(const char*);

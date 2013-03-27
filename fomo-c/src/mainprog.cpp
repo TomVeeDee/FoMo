@@ -40,7 +40,7 @@ int main(int argc, char* argv[])
 	// here starts mpi
 	int workheight = y_pixel;
 	if (commsize>1)	workheight = 1;
-	int maxsize = x_pixel*workheight;
+	int maxsize = x_pixel*workheight*lambda_pixel;
 	double *results;
 	// results is a one dimensional array with all data from rectangle [x1,x2]*[y1,y2]
 	// borders included!!!
@@ -57,6 +57,7 @@ int main(int argc, char* argv[])
 	const int nframes=1;
 	int ng = eqx*eqy*eqz;
 	int nvars = 5; // \rho, T, vx, vy, vz
+	double lambda0=readgoftfromchianti(chiantifile);
 	for (int t=0.; t<nframes; t++)
 	{
 		cube goftcube(1,1,1);
@@ -186,13 +187,13 @@ int main(int argc, char* argv[])
 #endif
 	}
 	} // ofstream s destroyed
+#ifdef HAVEMPEG
 	if (commrank==0)
 	{
-#ifdef HAVEMPEG
 		// write movie
 		if (mpeg) writemovie(imagefile, globalmin, globalmax);
-#endif
 	}
+#endif
 	unlink(imagefile);
 #ifdef HAVEMPI
 	// Finalize mpi

@@ -2,6 +2,7 @@
 #include <cmath>
 #include <cstdlib>
 #include <numeric>
+#include <gsl/gsl_const_mksa.h>
 
 // CGAL
 #include <CGAL/Exact_predicates_inexact_constructions_kernel.h>
@@ -21,6 +22,9 @@ const int z_pixel=x_pixel*z_aspect; // take a factor aspect to make 3D pixel a c
 const double size_z_pixel=size_pixel*x_pixel/z_pixel*z_aspect; 
 // this is the size of a pixel in the z direction, the factor aspect expresses the ratio
 // size of the considered plasma cube in the z direction versus the size in x and y
+const int lambda_pixel = 60;
+
+const double speedoflight=GSL_CONST_MKSA_SPEED_OF_LIGHT; // speed of light
 
 double findmax(double * const * const ccd, int * i, int * j)
 // returns the maximumvalue of the ccd
@@ -152,7 +156,7 @@ void mpi_getcoords(int & x1, int & x2, int & y1, int & y2)
 void mpi_calculatemypart(double* results, const int x1, const int x2, const int y1, const int y2, const double t, cube goftcube)
 {
 //
-// results is an array of at least dimension (x2-x1+1)*(y2-y1+1) and must be initialized to zero
+// results is an array of at least dimension (x2-x1+1)*(y2-y1+1)*lambda_pixel and must be initialized to zero
 // 
 // determine contributions per pixel
 
@@ -224,6 +228,7 @@ void mpi_calculatemypart(double* results, const int x1, const int x2, const int 
 	double maxx=*(max_element(xacc.begin(),xacc.end()));
 	double miny=*(min_element(yacc.begin(),yacc.end()));
 	double maxy=*(max_element(yacc.begin(),yacc.end()));
+	double maxfwhm=*(max_element(fwhmvec.begin(),fwhmvec.end()));
 	Value_access peak=Value_access(peakmap);
 	Value_access fwhm=Value_access(fwhmmap);
 	Value_access losvel=Value_access(losvelmap);
@@ -266,14 +271,24 @@ void mpi_calculatemypart(double* results, const int x1, const int x2, const int 
 		{
 			Delaunay_triangulation::Vertex_handle v=DT.nearest_vertex(p);
 			Point nearest=v->point();
-			pair<Coord_type,bool> intpolpeak=peak(nearest);
-			pair<Coord_type,bool> intpolfwhm=fwhm(nearest);
-			pair<Coord_type,bool> intpollosvel=losvel(nearest);
+			pair<Coord_type,bool> tmppeak=peak(nearest);
+			pair<Coord_type,bool> tmpfwhm=fwhm(nearest);
+			pair<Coord_type,bool> tmplosvel=losvel(nearest);
+			double intpolpeak=tmppeak.first;
+			double intpolfwhm=tmpfwhm.first;
+			double intpollosvel=tmplosvel.first;
+			for (int l=0; l<lambda_pixel; l++)
+			{
+			// lambda is made around lambda0, with a width of 2 maxfwhm (\sim 4 \sigma)
+				double lambdaval=double(l)/(lambda_pixel-1)*4*maxfwhm-2*maxfwhm;
+				results[((i-y1)*(x2-x1+1)+j-x1)*lambda_pixel+l]+=intpolpeak*exp(-pow(lambdaval-intpollosvel/speedoflight*lambdaval,2)/pow(intpolfwhm,2));
+			}
 		}
 		
 
 // on each point on the ray, put the Gaussian with doppler velocity and correct peak and width
 // sum the emission into results
+// The spectral line is stored at a position that starts at (i-y1)*(x2-x1+1)+j-x1 and has length lambda_pixel
 // results[(i-y1)*(x2-x1+1)+j-x1]+=pow(density(r,phi,z_or),2);
 		// print progress
 		if ((commrank==0)&&(j==x1)&&(k==0)) 

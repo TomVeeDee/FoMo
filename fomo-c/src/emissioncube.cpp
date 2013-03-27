@@ -161,6 +161,26 @@ tphysvar goft(const tphysvar logT, const tphysvar logrho, const cube gofttab)
 	return g;
 }
 
+double readgoftfromchianti(const char* chiantifile)
+{
+	ifstream in(chiantifile);
+	if (!in) {
+		cout << "Error: no CHIANTI G(T) file exists\n";
+		exit(EXIT_FAILURE);
+	}
+
+	double lambda0;
+	string ion;
+
+	// read in first two lines (ion name, rest wavelength)
+	in >> ion;
+	in >> lambda0;
+
+	in.close();
+
+	return lambda0;
+}
+
 cube readgoftfromchianti(const char* chiantifile, string & ion, double & lambda0, double & atweight)
 {
 	ifstream in(chiantifile);
@@ -222,6 +242,8 @@ cube readgoftfromchianti(const char* chiantifile, string & ion, double & lambda0
 	
 	gofttab.setgrid(tempgrid);
 	gofttab.setvar(0,tempgoft);
+
+	in.close();
 
 	cout << "Done!" << endl << flush;
 
