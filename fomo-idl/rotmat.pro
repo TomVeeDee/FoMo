@@ -1,8 +1,8 @@
 
-pro rotmat, dimx, dimy, dimz, ro, re, va, vae, co, ce, bo, be, waka_ini, no_init_guess = no_init, high_t_ext = high_t, nmode = nmode
+pro rotmat, dimx, dimy, dimz, ro, re, va, vae, co, ce, bo, be, waka_ini, waka_ini_ar, no_init_guess = no_init, high_t_ext = high_t, nmode = nmode
 
 if n_params(0) lt 1 then begin
-   print,'rotmat, dimx, dimy, dimz, ro, re, va, vae, co, ce, bo, be, waka_ini, [nmode=nmode,no_init_guess = no_guess, high_t_ext = high_t]'
+   print,'rotmat, dimx, dimy, dimz, ro, re, va, vae, co, ce, bo, be, waka_ini,waka_ini_ar, [nmode=nmode,no_init_guess = no_guess, high_t_ext = high_t]'
    return
 endif
 
@@ -226,10 +226,13 @@ if initial eq 1 then begin
 ;locs = where(abs(L/max(sqrt(abs(dnummoa2*dnummea2)))) lt 1.e-5)
 
    plot,wa/ka,L,/xs,/ys,psym=3,yr=[-2,10]  ;,yr=[-0.01,0.01]
-   locs = where(abs(L) lt 1.e-2)
+   locs = where(abs(L) lt 2.e-3)
    if locs[0] ne -1 then begin
       waka_ini = max(wa[locs]/ka[locs])
-      print,'waka_ini = ', waka_ini 
+      waka_ini_0 = round(wa[locs]/ka[locs]*1.e5)/1.e5
+      wrlocs = where(waka_ini_0[uniq(waka_ini_0)] gt va*1.01)
+      waka_ini_ar = waka_ini_0[(uniq(waka_ini_0))[wrlocs]]
+      print,'waka_ini = ', waka_ini_ar
    endif else begin
       print,'no solution'
    endelse
