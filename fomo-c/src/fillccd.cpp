@@ -194,7 +194,7 @@ void mpi_calculatemypart(double* results, const int x1, const int x2, const int 
 	typedef K::FT                                         Coord_type;
 	typedef K::Point_3                                    Point;
         std::map<Point, Coord_type, K::Less_xyz_3> peakmap, fwhmmap, losvelmap;
-        typedef CGAL::Data_access< std::map<Point, Coord_type, K::Less_xyz_3 > >  Value_access;
+//        typedef CGAL::Data_access< std::map<Point, Coord_type, K::Less_xyz_3 > >  Value_access;
 
 	int commrank;
 #ifdef HAVEMPI
@@ -241,12 +241,12 @@ void mpi_calculatemypart(double* results, const int x1, const int x2, const int 
 		// also create the map function_values here
 		vector<double> velvec = {vx[i], vy[i], vz[i]};
 		losvelval = inner_product(unit.begin(),unit.end(),velvec.begin(),0.0),
-		/*losvelmap[temporarygridpoint]=Coord_type(losvelval);
+		losvelmap[temporarygridpoint]=Coord_type(losvelval);
 		peakmap[temporarygridpoint]=Coord_type(peakvec[i]);
-		fwhmmap[temporarygridpoint]=Coord_type(fwhmvec[i]);*/
-		peakmap.insert(make_pair(temporarygridpoint,Coord_type(peakvec[i])));
+		fwhmmap[temporarygridpoint]=Coord_type(fwhmvec[i]);
+/*		peakmap.insert(make_pair(temporarygridpoint,Coord_type(peakvec[i])));
 		fwhmmap.insert(make_pair(temporarygridpoint,Coord_type(fwhmvec[i])));
-		losvelmap.insert(make_pair(temporarygridpoint,Coord_type(losvelval)));
+		losvelmap.insert(make_pair(temporarygridpoint,Coord_type(losvelval)));*/
 	}
 	double minz=*(min_element(zacc.begin(),zacc.end()));
 	double maxz=*(max_element(zacc.begin(),zacc.end()));
@@ -254,19 +254,19 @@ void mpi_calculatemypart(double* results, const int x1, const int x2, const int 
 	double maxx=*(max_element(xacc.begin(),xacc.end()));
 	double miny=*(min_element(yacc.begin(),yacc.end()));
 	double maxy=*(max_element(yacc.begin(),yacc.end()));
-	Value_access peak=Value_access(peakmap);
+/*	Value_access peak=Value_access(peakmap);
 	Value_access fwhm=Value_access(fwhmmap);
-	Value_access losvel=Value_access(losvelmap);
+	Value_access losvel=Value_access(losvelmap);*/
 	xacc.clear();
 	yacc.clear();
 	zacc.clear();
-	peakmap.clear();
-	fwhmmap.clear();
-	losvelmap.clear();
 	if (commrank==0) cout << "Done!" << endl;
 
-	if (commrank==0) cout << "Building frame: " << flush;
+	
+	
 	Delaunay_triangulation_3::Locate_type lt; int li, lj;
+	
+	if (commrank==0) cout << "Building frame: " << flush;
 #ifdef _OPENMP
 #pragma omp parallel for
 #endif
@@ -287,17 +287,24 @@ void mpi_calculatemypart(double* results, const int x1, const int x2, const int 
 		{
 			Delaunay_triangulation_3::Vertex_handle v=DT.nearest_vertex(p);
 			Point nearest=v->point();
-			pair<Coord_type,bool> tmppeak=peak(nearest);
+/* This is how it is done in the CGAL examples		
+ 			pair<Coord_type,bool> tmppeak=peak(nearest);
 			pair<Coord_type,bool> tmpfwhm=fwhm(nearest);
 			pair<Coord_type,bool> tmplosvel=losvel(nearest);
-			double intpolpeak=tmppeak.first;
-			double intpolfwhm=tmpfwhm.first;
-			double intpollosvel=tmplosvel.first;
+			intpolpeak=tmppeak.first;
+			intpolfwhm=tmpfwhm.first;
+			intpollosvel=tmplosvel.first;*/
+			double intpolpeak=peakmap[nearest];
+			double intpolfwhm=fwhmmap[nearest];
+			double intpollosvel=losvelmap[nearest];
 			for (int l=0; l<lambda_pixel; l++)
 			{
 			// lambda is made around lambda0, with a width of lambda_width 
 				double lambdaval=double(l)/(lambda_pixel-1)*lambda_width-lambda_width/2.;
-				results[((i-y1)*(x2-x1+1)+j-x1)*lambda_pixel+l]+=intpolpeak*exp(-pow(lambdaval-intpollosvel/speedoflight*lambdaval,2)/pow(intpolfwhm,2)*4.*log(2.));
+				double tempintens=intpolpeak*exp(-pow(lambdaval-intpollosvel/speedoflight*lambdaval,2)/pow(intpolfwhm,2)*4.*log(2.));
+				int ind=((i-y1)*(x2-x1+1)+j-x1)*lambda_pixel+l;
+				
+				results[ind]=tempintens;
 			}
 		}
 		

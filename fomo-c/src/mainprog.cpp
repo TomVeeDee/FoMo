@@ -162,16 +162,25 @@ int main(int argc, char* argv[])
 		}
 		if (commrank==0)
 		{
-// allocate image
-	double **image;
-	image = (double **)malloc(y_pixel*sizeof(double *));
-        for (int row = 0; row < y_pixel; row++)
-        {
-                image[row] = (double *)malloc(x_pixel*sizeof(double));
-// initialize image to black
-		for (int j=0; j<x_pixel; j++)
-			image[row][j]=0;
-        }
+		// allocate image
+			double **image;
+			image = (double **)malloc(y_pixel*sizeof(double *));
+        		for (int row = 0; row < y_pixel; row++)
+		        {
+                		image[row] = (double *)malloc(x_pixel*sizeof(double));
+		// initialize image to black
+				for (int j=0; j<x_pixel; j++)
+					image[row][j]=0;
+		        }
+			tgrid grid=observ.readgrid();
+			tphysvar intens=observ.readvar(0);
+			int row, column;
+			for (int k=0; k<x_pixel*y_pixel*lambda_pixel; k++)
+			{
+				row=int(grid[1][k]);
+				column=int(grid[0][k]);
+				image[row][column]+=intens[k];
+			}
 			if ((x_pixel>=42)&&(y_pixel>=42)) writetime(image,t);
 			int i,j;
 			double max = findmax(image,&i,&j);
