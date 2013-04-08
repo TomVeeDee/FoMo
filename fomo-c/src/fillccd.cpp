@@ -23,6 +23,8 @@ const double size_z_pixel=size_pixel*x_pixel/z_pixel*z_aspect;
 // this is the size of a pixel in the z direction, the factor aspect expresses the ratio
 // size of the considered plasma cube in the z direction versus the size in x and y
 const int lambda_pixel = 60;
+double lambda_width = 0.14;
+// if lambda0 is larger than 500, then lambda_width=0.3
 
 const double speedoflight=GSL_CONST_MKSA_SPEED_OF_LIGHT; // speed of light
 
@@ -161,7 +163,9 @@ void mpi_calculatemypart(double* results, const int x1, const int x2, const int 
 // determine contributions per pixel
 
 	typedef CGAL::Exact_predicates_inexact_constructions_kernel K;
-	typedef CGAL::Delaunay_triangulation_3<K>             Delaunay_triangulation;
+// The fast_location should be faster, but I don't see that
+	typedef CGAL::Delaunay_triangulation_3<K, CGAL::Fast_location> Delaunay_triangulation;
+//	typedef CGAL::Delaunay_triangulation_3<K> Delaunay_triangulation;
 	typedef K::FT                                         Coord_type;
 	typedef K::Point_3                                    Point;
         std::map<Point, Coord_type, K::Less_xyz_3> peakmap, fwhmmap, losvelmap;
@@ -228,7 +232,6 @@ void mpi_calculatemypart(double* results, const int x1, const int x2, const int 
 	double maxx=*(max_element(xacc.begin(),xacc.end()));
 	double miny=*(min_element(yacc.begin(),yacc.end()));
 	double maxy=*(max_element(yacc.begin(),yacc.end()));
-	double maxfwhm=*(max_element(fwhmvec.begin(),fwhmvec.end()));
 	Value_access peak=Value_access(peakmap);
 	Value_access fwhm=Value_access(fwhmmap);
 	Value_access losvel=Value_access(losvelmap);
@@ -279,9 +282,9 @@ void mpi_calculatemypart(double* results, const int x1, const int x2, const int 
 			double intpollosvel=tmplosvel.first;
 			for (int l=0; l<lambda_pixel; l++)
 			{
-			// lambda is made around lambda0, with a width of 2 maxfwhm (\sim 4 \sigma)
-				double lambdaval=double(l)/(lambda_pixel-1)*4*maxfwhm-2*maxfwhm;
-				results[((i-y1)*(x2-x1+1)+j-x1)*lambda_pixel+l]+=intpolpeak*exp(-pow(lambdaval-intpollosvel/speedoflight*lambdaval,2)/pow(intpolfwhm,2));
+			// lambda is made around lambda0, with a width of lambda_width 
+				double lambdaval=double(l)/(lambda_pixel-1)*lambda_width-lambda_width/2.;
+				results[((i-y1)*(x2-x1+1)+j-x1)*lambda_pixel+l]+=intpolpeak*exp(-pow(lambdaval-intpollosvel/speedoflight*lambdaval,2)/pow(intpolfwhm,2)*4.*log(2.));
 			}
 		}
 		
@@ -300,10 +303,28 @@ void mpi_calculatemypart(double* results, const int x1, const int x2, const int 
 	if (commrank==0) cout << " Done! " << endl << flush;
 }
 
-void fillccd(double * const * const frame, const double *results, const int x1, const int x2, const int y1, const int y2)
+void fillccd(cube observ, const double *results, const int x1, const int x2, const int y1, const int y2)
 {
+	tgrid grid=observ.readgrid();
+	tphysvar intens=observ.readvar(0);
+	cout << "size intens" << intens.size() << endl << flush;
+	double lambda0=readgoftfromchianti(chiantifile);
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
 	for (int i=y1; i<y2+1; i++)
 		for (int j=x1; j<x2+1; j++)
-			frame[i][j]=results[(i-y1)*(x2-x1+1)+j-x1];
+			for (int l=0; l<lambda_pixel; l++)
+			{
+				int ind=((i-y1)*(x2-x1+1)+j-x1)*lambda_pixel+l;
+				double lambdaval=double(l)/(lambda_pixel-1)*lambda_width-lambda_width/2.+lambda0;
+				grid[0][ind]=j;
+				grid[1][ind]=i;
+				grid[2][ind]=lambdaval;
+				intens[ind]=results[ind];
+			}
+
+	observ.setgrid(grid);
+	observ.setvar(0,intens);
 }
 

@@ -105,13 +105,12 @@ cube::cube(const int invars, const int ingrid, const int indim )
 	grid = new tcoord[dim];
 	for (int k=0; k<dim; k++)
 	{
-		grid[k].reserve(ng);
+		grid[k].resize(ng);
 	}
-//	cout << "Maximum size vector" << grid[0].max_size() << "\n Current size" << grid[0].size() << "\n Capacity" << grid[0].capacity() << "\n";
 	vars = new tphysvar[nvars];
 	for (int k=0; k<nvars; k++)
 	{
-		vars[k].reserve(ng);
+		vars[k].resize(ng);
 	}	
 };
 

@@ -27,16 +27,6 @@ int main(int argc, char* argv[])
 #ifdef HAVEMPI
 	MPI_Barrier(MPI_COMM_WORLD);
 #endif
-// allocate image
-	double **image;
-	image = (double **)malloc(y_pixel*sizeof(double *));
-        for (int row = 0; row < y_pixel; row++)
-        {
-                image[row] = (double *)malloc(x_pixel*sizeof(double));
-// initialize image to black
-		for (int j=0; j<x_pixel; j++)
-			image[row][j]=0;
-        }
 	// here starts mpi
 	int workheight = y_pixel;
 	if (commsize>1)	workheight = 1;
@@ -45,6 +35,7 @@ int main(int argc, char* argv[])
 	// results is a one dimensional array with all data from rectangle [x1,x2]*[y1,y2]
 	// borders included!!!
 	results = (double *)malloc(maxsize*sizeof(double));
+	cube observ(1,x_pixel*y_pixel*lambda_pixel);
 
 	// if we want a movie, iteration over time t starts here
 	char imagefile[] = "./imagefile.XXXXXX";
@@ -58,6 +49,7 @@ int main(int argc, char* argv[])
 	int ng = eqx*eqy*eqz;
 	int nvars = 5; // \rho, T, vx, vy, vz
 	double lambda0=readgoftfromchianti(chiantifile);
+	if (lambda0 > 500.) lambda_width=.6;
 	for (int t=0.; t<nframes; t++)
 	{
 		cube goftcube(1,1,1);
@@ -125,7 +117,7 @@ int main(int argc, char* argv[])
 						//cout << "Sent job to node " << r << endl;
 					}
 					// process the received results
-					fillccd(image,results,x1,x2,y1,y2);
+					fillccd(observ,results,x1,x2,y1,y2);
 					progressbar(done,0,y_pixel-1);
 				}
 				for (int r=1; r<commsize; r++)
@@ -140,7 +132,7 @@ int main(int argc, char* argv[])
 					coords[0][0]=-10;
 					MPI_Send(coords[r-1],4,MPI_INT,r,WORKTAG,MPI_COMM_WORLD);
 					// process the received results
-					fillccd(image,results,x1,x2,y1,y2);
+					fillccd(observ,results,x1,x2,y1,y2);
 				}
 			}
 			else //oh no, we're a slave, work to do
@@ -162,10 +154,20 @@ int main(int argc, char* argv[])
 		else
 		{
 			mpi_calculatemypart(results,0,x_pixel-1,0,y_pixel-1,t,goftcube);
-			fillccd(image,results,0,x_pixel-1,0,y_pixel-1);
+			fillccd(observ,results,0,x_pixel-1,0,y_pixel-1);
 		}
 		if (commrank==0)
 		{
+// allocate image
+	double **image;
+	image = (double **)malloc(y_pixel*sizeof(double *));
+        for (int row = 0; row < y_pixel; row++)
+        {
+                image[row] = (double *)malloc(x_pixel*sizeof(double));
+// initialize image to black
+		for (int j=0; j<x_pixel; j++)
+			image[row][j]=0;
+        }
 			if ((x_pixel>=42)&&(y_pixel>=42)) writetime(image,t);
 			int i,j;
 			double max = findmax(image,&i,&j);
