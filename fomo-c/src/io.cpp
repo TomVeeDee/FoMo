@@ -76,7 +76,7 @@ void writefile()
 	}
 }
 
-void writeemissioncube(const cube goftcube, const string filename)
+void writeemissioncube(const cube goftcube, const Delaunay_triangulation_3 DT, const string filename)
 {
 	// write out goftcube to file "emissionsave"
 	int commrank;
@@ -113,13 +113,14 @@ void writeemissioncube(const cube goftcube, const string filename)
 					out << var[j] << space;
 				}
 			}
+			out << DT;
 		}
 		else cout << "Unable to write to " << emissionsave << endl;
 		out.close();
 	}
 }
 
-cube reademissioncube()
+void reademissioncube(cube &resultcube, Delaunay_triangulation_3 &DT, const string emissionsave)
 {
 	// read emission datacube from file "emissionsave" when the reuse parameter is switched on
 	int commrank;
@@ -161,11 +162,13 @@ cube reademissioncube()
 				}
 				goftcube.setvar(i,var);
 			}
-			return goftcube;
+			resultcube=goftcube;
+
+			in >> DT;
+			// Check is this is a valid Delaunay triangulation
+			assert(DT.is_valid());
 		}
 		else cout << "Unable to read " << emissionsave << endl;
 		in.close();
 	}
-	cube badcube(1,1,1);
-	return badcube;
 }

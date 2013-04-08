@@ -4,9 +4,7 @@
 #include <gsl/gsl_const_mksa.h>
 
 // CGAL stuff
-#include <CGAL/Exact_predicates_inexact_constructions_kernel.h>
 #include <CGAL/Delaunay_triangulation_2.h>
-
 #include <CGAL/Interpolation_traits_2.h>
 #include <CGAL/natural_neighbor_coordinates_2.h>
 #include <CGAL/interpolation_functions.h>
@@ -67,7 +65,6 @@ double abundfromchianti(const char* abundfile, const string & ion)
 tphysvar goft(const tphysvar logT, const tphysvar logrho, const cube gofttab)
 {
 	// uses the log(T), because the G(T) is also stored using those values.
-	typedef CGAL::Exact_predicates_inexact_constructions_kernel K;
 	typedef CGAL::Delaunay_triangulation_2<K>             Delaunay_triangulation;
 	typedef CGAL::Interpolation_traits_2<K>               Traits;
 	typedef K::FT                                         Coord_type;

@@ -5,8 +5,6 @@
 #include <gsl/gsl_const_mksa.h>
 
 // CGAL
-#include <CGAL/Exact_predicates_inexact_constructions_kernel.h>
-#include <CGAL/Delaunay_triangulation_3.h>
 #include <CGAL/interpolation_functions.h>
 
 
@@ -155,17 +153,44 @@ void mpi_getcoords(int & x1, int & x2, int & y1, int & y2)
 #endif
 }
 
-void mpi_calculatemypart(double* results, const int x1, const int x2, const int y1, const int y2, const double t, cube goftcube)
+Delaunay_triangulation_3 triangulationfromdatacube(cube goftcube)
+{
+	typedef K::Point_3                                    Point;
+	int commrank;
+#ifdef HAVEMPI
+	MPI_Comm_rank(MPI_COMM_WORLD,&commrank);
+#else
+	commrank = 0;
+#endif
+	tgrid grid = goftcube.readgrid();
+	int ng=goftcube.readngrid();
+	vector<Point> delaunaygrid;
+	delaunaygrid.resize(ng);
+
+	for (int i=0; i<ng; i++)
+	{
+		delaunaygrid[i]=Point(grid[0][i],grid[1][i],grid[2][i]);
+	}
+
+	// compute the Delaunay triangulation
+	if (commrank==0) cout << "Doing Delaunay triangulation for interpolation onto rays... " << flush;
+	Delaunay_triangulation_3 DT;
+	// The triangulation should go quicker if it is sorted
+	// CGAL::spatial_sort(delaunaygrid.begin(),delaunaygrid.end());
+	// but I don't know how this affects the values in the maps.
+	// Apparently, this is already done internally.
+	DT.insert(delaunaygrid.begin(),delaunaygrid.end());
+	if (commrank==0) cout << "Done!" << endl << flush;
+	return DT;
+}
+
+void mpi_calculatemypart(double* results, const int x1, const int x2, const int y1, const int y2, const double t, cube goftcube, Delaunay_triangulation_3 DT)
 {
 //
 // results is an array of at least dimension (x2-x1+1)*(y2-y1+1)*lambda_pixel and must be initialized to zero
 // 
 // determine contributions per pixel
 
-	typedef CGAL::Exact_predicates_inexact_constructions_kernel K;
-// The fast_location should be faster, but I don't see that
-	typedef CGAL::Delaunay_triangulation_3<K, CGAL::Fast_location> Delaunay_triangulation;
-//	typedef CGAL::Delaunay_triangulation_3<K> Delaunay_triangulation;
 	typedef K::FT                                         Coord_type;
 	typedef K::Point_3                                    Point;
         std::map<Point, Coord_type, K::Less_xyz_3> peakmap, fwhmmap, losvelmap;
@@ -189,8 +214,6 @@ void mpi_calculatemypart(double* results, const int x1, const int x2, const int 
 	zacc.resize(ng);
 	vector<double> gridpoint;
 	gridpoint.resize(3);
-	vector<Point> delaunaygrid;
-	delaunaygrid.resize(ng);
 	Point temporarygridpoint;
 	// Define the unit vector along the line-of-sight
 	vector<double> unit = {cos(b)*cos(l), cos(b)*sin(l), sin(b)};
@@ -214,8 +237,7 @@ void mpi_calculatemypart(double* results, const int x1, const int x2, const int 
 		xacc[i]=gridpoint[0]*cos(b)*cos(l)-gridpoint[1]*cos(b)*sin(l)-gridpoint[2]*sin(b);
 		yacc[i]=gridpoint[0]*sin(l)+gridpoint[1]*cos(l);
 		zacc[i]=gridpoint[0]*sin(b)*cos(l)-gridpoint[1]*sin(b)*sin(l)+gridpoint[2]*cos(b);
-		temporarygridpoint=Point(xacc[i],yacc[i],zacc[i]);
-		delaunaygrid[i]=temporarygridpoint;
+		temporarygridpoint=Point(grid[0][i],grid[1][i],grid[2][i]);
 		// also create the map function_values here
 		vector<double> velvec = {vx[i], vy[i], vz[i]};
 		losvelval = inner_product(unit.begin(),unit.end(),velvec.begin(),0.0),
@@ -243,19 +265,8 @@ void mpi_calculatemypart(double* results, const int x1, const int x2, const int 
 	losvelmap.clear();
 	if (commrank==0) cout << "Done!" << endl;
 
-	// compute the Delaunay triangulation
-	cout << "Doing Delaunay triangulation for interpolation onto rays... " << flush;
-	Delaunay_triangulation DT;
-	// The triangulation should go quicker if it is sorted
-	// CGAL::spatial_sort(delaunaygrid.begin(),delaunaygrid.end());
-	// but I don't know how this affects the values in the maps.
-	// Also, some test don't show a significant speedup.
-	DT.insert(delaunaygrid.begin(),delaunaygrid.end());
-	if (commrank==0) cout << "Done!" << endl << flush;
-	delaunaygrid.clear();
-
 	if (commrank==0) cout << "Building frame: " << flush;
-	Delaunay_triangulation::Locate_type lt; int li, lj;
+	Delaunay_triangulation_3::Locate_type lt; int li, lj;
 #ifdef _OPENMP
 #pragma omp parallel for
 #endif
@@ -266,13 +277,15 @@ void mpi_calculatemypart(double* results, const int x1, const int x2, const int 
 		double x = double(j)/x_pixel*(maxx-minx)+minx;
 		double y = double(i)/y_pixel*(maxy-miny)+miny;
 		double z = double(k)/z_pixel*(maxz-minz)+minz;
-		Point p(x,y,z);
-		Delaunay_triangulation::Cell_handle c = DT.locate(p, lt, li, lj);
+		// calculate the interpolation in the original frame of reference
+		// i.e. derotate the point using angles -l and -b
+		Point p(x*cos(b)*cos(l)+y*cos(b)*sin(l)+z*sin(b),-x*sin(l)+y*cos(l),-x*sin(b)*cos(l)-y*sin(b)*sin(l)+z*cos(b));
+		Delaunay_triangulation_3::Cell_handle c = DT.locate(p, lt, li, lj);
 
 		// Only look for the nearest point and interpolate, if the point p is inside the convex hull.
-		if (lt!=Delaunay_triangulation::OUTSIDE_CONVEX_HULL)
+		if (lt!=Delaunay_triangulation_3::OUTSIDE_CONVEX_HULL)
 		{
-			Delaunay_triangulation::Vertex_handle v=DT.nearest_vertex(p);
+			Delaunay_triangulation_3::Vertex_handle v=DT.nearest_vertex(p);
 			Point nearest=v->point();
 			pair<Coord_type,bool> tmppeak=peak(nearest);
 			pair<Coord_type,bool> tmpfwhm=fwhm(nearest);
@@ -307,7 +320,7 @@ void fillccd(cube observ, const double *results, const int x1, const int x2, con
 {
 	tgrid grid=observ.readgrid();
 	tphysvar intens=observ.readvar(0);
-	cout << "size intens" << intens.size() << endl << flush;
+	if (intens.size() == 0) intens.resize(x_pixel*y_pixel*lambda_pixel);
 	double lambda0=readgoftfromchianti(chiantifile);
 #ifdef _OPENMP
 #pragma omp parallel for

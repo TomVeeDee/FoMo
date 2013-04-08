@@ -105,12 +105,12 @@ cube::cube(const int invars, const int ingrid, const int indim )
 	grid = new tcoord[dim];
 	for (int k=0; k<dim; k++)
 	{
-		grid[k].resize(ng);
+		grid[k].reserve(ng);
 	}
 	vars = new tphysvar[nvars];
 	for (int k=0; k<nvars; k++)
 	{
-		vars[k].resize(ng);
+		vars[k].reserve(ng);
 	}	
 };
 

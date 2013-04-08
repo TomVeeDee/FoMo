@@ -5,7 +5,7 @@
 #include <cstdio>
 
 // Initialize global variables
-int reuse = 0, png = 0, mpeg = 0, array = 0;
+int reuse = 0, png = 0, mpeg = 0, warray = 0;
 double length = 200, width = 5, magfield = 15, rhoint = 1.4, contrast = 3, thickness = 2, alpha = 0.78, ampl = 0.2, phase=0.;
 double l=M_PI/6., b=M_PI/3.;
 char* chiantifile="chiantitables/goft_table_fe_12_0194.dat";
@@ -129,7 +129,7 @@ void getarg(int argc, char* argv[])
 #endif
 				break;
 			case 'y':
-				array = 1;
+				warray = 1;
 				break;
 			case 'r':
 				reuse = 1;
@@ -151,5 +151,5 @@ void getarg(int argc, char* argv[])
 		}
 		opt = getopt_long(argc, argv, optstr, longopts, &longindex);
 	}
-	if ((!mpeg)&&(!png)) array = 1;
+	if ((!mpeg)&&(!png)) warray = 1;
 }

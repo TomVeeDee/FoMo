@@ -7,12 +7,20 @@
 #include <mpi.h>
 #endif
 
+//CGAL
+#include <CGAL/Exact_predicates_inexact_constructions_kernel.h>
+#include <CGAL/Delaunay_triangulation_3.h>
+
+
 using namespace std;
 
 typedef vector<double> tcoord;
 typedef tcoord * tgrid;
 typedef vector<double> tphysvar;
 typedef tphysvar * tvars;
+
+typedef CGAL::Exact_predicates_inexact_constructions_kernel K;
+typedef CGAL::Delaunay_triangulation_3<K, CGAL::Fast_location> Delaunay_triangulation_3;
 
 enum EqType 
 {
@@ -62,8 +70,8 @@ extern void getarg(int, char* array[]);
 extern void getfile();
 extern void writefile();
 extern void writeparameters(ostream&, char);
-extern cube reademissioncube();
-extern void writeemissioncube(const cube, const string);
+extern void reademissioncube(cube&, Delaunay_triangulation_3&, const string);
+extern void writeemissioncube(const cube, const Delaunay_triangulation_3, const string);
 
 //external functions in equilibrium.cpp
 extern double density(const double, const double, const double);
@@ -93,7 +101,7 @@ extern double findmin(double * const * const, int *, int *);
 extern int MPE_Decomp1d(int , int , int, int *, int*);
 extern void fillccd(cube, const double*, const int, const int, const int, const int);
 extern void mpi_getcoords(int &, int &, int &, int &);
-extern void mpi_calculatemypart(double*, const int, const int, const int, const int, const double, cube);
+extern void mpi_calculatemypart(double*, const int, const int, const int, const int, const double, cube, Delaunay_triangulation_3);
 
 //external functions in writetime.cpp
 extern void writetime(double * const * const, const int);
@@ -103,7 +111,7 @@ extern void progressbar(const int, const int, const int);
 
 // Global variables from mainprog.cpp
 // reuse controls whether to compute a new problem or just to reuse the old outputfiles
-extern int reuse, png, mpeg, array;
+extern int reuse, png, mpeg, warray;
 // physical parameters of the problem
 extern double length, width, magfield, rhoint, contrast, thickness, alpha;
 extern double l, b;
@@ -115,6 +123,7 @@ extern void builtingrid(const int, const int, const int, tgrid);
 
 // external functions from emissioncube.cpp
 extern cube emissionfromdatacube(cube);
+extern Delaunay_triangulation_3 triangulationfromdatacube(cube);
 extern char* chiantifile;
 extern char* abundfile;
 extern char* emissionsave;

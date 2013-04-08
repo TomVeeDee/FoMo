@@ -6,7 +6,6 @@
 #include <cstdlib>
 #include <cmath>
 
-
 int main(int argc, char* argv[])
 {
 // Initialize global paramters, get arguments and set physical parameters
@@ -24,6 +23,7 @@ int main(int argc, char* argv[])
 	getarg(argc,argv);
 	writeparameters(cout,'v');
 	writefile();
+
 #ifdef HAVEMPI
 	MPI_Barrier(MPI_COMM_WORLD);
 #endif
@@ -53,6 +53,7 @@ int main(int argc, char* argv[])
 	for (int t=0.; t<nframes; t++)
 	{
 		cube goftcube(1,1,1);
+		Delaunay_triangulation_3 DT;
 		if (reuse!=1) 
 		{
 			cube datacube(nvars,ng);
@@ -60,13 +61,16 @@ int main(int argc, char* argv[])
 			datacube.settype(qtype);
 			datacube.fillcube();
 			goftcube=emissionfromdatacube(datacube);
-			writeemissioncube(goftcube,emissionsave);
+			DT=triangulationfromdatacube(datacube);
+			writeemissioncube(goftcube,DT,emissionsave);
 		}
 		else
 		{
-			if (commrank==0) cout << "Reading in data from previous run in file " << emissionsave << "... ";
-			goftcube=reademissioncube();
-			if (commrank==0) cout << "Done!" << endl;
+			if (commrank==0) cout << "Reading in data from previous run in file " << emissionsave << "... " << flush;
+			reademissioncube(goftcube, DT, emissionsave);
+			// Perform some checks on the Delaunay triangulation and data cube that have been read in
+			// cout << DT.number_of_vertices() << goftcube.readdim() << endl << flush;
+			if (commrank==0) cout << "Done!" << endl << flush;
 		}
 
 		if (commsize>1)
@@ -144,7 +148,7 @@ int main(int argc, char* argv[])
 					if (coords[0][0]>=0) 
 					{
 					for (int i=0; i<maxsize; i++) results[i]=0.;
-					mpi_calculatemypart(results,coords[0][0],coords[0][1],coords[0][2],coords[0][3],t,goftcube);
+					mpi_calculatemypart(results,coords[0][0],coords[0][1],coords[0][2],coords[0][3],t,goftcube,DT);
 					MPI_Send(results,maxsize,MPI_DOUBLE,0,RESULTTAG,MPI_COMM_WORLD);
 					}
 				}
@@ -153,7 +157,7 @@ int main(int argc, char* argv[])
 		}
 		else
 		{
-			mpi_calculatemypart(results,0,x_pixel-1,0,y_pixel-1,t,goftcube);
+			mpi_calculatemypart(results,0,x_pixel-1,0,y_pixel-1,t,goftcube,DT);
 			fillccd(observ,results,0,x_pixel-1,0,y_pixel-1);
 		}
 		if (commrank==0)
@@ -178,7 +182,7 @@ int main(int argc, char* argv[])
 			// writeout image in outputfile.t*.png
 			if (png) writepng(image,t);
 #endif
-			if (array) writearray(image,t);
+			if (warray) writearray(image,t);
 			// write image to disk in temporary file
 			for (int j=0; j<y_pixel; j++)
 				for (int k=0; k<x_pixel; k++)
