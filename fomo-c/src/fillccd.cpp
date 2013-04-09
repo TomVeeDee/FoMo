@@ -254,6 +254,7 @@ void mpi_calculatemypart(double* results, const int x1, const int x2, const int 
 	double maxx=*(max_element(xacc.begin(),xacc.end()));
 	double miny=*(min_element(yacc.begin(),yacc.end()));
 	double maxy=*(max_element(yacc.begin(),yacc.end()));
+	cout << "x" << minx << " " << maxx << "y" << miny << " " << maxy << "z" << minz << " " << maxz << endl << flush;
 /*	Value_access peak=Value_access(peakmap);
 	Value_access fwhm=Value_access(fwhmmap);
 	Value_access losvel=Value_access(losvelmap);*/
@@ -302,20 +303,15 @@ void mpi_calculatemypart(double* results, const int x1, const int x2, const int 
 				double tempintens=intpolpeak*exp(-pow(lambdaval-intpollosvel/speedoflight*lambdaval,2)/pow(intpolfwhm,2)*4.*log(2.));
 				int ind=((i-y1)*(x2-x1+1)+j-x1)*lambda_pixel+l;
 				
-				results[ind]=tempintens;
+				results[ind]+=tempintens;
 			}
 		}
 		
 
-// on each point on the ray, put the Gaussian with doppler velocity and correct peak and width
-// sum the emission into results
-// The spectral line is stored at a position that starts at (i-y1)*(x2-x1+1)+j-x1 and has length lambda_pixel
-// results[(i-y1)*(x2-x1+1)+j-x1]+=pow(density(r,phi,z_or),2);
 		// print progress
 		if ((commrank==0)&&(j==x1)&&(k==0)) 
 		{
 			progressbar(i,y1,y2);
-			//cout << "i" << i << "y1" << y1 << "y2" << y2;
 		}
 	}
 	if (commrank==0) cout << " Done! " << endl << flush;

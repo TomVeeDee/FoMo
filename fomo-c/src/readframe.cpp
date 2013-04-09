@@ -196,10 +196,12 @@ void cube::fillcube()
 		                {
 		                        z_or = .5; // does not matter which value is taken here, because it is the singular point of the coordinate system
 		                }
-				vars[0][i]=density(r,phi,z_or);
+				double dens=density(r,phi,z_or);
+				vars[0][i]=dens;
 				vars[1][i]=temperature(r,phi,z_or);
 				vars[2][i]=0.;
-				vars[3][i]=30.*sin(M_PI*z_or);
+				if (2*r/width/1000.<1) vars[3][i]=30.*sin(M_PI*z_or);
+				else vars[3][i]=0.;
 				vars[4][i]=0.;
 			}
 			cout << "Done!" << endl << flush;

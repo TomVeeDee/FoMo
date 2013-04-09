@@ -62,7 +62,9 @@ int main(int argc, char* argv[])
 			datacube.fillcube();
 			goftcube=emissionfromdatacube(datacube);
 			DT=triangulationfromdatacube(datacube);
+			if (commrank==0) cout << "Writing data for reuse in file " << emissionsave << "... " << flush;
 			writeemissioncube(goftcube,DT,emissionsave);
+			if (commrank==0) cout << "Done!" << endl << flush;
 		}
 		else
 		{

@@ -105,11 +105,7 @@ tphysvar goft(const tphysvar logT, const tphysvar logrho, const cube gofttab)
 	g.resize(ng);
 	cout << "Doing G(T) interpolation: " << flush;
 
-#ifdef HAVEMPI
 	// If MPI is available, we should divide the work between nodes, we can just use a geometric division by the commsize
-	// I guess the MPI_Init only has to be used once, at the beginning of the program (mainprog.cpp)
-//	MPI_Init(&argc,&argv);
-#endif
 	int commrank,commsize;
 #ifdef HAVEMPI
         MPI_Comm_rank(MPI_COMM_WORLD,&commrank);
