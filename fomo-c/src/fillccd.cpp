@@ -254,7 +254,6 @@ void mpi_calculatemypart(double* results, const int x1, const int x2, const int 
 	double maxx=*(max_element(xacc.begin(),xacc.end()));
 	double miny=*(min_element(yacc.begin(),yacc.end()));
 	double maxy=*(max_element(yacc.begin(),yacc.end()));
-	cout << "x" << minx << " " << maxx << "y" << miny << " " << maxy << "z" << minz << " " << maxz << endl << flush;
 /*	Value_access peak=Value_access(peakmap);
 	Value_access fwhm=Value_access(fwhmmap);
 	Value_access losvel=Value_access(losvelmap);*/
@@ -277,7 +276,7 @@ void mpi_calculatemypart(double* results, const int x1, const int x2, const int 
 		double z = double(k)/z_pixel*(maxz-minz)+minz;
 		// calculate the interpolation in the original frame of reference
 		// i.e. derotate the point using angles -l and -b
-		Point p(x*cos(b)*cos(l)+y*cos(b)*sin(l)+z*sin(b),-x*sin(l)+y*cos(l),-x*sin(b)*cos(l)-y*sin(b)*sin(l)+z*cos(b));
+		Point p(x*cos(b)*cos(l)+y*sin(l)+z*sin(b)*cos(l),-x*cos(b)*sin(l)+y*cos(l)-z*sin(b)*sin(l),-x*sin(b)+z*cos(b));
 		Delaunay_triangulation_3::Locate_type lt; int li, lj;
 		Delaunay_triangulation_3::Cell_handle c = DT.locate(p, lt, li, lj);
 
