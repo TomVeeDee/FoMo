@@ -208,6 +208,7 @@ void mpi_calculatemypart(double* results, const int x1, const int x2, const int 
 	// We will calculate the maximum image coordinates by projecting the grid onto the image plane
 	// Rotate the grid over an angle -l (around z-axis), and -b (around y-axis)
 	// Take the min and max of the resulting coordinates, those are coordinates in the image plane
+	if (commrank==0) cout << "Rotating coordinates to POS reference... " << flush;
 	vector<double> xacc, yacc, zacc;
 	xacc.resize(ng);
 	yacc.resize(ng);
@@ -225,7 +226,6 @@ void mpi_calculatemypart(double* results, const int x1, const int x2, const int 
 	tphysvar vz=goftcube.readvar(4);
 	double losvelval;
 
-	if (commrank==0) cout << "Rotating coordinates to POS reference... " << flush;
 // No openmp possible here
 // Because of the insertions at the end of the loop, we get segfaults :(
 /*#ifdef _OPENMP
@@ -263,9 +263,6 @@ void mpi_calculatemypart(double* results, const int x1, const int x2, const int 
 	if (commrank==0) cout << "Done!" << endl;
 
 	
-	
-	Delaunay_triangulation_3::Locate_type lt; int li, lj;
-	
 	if (commrank==0) cout << "Building frame: " << flush;
 #ifdef _OPENMP
 #pragma omp parallel for
@@ -280,6 +277,7 @@ void mpi_calculatemypart(double* results, const int x1, const int x2, const int 
 		// calculate the interpolation in the original frame of reference
 		// i.e. derotate the point using angles -l and -b
 		Point p(x*cos(b)*cos(l)+y*cos(b)*sin(l)+z*sin(b),-x*sin(l)+y*cos(l),-x*sin(b)*cos(l)-y*sin(b)*sin(l)+z*cos(b));
+		Delaunay_triangulation_3::Locate_type lt; int li, lj;
 		Delaunay_triangulation_3::Cell_handle c = DT.locate(p, lt, li, lj);
 
 		// Only look for the nearest point and interpolate, if the point p is inside the convex hull.
