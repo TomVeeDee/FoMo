@@ -1,8 +1,8 @@
 #include "header.h"
 #include <cmath>
 
-const int eqx=150;
-const int eqy=60;
+const int eqx=120;
+const int eqy=120;
 const int eqz=100;
 
 void builtingrid(const int x, const int y, const int z, tgrid grid)

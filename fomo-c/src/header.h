@@ -94,8 +94,6 @@ extern const int y_pixel;
 extern const int z_pixel;
 extern const int lambda_pixel;
 extern double lambda_width;
-extern const double size_pixel;
-extern const double size_z_pixel;
 extern double findmax(double * const * const, int *, int *);
 extern double findmin(double * const * const, int *, int *);
 extern int MPE_Decomp1d(int , int , int, int *, int*);

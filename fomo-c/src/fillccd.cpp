@@ -9,17 +9,9 @@
 
 
 const int y_pixel = 200;
-const int x_pixel = 201;
-//pixelsize in kilometers, corresponds to 0.5 arcsecond
-// in contradiction with Schrijver et al. (99)? They claim a spatial resolution of 1,25 arcseconds, which corresponds to 900km.
-const double size_pixel = 727.22;
-// z_pixel is need to determine the resolution in the integration over the line-of-sight, ideally it should be as big as possible
-// for 1024, it takes one hour to calculate one frame on one P4 3GHz CPU
+const int x_pixel = 200;
 const int z_aspect=2; // determines the aspect ratio between the z direction and the other directions
 const int z_pixel=x_pixel*z_aspect; // take a factor aspect to make 3D pixel a cube
-const double size_z_pixel=size_pixel*x_pixel/z_pixel*z_aspect; 
-// this is the size of a pixel in the z direction, the factor aspect expresses the ratio
-// size of the considered plasma cube in the z direction versus the size in x and y
 const int lambda_pixel = 60;
 double lambda_width = 0.14;
 // if lambda0 is larger than 500, then lambda_width=0.3
