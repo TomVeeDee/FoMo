@@ -2,7 +2,7 @@
 #include <fstream>
 #include <cstdlib>
 
-char* configfile="fomo-c.conf";
+string configfile="fomo-c.conf";
 
 void getfile()
 {
@@ -76,11 +76,11 @@ void writefile()
 	}
 }
 
-void writeemissioncube(const cube goftcube, const Delaunay_triangulation_3 DT, const string filename)
+void writeemissioncube(const cube goftcube, const string filename, const Delaunay_triangulation_3 *DTpointer)
 {
 	// write out goftcube to file "emissionsave"
 	int commrank;
-	char* space=" ";
+	string space=" ";
 #ifdef HAVEMPI
         MPI_Comm_rank(MPI_COMM_WORLD,&commrank);
 #else
@@ -95,32 +95,37 @@ void writeemissioncube(const cube goftcube, const Delaunay_triangulation_3 DT, c
 			int dim = goftcube.readdim();
 			int intqtype=int(goftcube.readtype());
 			int ng = goftcube.readngrid();
-			out << dim << space;
-			out << intqtype << space;
-			out << ng << space;
-			out << nvars << space;
+			out << dim << endl;
+			out << intqtype << endl;
+			out << ng << endl;
+			out << nvars << endl;
 			tgrid grid=goftcube.readgrid();
-			for (int i=0; i<dim; i++)
-				for (int j=0; j<ng; j++)
+			vector<tphysvar> allvar;
+			allvar.resize(nvars);
+			for (int i=0; i<nvars; i++)
+			{
+				allvar[i]=goftcube.readvar(i);
+			}
+			for (int j=0; j<ng; j++)
+			{
+				for (int i=0; i<dim; i++)
 				{ 
 					out << grid[i][j] << space;
 				}
-			for (int i=0; i<nvars; i++)
-			{
-				tphysvar var=goftcube.readvar(i);
-				for (int j=0; j<ng; j++)
+				for (int i=0; i<nvars; i++)
 				{
-					out << var[j] << space;
+					out << allvar[i][j] << space;
 				}
+				out << endl;
 			}
-			out << DT;
+			if (DTpointer!=NULL) out << *DTpointer;
 		}
 		else cout << "Unable to write to " << emissionsave << endl;
 		out.close();
 	}
 }
 
-void reademissioncube(cube &resultcube, Delaunay_triangulation_3 &DT, const string emissionsave)
+void reademissioncube(cube &resultcube, const string emissionsave, Delaunay_triangulation_3 &DT)
 {
 	// read emission datacube from file "emissionsave" when the reuse parameter is switched on
 	int commrank;
@@ -143,28 +148,29 @@ void reademissioncube(cube &resultcube, Delaunay_triangulation_3 &DT, const stri
 			cube goftcube(nvars,ng,dim);
 			goftcube.settype(EqType(intqtype));
 			tgrid grid= new tcoord[dim];
+			vector<tphysvar> allvar;
+			allvar.resize(nvars);
 			for (int i=0; i<dim; i++)
 			{
 				grid[i].resize(ng);
-				for (int j=0; j<ng; j++)
-				{
-					in >> grid[i][j];
-				}
 			}
-			goftcube.setgrid(grid);
-			tphysvar var;
-			var.resize(ng);
 			for (int i=0; i<nvars; i++)
 			{
-				for (int j=0; j<ng; j++)
-				{
-					in >> var[j];
-				}
-				goftcube.setvar(i,var);
+				allvar[i].resize(ng);
+			}
+			for (int j=0; j<ng; j++)
+			{
+				for (int i=0; i<dim; i++) in >> grid[i][j];
+				for (int i=0; i<nvars; i++) in >> allvar[i][j];
+			}
+			goftcube.setgrid(grid);
+			for (int i=0; i<nvars; i++)
+			{
+				goftcube.setvar(i,allvar[i]);
 			}
 			resultcube=goftcube;
 
-			in >> DT;
+			if (!in.eof()) in >> DT;
 			// Check is this is a valid Delaunay triangulation
 			assert(DT.is_valid());
 		}

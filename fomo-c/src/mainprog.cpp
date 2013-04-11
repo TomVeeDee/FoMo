@@ -62,14 +62,17 @@ int main(int argc, char* argv[])
 			datacube.fillcube();
 			goftcube=emissionfromdatacube(datacube);
 			DT=triangulationfromdatacube(datacube);
-			if (commrank==0) cout << "Writing data for reuse in file " << emissionsave << "... " << flush;
-			writeemissioncube(goftcube,DT,emissionsave);
-			if (commrank==0) cout << "Done!" << endl << flush;
+			if (emissionsave.compare("none")!=0)
+			{
+				if (commrank==0) cout << "Writing data for reuse in file " << emissionsave << "... " << flush;
+				writeemissioncube(goftcube,emissionsave,&DT);
+				if (commrank==0) cout << "Done!" << endl << flush;
+			}
 		}
 		else
 		{
 			if (commrank==0) cout << "Reading in data from previous run in file " << emissionsave << "... " << flush;
-			reademissioncube(goftcube, DT, emissionsave);
+			reademissioncube(goftcube, emissionsave, DT);
 			// Perform some checks on the Delaunay triangulation and data cube that have been read in
 			// cout << DT.number_of_vertices() << goftcube.readdim() << endl << flush;
 			if (commrank==0) cout << "Done!" << endl << flush;

@@ -18,7 +18,7 @@ const double boltzmannconstant=GSL_CONST_MKSA_BOLTZMANN; // Boltzmann constant
 const double massproton=GSL_CONST_MKSA_MASS_PROTON; // hydrogen mass
 const double speedoflight=GSL_CONST_MKSA_SPEED_OF_LIGHT; // speed of light
 
-double abundfromchianti(const char* abundfile, const string & ion)
+double abundfromchianti(const string abundfile, const string & ion)
 {
 	// read the abundfile and return the value that goes with the ion string
 	ifstream in(abundfile);
@@ -154,7 +154,7 @@ tphysvar goft(const tphysvar logT, const tphysvar logrho, const cube gofttab)
 	return g;
 }
 
-double readgoftfromchianti(const char* chiantifile)
+double readgoftfromchianti(const string chiantifile)
 {
 	ifstream in(chiantifile);
 	if (!in) {
@@ -174,7 +174,7 @@ double readgoftfromchianti(const char* chiantifile)
 	return lambda0;
 }
 
-cube readgoftfromchianti(const char* chiantifile, string & ion, double & lambda0, double & atweight)
+cube readgoftfromchianti(const string chiantifile, string & ion, double & lambda0, double & atweight)
 {
 	ifstream in(chiantifile);
 	if (!in) {

@@ -2,7 +2,7 @@
 #include <cmath>
 
 const int eqx=120;
-const int eqy=120;
+const int eqy=50;
 const int eqz=100;
 
 void builtingrid(const int x, const int y, const int z, tgrid grid)
@@ -24,7 +24,7 @@ double density(const double r, const double phi, const double z)
 	double value;
 	if (2*r/width/1000.<1-thickness/2) value=rhoint*(1-alpha*sin(M_PI*z));
 	else if (2*r/width/1000.>1+thickness/2) value=rhoint/contrast*(1-alpha*sin(M_PI*z));
-	else value=rhoint/2*(1-alpha*sin(M_PI*z))*((1+1/contrast)-(1-1/contrast)*sin(M_PI/thickness*(r/0.02-1)));
+	else value=rhoint/2*(1-alpha*sin(M_PI*z))*((1+1/contrast)-(1-1/contrast)*sin(M_PI/thickness*(2*r/width/1000.-1)));
 	value*=1000000000; // put the density in per cm^3
 	return value;
 };

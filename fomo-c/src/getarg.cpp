@@ -8,15 +8,15 @@
 int reuse = 0, png = 0, mpeg = 0, warray = 0;
 double length = 200, width = 5, magfield = 15, rhoint = 1.4, contrast = 3, thickness = 2, alpha = 0.78, ampl = 0.2, phase=0.;
 double l=M_PI/6., b=M_PI/3.;
-char* chiantifile="chiantitables/goft_table_fe_12_0194.dat";
-char* abundfile="/users/cpa/tomvd/ssw/packages/chianti/dbase/abundance/sun_coronal.abund";
-char* emissionsave="fomo-c.emissionsave";
+string chiantifile="chiantitables/goft_table_fe_12_0194.dat";
+string abundfile="/users/cpa/tomvd/ssw/packages/chianti/dbase/abundance/sun_coronal.abund";
+string emissionsave="fomo-c.emissionsave";
 
 void printusage(const char* programname){
 // print the usage of the program
 	printf("Usage: %s [--reuse] [--help] [--parameter value] \n\n",programname);
 	printf("  --reuse       Reuse the previous results. Setting the physical parameters does not have any effect!\n");
-	printf("  --emissionsave    When running without --reuse, this is the filename where the G(T) interpolated datacube will be stored. When running with --reuse, this is the file that will be read in\n");
+	printf("  --emissionsave    When running without --reuse, this is the filename where the G(T) interpolated datacube will be stored (filename 'none' skips this step). When running with --reuse, this is the file that will be read in\n");
 	printf("  --help        Print this message\n\n");
 	printf("CHIANTI parameters:\n");
 	printf("  --goftfile    Filename containing the table with the G(T) written by CHIANTI\n");

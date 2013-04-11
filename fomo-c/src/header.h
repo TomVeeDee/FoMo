@@ -70,8 +70,8 @@ extern void getarg(int, char* array[]);
 extern void getfile();
 extern void writefile();
 extern void writeparameters(ostream&, char);
-extern void reademissioncube(cube&, Delaunay_triangulation_3&, const string);
-extern void writeemissioncube(const cube, const Delaunay_triangulation_3, const string);
+extern void reademissioncube(cube&, const string, Delaunay_triangulation_3&);
+extern void writeemissioncube(const cube, const string, const Delaunay_triangulation_3 * = NULL);
 
 //external functions in equilibrium.cpp
 extern double density(const double, const double, const double);
@@ -122,7 +122,7 @@ extern void builtingrid(const int, const int, const int, tgrid);
 // external functions from emissioncube.cpp
 extern cube emissionfromdatacube(cube);
 extern Delaunay_triangulation_3 triangulationfromdatacube(cube);
-extern char* chiantifile;
-extern char* abundfile;
-extern char* emissionsave;
-extern double readgoftfromchianti(const char*);
+extern string chiantifile;
+extern string abundfile;
+extern string emissionsave;
+extern double readgoftfromchianti(const string);
