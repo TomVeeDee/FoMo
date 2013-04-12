@@ -206,6 +206,8 @@ void cube::fillcube()
 			}
 			cout << "Done!" << endl << flush;
 			break;
+		case patricksausage:
+			break;
 		case empty:
 			cout << "Error: first set the type of the equilibrium with datacube.settype(EqType)\n";
 			exit(EXIT_FAILURE);

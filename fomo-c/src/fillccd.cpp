@@ -176,7 +176,7 @@ Delaunay_triangulation_3 triangulationfromdatacube(cube goftcube)
 	return DT;
 }
 
-void mpi_calculatemypart(double* results, const int x1, const int x2, const int y1, const int y2, const double t, cube goftcube, Delaunay_triangulation_3 DT)
+void mpi_calculatemypart(double* results, const int x1, const int x2, const int y1, const int y2, const double t, cube goftcube, Delaunay_triangulation_3* DTpointer)
 {
 //
 // results is an array of at least dimension (x2-x1+1)*(y2-y1+1)*lambda_pixel and must be initialized to zero
@@ -270,12 +270,12 @@ void mpi_calculatemypart(double* results, const int x1, const int x2, const int 
 		// i.e. derotate the point using angles -l and -b
 		Point p(x*cos(b)*cos(l)+y*sin(l)+z*sin(b)*cos(l),-x*cos(b)*sin(l)+y*cos(l)-z*sin(b)*sin(l),-x*sin(b)+z*cos(b));
 		Delaunay_triangulation_3::Locate_type lt; int li, lj;
-		Delaunay_triangulation_3::Cell_handle c = DT.locate(p, lt, li, lj);
+		DTpointer->locate(p, lt, li, lj);
 
 		// Only look for the nearest point and interpolate, if the point p is inside the convex hull.
 		if (lt!=Delaunay_triangulation_3::OUTSIDE_CONVEX_HULL)
 		{
-			Delaunay_triangulation_3::Vertex_handle v=DT.nearest_vertex(p);
+			Delaunay_triangulation_3::Vertex_handle v=DTpointer->nearest_vertex(p);
 			Point nearest=v->point();
 /* This is how it is done in the CGAL examples		
  			pair<Coord_type,bool> tmppeak=peak(nearest);
@@ -331,5 +331,6 @@ void fillccd(cube observ, const double *results, const int x1, const int x2, con
 
 	observ.setgrid(grid);
 	observ.setvar(0,intens);
+	observ.settype(observcube);
 }
 

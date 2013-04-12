@@ -3,6 +3,8 @@
 
 #include "header.h"
 #include <fstream>
+#include <sstream>
+#include <iomanip>
 #include <cstdlib>
 #include <cmath>
 
@@ -50,22 +52,37 @@ int main(int argc, char* argv[])
 	int nvars = 5; // \rho, T, vx, vy, vz
 	double lambda0=readgoftfromchianti(chiantifile);
 	if (lambda0 > 500.) lambda_width=.6;
+	stringstream ss;
 	for (int t=0.; t<nframes; t++)
 	{
+		ss << "patrickfiles/datcubes_ka2.24_";
+		ss << setfill('0') << setw(3) << t;
+		ss << ".dat";
+		string filename=ss.str();
+		ss.clear();
 		cube goftcube(1,1,1);
 		Delaunay_triangulation_3 DT;
 		if (reuse!=1) 
 		{
 			cube datacube(nvars,ng);
-			EqType qtype=builtineq;
+			EqType qtype=patricksausage;
 			datacube.settype(qtype);
 			datacube.fillcube();
+			if (datacube.readtype() == patricksausage) 
+			{
+				if (commrank == 0) cout << "Reading in snapshot... " << flush;
+				reademissioncube(datacube, filename, &DT);
+				if (commrank == 0) cout << "Done!" << endl << flush;
+			}
 			goftcube=emissionfromdatacube(datacube);
-			DT=triangulationfromdatacube(datacube);
+			if (t==0) DT=triangulationfromdatacube(datacube);
 			if (emissionsave.compare("none")!=0)
 			{
 				if (commrank==0) cout << "Writing data for reuse in file " << emissionsave << "... " << flush;
-				writeemissioncube(goftcube,emissionsave,&DT);
+				ss << emissionsave;
+				ss << setfill('0') << setw(3) << t;
+				writeemissioncube(goftcube,ss.str(),&DT);
+				ss.clear();
 				if (commrank==0) cout << "Done!" << endl << flush;
 			}
 		}

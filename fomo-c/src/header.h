@@ -27,6 +27,8 @@ enum EqType
 	builtineq,
 	gofttable,
 	emisscube,
+	observcube,
+	patricksausage,
 	empty,
 };
 
@@ -70,7 +72,7 @@ extern void getarg(int, char* array[]);
 extern void getfile();
 extern void writefile();
 extern void writeparameters(ostream&, char);
-extern void reademissioncube(cube&, const string, Delaunay_triangulation_3&);
+extern void reademissioncube(cube&, const string, Delaunay_triangulation_3*);
 extern void writeemissioncube(const cube, const string, const Delaunay_triangulation_3 * = NULL);
 
 //external functions in equilibrium.cpp
@@ -99,7 +101,7 @@ extern double findmin(double * const * const, int *, int *);
 extern int MPE_Decomp1d(int , int , int, int *, int*);
 extern void fillccd(cube, const double*, const int, const int, const int, const int);
 extern void mpi_getcoords(int &, int &, int &, int &);
-extern void mpi_calculatemypart(double*, const int, const int, const int, const int, const double, cube, Delaunay_triangulation_3);
+extern void mpi_calculatemypart(double*, const int, const int, const int, const int, const double, cube, Delaunay_triangulation_3*);
 
 //external functions in writetime.cpp
 extern void writetime(double * const * const, const int);

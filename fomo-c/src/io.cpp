@@ -125,7 +125,7 @@ void writeemissioncube(const cube goftcube, const string filename, const Delauna
 	}
 }
 
-void reademissioncube(cube &resultcube, const string emissionsave, Delaunay_triangulation_3 &DT)
+void reademissioncube(cube &resultcube, const string emissionsave, Delaunay_triangulation_3 * DTpointer)
 {
 	// read emission datacube from file "emissionsave" when the reuse parameter is switched on
 	int commrank;
@@ -170,9 +170,11 @@ void reademissioncube(cube &resultcube, const string emissionsave, Delaunay_tria
 			}
 			resultcube=goftcube;
 
+			Delaunay_triangulation_3 DT;
 			if (!in.eof()) in >> DT;
 			// Check is this is a valid Delaunay triangulation
 			assert(DT.is_valid());
+			DTpointer=&DT;
 		}
 		else cout << "Unable to read " << emissionsave << endl;
 		in.close();
