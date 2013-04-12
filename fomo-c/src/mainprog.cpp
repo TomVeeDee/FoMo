@@ -167,6 +167,8 @@ int main(int argc, char* argv[])
 		}
 		if (commrank==0)
 		{
+			// write out observ cube
+			writeemissioncube(observ,"fomo-c.observ");
 		// allocate image
 			double **image;
 			image = (double **)malloc(y_pixel*sizeof(double *));
