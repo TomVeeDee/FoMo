@@ -170,9 +170,12 @@ void reademissioncube(cube &resultcube, const string emissionsave, Delaunay_tria
 			}
 			resultcube=goftcube;
 
-			if (!in.eof()) in >> *DTpointer;
-			// Check is this is a valid Delaunay triangulation
-			assert(DTpointer->is_valid());
+			if (!in.eof()) 
+			{
+				in >> *DTpointer;
+				// Check is this is a valid Delaunay triangulation
+				// assert(DTpointer->is_valid());
+			}
 		}
 		else cout << "Unable to read " << emissionsave << endl;
 		in.close();
