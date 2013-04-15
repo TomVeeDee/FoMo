@@ -232,7 +232,7 @@ void mpi_calculatemypart(double* results, const int x1, const int x2, const int 
 		temporarygridpoint=Point(grid[0][i],grid[1][i],grid[2][i]);
 		// also create the map function_values here
 		vector<double> velvec = {vx[i], vy[i], vz[i]};
-		losvelval = inner_product(unit.begin(),unit.end(),velvec.begin(),0.0),
+		losvelval = inner_product(unit.begin(),unit.end(),velvec.begin(),0.0);
 		losvelmap[temporarygridpoint]=Coord_type(losvelval);
 		peakmap[temporarygridpoint]=Coord_type(peakvec[i]);
 		fwhmmap[temporarygridpoint]=Coord_type(fwhmvec[i]);
@@ -254,6 +254,7 @@ void mpi_calculatemypart(double* results, const int x1, const int x2, const int 
 	zacc.clear();
 	if (commrank==0) cout << "Done!" << endl;
 
+	double lambda0=readgoftfromchianti(chiantifile);
 	
 	if (commrank==0) cout << "Building frame: " << flush;
 #ifdef _OPENMP
@@ -291,7 +292,7 @@ void mpi_calculatemypart(double* results, const int x1, const int x2, const int 
 			{
 			// lambda is made around lambda0, with a width of lambda_width 
 				double lambdaval=double(l)/(lambda_pixel-1)*lambda_width-lambda_width/2.;
-				double tempintens=intpolpeak*exp(-pow(lambdaval-intpollosvel/speedoflight*lambdaval,2)/pow(intpolfwhm,2)*4.*log(2.));
+				double tempintens=intpolpeak*exp(-pow(lambdaval-intpollosvel/speedoflight*lambda0,2)/pow(intpolfwhm,2)*4.*log(2.));
 				int ind=((i-y1)*(x2-x1+1)+j-x1)*lambda_pixel+l;
 				
 				results[ind]+=tempintens;

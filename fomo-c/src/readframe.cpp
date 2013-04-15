@@ -200,7 +200,7 @@ void cube::fillcube()
 				vars[0][i]=dens;
 				vars[1][i]=temperature(r,phi,z_or);
 				vars[2][i]=0.;
-				if (2*r/width/1000.<1) vars[3][i]=30.*sin(M_PI*z_or);
+				if (2*r/width/1000.<1) vars[3][i]=30.*sin(M_PI*z_or)*1000.;
 				else vars[3][i]=0.;
 				vars[4][i]=0.;
 			}
