@@ -257,27 +257,36 @@ void mpi_calculatemypart(double* results, const int x1, const int x2, const int 
 	double lambda0=readgoftfromchianti(chiantifile);
 	
 	if (commrank==0) cout << "Building frame: " << flush;
+	double x,y,z,intpolpeak,intpolfwhm,intpollosvel,lambdaval,tempintens;
+	int li,lj,ind;
+	Point p,nearest;
+	Delaunay_triangulation_3::Vertex_handle v;
+	Delaunay_triangulation_3::Locate_type lt;
 #ifdef _OPENMP
-#pragma omp parallel for
+// it seems as if the first two options below are equivalent and the fastest for this loop
+#pragma omp parallel for schedule(dynamic) collapse(2) private (x,y,z,p,lt,li,lj,v,nearest,intpolpeak,intpolfwhm,intpollosvel,lambdaval,tempintens,ind)
+//#pragma omp parallel for schedule(dynamic,1) collapse(2)
+//#pragma omp parallel for schedule(static,1) collapse(2)
+//#pragma omp parallel for schedule(dynamic,(y2-y1+1)*(x2-x1+1)/100) collapse(2)
+//#pragma omp parallel for schedule(guided,1) collapse(2)
 #endif
 	for (int i=y1; i<y2+1; i++)
 		for (int j=x1; j<x2+1; j++)
 			for (int k=0; k<z_pixel; k++) // scanning through ccd
 	{
-		double x = double(j)/x_pixel*(maxx-minx)+minx;
-		double y = double(i)/y_pixel*(maxy-miny)+miny;
-		double z = double(k)/z_pixel*(maxz-minz)+minz;
+		x = double(j)/x_pixel*(maxx-minx)+minx;
+		y = double(i)/y_pixel*(maxy-miny)+miny;
+		z = double(k)/z_pixel*(maxz-minz)+minz;
 		// calculate the interpolation in the original frame of reference
 		// i.e. derotate the point using angles -l and -b
-		Point p(x*cos(b)*cos(l)+y*sin(l)+z*sin(b)*cos(l),-x*cos(b)*sin(l)+y*cos(l)-z*sin(b)*sin(l),-x*sin(b)+z*cos(b));
-		Delaunay_triangulation_3::Locate_type lt; int li, lj;
+		p={x*cos(b)*cos(l)+y*sin(l)+z*sin(b)*cos(l),-x*cos(b)*sin(l)+y*cos(l)-z*sin(b)*sin(l),-x*sin(b)+z*cos(b)};
 		DTpointer->locate(p, lt, li, lj);
 
 		// Only look for the nearest point and interpolate, if the point p is inside the convex hull.
 		if (lt!=Delaunay_triangulation_3::OUTSIDE_CONVEX_HULL)
 		{
-			Delaunay_triangulation_3::Vertex_handle v=DTpointer->nearest_vertex(p);
-			Point nearest=v->point();
+			v=DTpointer->nearest_vertex(p);
+			nearest=v->point();
 /* This is how it is done in the CGAL examples		
  			pair<Coord_type,bool> tmppeak=peak(nearest);
 			pair<Coord_type,bool> tmpfwhm=fwhm(nearest);
@@ -285,15 +294,15 @@ void mpi_calculatemypart(double* results, const int x1, const int x2, const int 
 			intpolpeak=tmppeak.first;
 			intpolfwhm=tmpfwhm.first;
 			intpollosvel=tmplosvel.first;*/
-			double intpolpeak=peakmap[nearest];
-			double intpolfwhm=fwhmmap[nearest];
-			double intpollosvel=losvelmap[nearest];
+			intpolpeak=peakmap[nearest];
+			intpolfwhm=fwhmmap[nearest];
+			intpollosvel=losvelmap[nearest];
 			for (int l=0; l<lambda_pixel; l++)
 			{
 			// lambda is made around lambda0, with a width of lambda_width 
-				double lambdaval=double(l)/(lambda_pixel-1)*lambda_width-lambda_width/2.;
-				double tempintens=intpolpeak*exp(-pow(lambdaval-intpollosvel/speedoflight*lambda0,2)/pow(intpolfwhm,2)*4.*log(2.));
-				int ind=((i-y1)*(x2-x1+1)+j-x1)*lambda_pixel+l;
+				lambdaval=double(l)/(lambda_pixel-1)*lambda_width-lambda_width/2.;
+				tempintens=intpolpeak*exp(-pow(lambdaval-intpollosvel/speedoflight*lambda0,2)/pow(intpolfwhm,2)*4.*log(2.));
+				ind=((i-y1)*(x2-x1+1)+j-x1)*lambda_pixel+l;
 				
 				results[ind]+=tempintens;
 			}

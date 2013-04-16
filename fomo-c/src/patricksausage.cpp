@@ -67,13 +67,13 @@ int main(int argc, char* argv[])
 			cube datacube(nvars,ng);
 			EqType qtype=patricksausage;
 			datacube.settype(qtype);
-			datacube.fillcube();
 			if (datacube.readtype() == patricksausage) 
 			{
 				if (commrank == 0) cout << "Reading in snapshot... " << flush;
 				reademissioncube(datacube, filename, &DT);
 				if (commrank == 0) cout << "Done!" << endl << flush;
 			}
+			datacube.fillcube();
 			goftcube=emissionfromdatacube(datacube);
 			if (t==0) DT=triangulationfromdatacube(datacube);
 			if (emissionsave.compare("none")!=0)
