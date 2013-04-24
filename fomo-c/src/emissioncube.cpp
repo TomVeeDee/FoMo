@@ -2,6 +2,7 @@
 #include <fstream>
 #include <cstdlib>
 #include <gsl/gsl_const_mksa.h>
+#include <boost/progress.hpp>
 
 // CGAL stuff
 #include <CGAL/Delaunay_triangulation_2.h>
@@ -122,8 +123,10 @@ tphysvar goft(const tphysvar logT, const tphysvar logrho, const cube gofttab)
 	mpimin--;
 	mpimax--;
 
+	boost::progress_display show_progress((mpimax-mpimin+1)/10);
+
 #ifdef _OPENMP
-#pragma omp parallel for 
+#pragma omp parallel for schedule(dynamic)
 #endif
 	for (int i=mpimin; i<mpimax; i++)
 	{
@@ -146,8 +149,9 @@ tphysvar goft(const tphysvar logT, const tphysvar logrho, const cube gofttab)
 		Point nearest=v->point();
 		std::pair<Coord_type,bool> funcval=tempmap(nearest);
 		g[i]=funcval.first;
-		
-		progressbar(i,0,ng-1);
+	
+		// This introduces a race condition between threads, but since it's only a counter, it doesn't really matter.
+		if ((i-mpimin)%10 == 0) ++show_progress;
 	}
 	cout << " Done!" << endl << flush;
 

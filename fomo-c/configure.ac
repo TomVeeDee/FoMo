@@ -1,6 +1,7 @@
 AC_INIT(visual,0.99)
 AC_PREREQ(2.59)
 AM_INIT_AUTOMAKE(1.9)
+AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_HEADERS(config.h)
 # check if mpi is wanted
 AC_ARG_WITH(mpi,
@@ -15,6 +16,8 @@ fi
 AC_PROG_CXX($CXXCOMP)
 AC_PROG_CXXCPP([cpp])
 AC_LANG(C++)
+AX_BOOST_BASE([1.36])
+AC_CHECK_HEADER(boost/progress.hpp,[],[AC_MSG_ERROR(Boost header not found)])
 PKG_PROG_PKG_CONFIG
 #check if MPI is available
 if test "a$mpi" = "ayes" ; then

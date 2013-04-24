@@ -5,6 +5,7 @@
 #include <fstream>
 #include <cstdlib>
 #include <cmath>
+#include <boost/progress.hpp>
 
 int main(int argc, char* argv[])
 {
@@ -78,6 +79,7 @@ int main(int argc, char* argv[])
 			if (commrank==0) cout << "Done!" << endl << flush;
 		}
 
+		boost::progress_display show_progress(y_pixel);
 		if (commsize>1)
 		{
 #ifdef HAVEMPI
@@ -127,7 +129,7 @@ int main(int argc, char* argv[])
 					}
 					// process the received results
 					fillccd(observ,results,x1,x2,y1,y2);
-					progressbar(done,0,y_pixel-1);
+					++show_progress;
 				}
 				for (int r=1; r<commsize; r++)
 				{

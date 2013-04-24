@@ -3,6 +3,7 @@
 #include <cstdlib>
 #include <numeric>
 #include <gsl/gsl_const_mksa.h>
+#include <boost/progress.hpp>
 
 // CGAL
 #include <CGAL/interpolation_functions.h>
@@ -262,6 +263,7 @@ void mpi_calculatemypart(double* results, const int x1, const int x2, const int 
 	Point p,nearest;
 	Delaunay_triangulation_3::Vertex_handle v;
 	Delaunay_triangulation_3::Locate_type lt;
+	boost::progress_display show_progress((y2-y1+1)*(x2-x1+1));
 #ifdef _OPENMP
 // it seems as if the first two options below are equivalent and the fastest for this loop
 #pragma omp parallel for schedule(dynamic) collapse(2) private (x,y,z,p,lt,li,lj,v,nearest,intpolpeak,intpolfwhm,intpollosvel,lambdaval,tempintens,ind)
@@ -310,10 +312,7 @@ void mpi_calculatemypart(double* results, const int x1, const int x2, const int 
 		
 
 		// print progress
-		if ((commrank==0)&&(j==x1)&&(k==0)) 
-		{
-			progressbar(i,y1,y2);
-		}
+		if (k == 0) ++show_progress;
 	}
 	if (commrank==0) cout << " Done! " << endl << flush;
 }

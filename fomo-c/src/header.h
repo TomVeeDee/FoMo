@@ -29,7 +29,7 @@ enum EqType
 	emisscube,
 	observcube,
 	patricksausage,
-	empty,
+	empty, // this should always be at the end, because it is tested for in the reademissioncube routine in io.cpp
 };
 
 // cube class
@@ -72,7 +72,7 @@ extern void getarg(int, char* array[]);
 extern void getfile();
 extern void writefile();
 extern void writeparameters(ostream&, char);
-extern void reademissioncube(cube&, const string, Delaunay_triangulation_3*);
+extern void reademissioncube(cube&, const string, Delaunay_triangulation_3* = NULL);
 extern void writeemissioncube(const cube, const string, const Delaunay_triangulation_3 * = NULL);
 
 //external functions in equilibrium.cpp
@@ -105,9 +105,6 @@ extern void mpi_calculatemypart(double*, const int, const int, const int, const 
 
 //external functions in writetime.cpp
 extern void writetime(double * const * const, const int);
-
-//external functions in progressbar.cpp
-extern void progressbar(const int, const int, const int);
 
 // Global variables from mainprog.cpp
 // reuse controls whether to compute a new problem or just to reuse the old outputfiles

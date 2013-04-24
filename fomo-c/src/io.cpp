@@ -78,7 +78,7 @@ void writefile()
 
 void writeemissioncube(const cube goftcube, const string filename, const Delaunay_triangulation_3 *DTpointer)
 {
-	// write out goftcube to file "emissionsave"
+	// write out goftcube to file "filename"
 	int commrank;
 	string space=" ";
 #ifdef HAVEMPI
@@ -120,7 +120,7 @@ void writeemissioncube(const cube goftcube, const string filename, const Delauna
 			}
 			if (DTpointer!=NULL) out << *DTpointer;
 		}
-		else cout << "Unable to write to " << emissionsave << endl;
+		else cout << "Unable to write to " << filename << endl;
 		out.close();
 	}
 }
@@ -137,6 +137,7 @@ void reademissioncube(cube &resultcube, const string emissionsave, Delaunay_tria
 	if (commrank==0)
 	{
 		int dim, ng, nvars, intqtype;
+		EqType resulttype=resultcube.readtype();
 
 		ifstream in(emissionsave,ios::binary);
 		if (in.is_open())
@@ -146,7 +147,14 @@ void reademissioncube(cube &resultcube, const string emissionsave, Delaunay_tria
 			in >> ng;
 			in >> nvars;
 			cube goftcube(nvars,ng,dim);
-			goftcube.settype(EqType(intqtype));
+			if ((EqType(intqtype) <= empty) && (resulttype == empty))
+			{
+				goftcube.settype(EqType(intqtype));
+			}
+			else
+			{
+				goftcube.settype(resulttype);
+			}
 			tgrid grid= new tcoord[dim];
 			vector<tphysvar> allvar;
 			allvar.resize(nvars);
@@ -170,7 +178,7 @@ void reademissioncube(cube &resultcube, const string emissionsave, Delaunay_tria
 			}
 			resultcube=goftcube;
 
-			if (!in.eof()) 
+			if (!in.eof() && (DTpointer!=NULL)) 
 			{
 				in >> *DTpointer;
 				// Check is this is a valid Delaunay triangulation
