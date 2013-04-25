@@ -9,5 +9,6 @@ data=fltarr(header[0]+header[3],header[2])
 readf,lun,data
 
 close,lun
+free_lun,lun
 
 end
