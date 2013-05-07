@@ -210,7 +210,7 @@ void mpi_calculatemypart(double* results, const int x1, const int x2, const int 
 	gridpoint.resize(3);
 	Point temporarygridpoint;
 	// Define the unit vector along the line-of-sight
-	vector<double> unit = {cos(b)*cos(l), cos(b)*sin(l), sin(b)};
+	vector<double> unit = {sin(b)*cos(l), -sin(b)*sin(l), cos(b)};
 	// Read the physical variables
 	tphysvar peakvec=goftcube.readvar(0);
 	tphysvar fwhmvec=goftcube.readvar(1);
