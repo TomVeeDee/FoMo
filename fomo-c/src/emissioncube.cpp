@@ -133,22 +133,24 @@ tphysvar goft(const tphysvar logT, const tphysvar logrho, const cube gofttab)
 		Point p(logT[i],logrho[i]);
 // a possible linear interpolation
 // see http://www.cgal.org/Manual/latest/doc_html/cgal_manual/Interpolation/Chapter_main.html#Subsection_70.3.3
+// make sure to use small interpolation file. If not, this takes hours!
   
-/*  		std::vector< std::pair< Point, Coord_type > > coords;
+  		std::vector< std::pair< Point, Coord_type > > coords;
 		Coord_type norm = CGAL::natural_neighbor_coordinates_2(DT, p,std::back_inserter(coords)).second;
 
 		Coord_type res =  CGAL::linear_interpolation(coords.begin(), coords.end(),
                                                norm,
                                                Value_access(function_values));	
-		g[i]=res; */
+		g[i]=res; 
 
-// let's do nearest neighbour
+// let's not do nearest neighbour
 // it is much faster than the linear interpolation
+// but the spacing in temperature is too broad too handle this
 
-		Delaunay_triangulation::Vertex_handle v=DT.nearest_vertex(p);
+		/*Delaunay_triangulation::Vertex_handle v=DT.nearest_vertex(p);
 		Point nearest=v->point();
 		std::pair<Coord_type,bool> funcval=tempmap(nearest);
-		g[i]=funcval.first;
+		g[i]=funcval.first;*/
 	
 		// This introduces a race condition between threads, but since it's only a counter, it doesn't really matter.
 		if ((i-mpimin)%10 == 0) ++show_progress;
