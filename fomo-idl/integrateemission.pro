@@ -19,7 +19,7 @@ pro integrateemission,emission=emission,logt=logt,n_gridx=n_gridx,n_gridy=n_grid
 
 if keyword_set(imaging) eq 0 then imaging = 0
 
-sizes=size(logt)
+sizes=size(emission)
 dims = sizes[0]
 nx = sizes[1]
 ny = sizes[2]
@@ -67,7 +67,7 @@ if imaging eq 0 then begin
          hemi = histogram(emi,nbins=numemi,locations=lhemi,reverse_indices=Re)
          nhemi = n_elements(hemi)
          for j=0.,nhemi-1 do begin
-            if Re[j] ne Re[j+1] then begin
+            if (Re[j] ne Re[j+1] and lhemi[j] ne 0.) then begin
                mnlgt = mean(logt[indx[0,Re[Re[j]:Re[j+1]-1]],indx[1,Re[Re[j]:Re[j+1]-1]]])
                sigma = sqrt(kboltz/proton/watom*w0^2/(c*1.e5)^2*10^(mnlgt))
                prms =[lhemi[j],wdop,sigma]

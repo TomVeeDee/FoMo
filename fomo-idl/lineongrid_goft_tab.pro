@@ -1,4 +1,4 @@
-pro lineongrid_goft_tab, rh_s, te_s, wave=wave,nwave=nwave,minwave=minwave,maxwave=maxwave,ion=ion, w0=w0, emission_goft=emission_goft, goft=goft, logt=logt, wayemi=wayemi, watom=watom
+pro lineongrid_goft_tab, rh_s, te_s, ne_s=ne_s, gotdir=gotdir,wave=wave,nwave=nwave,minwave=minwave,maxwave=maxwave,ion=ion, w0=w0, emission_goft=emission_goft, goft=goft, logt=logt, wayemi=wayemi, watom=watom, conv=conv,file_abund=file_abund,vers=vers
 
 if n_params(0) lt 1 then begin
    print,'Check input directories'
@@ -29,13 +29,24 @@ if keyword_set(wayemi) eq 0 then begin
 endif
 
 ; set ionization,abundance and DEM packages for CHIANTI:
-ioneq_name = '/users/cpa/tomvd/ssw/packages/chianti/dbase/ioneq/chianti.ioneq'
-abund_name = '/users/cpa/tomvd/ssw/packages/chianti/dbase/abundance/sun_coronal.abund'
-dem_name = '/users/cpa/tomvd/ssw/packages/chianti/dbase/dem/active_region.dem'
-;ioneq_name= !xuvtop+'/ioneq/chianti.ioneq'
-;abund_name=!xuvtop+'/abundance/sun_photospheric.abund'
-;abund_name=!xuvtop+'/abundance/sun_coronal.abund'
+;ioneq_name = '/users/cpa/tomvd/ssw/packages/chianti/dbase/ioneq/chianti.ioneq'
+;abund_name = '/users/cpa/tomvd/ssw/packages/chianti/dbase/abundance/sun_coronal.abund'
+;dem_name = '/users/cpa/tomvd/ssw/packages/chianti/dbase/dem/active_region.dem'
+ioneq_name= concat_dir(concat_dir(!xuvtop,'ioneq'),'chianti.ioneq') ; !xuvtop+'/ioneq/chianti.ioneq'
+if keyword_set(file_abund) then begin
+   if file_abund eq 'photospheric' then begin
+      abund_name = concat_dir(concat_dir(!xuvtop,'abundance'),'sun_photospheric.abund');!xuvtop+'/abundance/sun_photospheric.abund'
+      print,'Assuming photospheric abundances'
+   endif
+   if file_abund eq 'coronal' then begin
+      abund_name = concat_dir(concat_dir(!xuvtop,'abundance'),'sun_coronal.abund') ;!xuvtop+'/abundance/sun_coronal.abund'
+      print,'Assuming coronal abundances'
+   endif
 ;dem_name=!xuvtop+'/dem/active_region.dem'
+endif else begin
+   abund_name=concat_dir(concat_dir(!xuvtop,'abundance'),'sun_coronal.abund') ; !xuvtop+'/abundance/sun_coronal.abund'
+   print,'Assuming coronal abundances'
+endelse
 
 proton=1.67262158*10^(-27.)
 kboltz = 1.380658*10^(-23.)
@@ -48,10 +59,18 @@ normro = 1.e10
 ;   const = 3.5991482e+13 ; = T[mid]*rho[mid]^(-gamma+1)
 ;   normte = const*normro^(-gamma+1)
 normte = proton/(2*kboltz)*normro
-rh = rh_s / normro
-T = te_s * normte
+if keyword_set(conv) then begin
+   rh = rh_s / normro
+   T = te_s * normte
+   if ~keyword_set(ne_s) then n_e = rh/proton/1.e6 else n_e = ne_s   ; in cgs
+   pe = n_e * kboltz * T * 1.e7 ; in cgs
+endif else begin
+   ; check for CGS
+   rh = rh_s
+   T = te_s
+   if ~keyword_set(ne_s) then n_e = rh/proton else n_e = ne_s
+endelse
 
-n_e=rh/proton/1.e6 ; in cgs
 logT = alog10(T>1.)
 
 sizes=size(rh)
@@ -86,13 +105,14 @@ endelse
 wave=findgen(nwave)/(nwave-1)*(maxwave-minwave)+minwave
 
 if wayemi eq 4 then begin
+   if (dims eq 1) then emission_goft=dblarr(nx)
    if (dims eq 2) then emission_goft=dblarr(nx,nz)
    if (dims eq 3) then emission_goft=dblarr(nx,ny,nz)
 endif else begin
+   if (dims eq 1) then emission_goft=dblarr(nx,nwave)
    if (dims eq 2) then emission_goft=dblarr(nx,nz,nwave)
    if (dims eq 3) then emission_goft=dblarr(nx,ny,nz,nwave)
 endelse
-pe = n_e * kboltz * T * 1.e7 ; in cgs
 
 ne_sort = sort(n_e)
 n_e_sorted = n_e[ne_sort]
@@ -100,8 +120,8 @@ Tlg_sorted = logT[ne_sort]
 
 ; Read tabulated G(ne,T) values for given number density (n_e_lg) and
 ; temperature (t_lg) arrays
-lookup_goft, ion=ion, w0=w0, n_e_lg=n_e_lg, logt=t_lg, goft_mat=goft_mat, watom= watom
-elements, w0=w0, ion=ion, logTm=logTm, enum=enum, inum=inum, ind=ind
+lookup_goft, ion=ion, w0=w0, gotdir=gotdir,n_e_lg=n_e_lg, logt=t_lg, goft_mat=goft_mat, watom= watom,file_abund=file_abund
+elements, w0=w0, ion=ion, logTm=logTm, enum=enum, inum=inum, ind=ind, vers=vers
 
 if wayemi ne 3 and wayemi ne 4 then begin
 ; create a ch_synthetic structure called "singleline"
@@ -123,8 +143,10 @@ if wayemi eq 1 then begin
       goft[ne_sort[i]] = spline(t_lg,goft_mat[lc_ne,*],tlg_sorted[i])
       singleline.logt_isothermal[0]=tlg_sorted[i]
       singleline.lines.int[0]=goft[ne_sort[i]]*n_e_sorted[i]^2
-      make_chianti_spec, singleline, wave, out, abund_name=concat_dir(concat_dir(!xuvtop,'abundance'),'sun_coronal.abund')
-      emission_goft[coords[0],coords[1],coords[2],*]=out.spectrum
+      make_chianti_spec, singleline, wave, out, abund_name=abund_name
+      if dims eq 1 then emission_goft[coords[0],*]=out.spectrum
+      if dims eq 2 then emission_goft[coords[0],coords[1],*]=out.spectrum 
+      if dims eq 3 then emission_goft[coords[0],coords[1],coords[2],*]=out.spectrum
       print,string(13b)+' % finished: ',float(i)*100./(n_elements(t)-1),format='(a,f4.0,$)'
    endfor
 endif

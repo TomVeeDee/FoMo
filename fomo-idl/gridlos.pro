@@ -22,6 +22,7 @@ endif
 if (keyword_set(dy) eq 0 or keyword_set(dx) eq 0) then begin dy = 1. & dx = 1. & endif
 
 mua_r=mua_d*!pi/180.
+mua_uni = abs(atan(dy/dx*tan(mua_r)))
 dimx = float(n_elements(gridx))
 dimy = float(n_elements(gridy))
 xc = dimx/2.
@@ -58,15 +59,17 @@ if mua_r eq !pi/2 then begin
       i = i+1
    endwhile
 endif else begin
+   dl = sqrt((dx*cos(mua_r))^2+(dy*sin(mua_r))^2)
+   ds = sqrt((dx*sin(mua_r))^2+(dy*cos(mua_r))^2)
    if dx lt dy then begin 
-      dl = dx/cos(mua_r)<dy
-      ds = dx/sin(mua_r)<dy
-      ls = (ds/dx)<1.
+;      dl = dx/cos(mua_r)<dy
+;      ds = dx/sin(mua_r)<dy
+      ls = (ds/dy)<1.
    endif
    if dy lt dx then begin
-      dl = dy/sin(mua_r)<dx
-      ds = dy/cos(mua_r)<dx
-      ls = (ds/dy)<1.
+;      dl = dy/sin(mua_r)<dx
+;      ds = dy/cos(mua_r)<dx
+      ls = (ds/dx)<1.
    endif
    if dy eq dx then begin
       dl = dx
