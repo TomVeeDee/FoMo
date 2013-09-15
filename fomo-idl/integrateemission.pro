@@ -1,21 +1,21 @@
 pro integrateemission,emission=emission,logt=logt,n_gridx=n_gridx,n_gridy=n_gridy,ngrid=ngrid,wave=wave,w0=w0,direction=direction,losvel=losvel,imaging=imaging,watom=watom,image, wayemi=wayemi
 
+; Calculates intensity by integrating emissivity along a given
+; line-of-sight
+
 ; INPUT:	
-; emission = output of lineongrid.pro , array of emission (x,y,(z),lambda)
-; wave = wavelength array from lineongrid.pro
-; n_gridx = output of gridlos.pro, grid along new x direction
-; (longitudinal direction: old z axis)
-; n_gridy = output of gridlos.pro, grid along new y direction 
-; (radial direction)
-; ngrid = output of gridlos.pro, number of points in depth for each
-; x,y position
-; direction = direction of the integration (1 = x, 2 = y, 3 = z, 4 = mua_d angle)
-; losvel = output of gridlos.pro, line-of-sight velocity (in 10^5 m/s unit)
+; emission = output of lineongrid_goft_tab.pro: emission_goft, 2d array of emissivity
+; wave = wavelength array from lineongrid_goft_tab.pro
+; n_gridx, n_gridy, ngrid = output of gridlos.pro
+; direction = (int) direction of the integration (1 = x, 2 = y, 3 = z, 4 = mua_d angle)
+; losvel = (2d array) output of gridlos.pro, line-of-sight velocity (in 10^5 m/s unit)
+
 ; OPTIONAL:
-; set keyword imaging to 1 for no doppler shift calculation (imaging
+; set keyword imaging for no doppler shift calculation (imaging
 ; case) (default = 1)
+
 ; OUTPUT:
-; image	= intensity along line-of-sight (new x, (new y),lambda) = (nz,ny,nwave)
+; image	= (2d float array) intensity along line-of-sight (n_elements(ngrid),nwave)
 
 if keyword_set(imaging) eq 0 then imaging = 0
 

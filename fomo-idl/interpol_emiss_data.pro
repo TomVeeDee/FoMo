@@ -1,5 +1,31 @@
 
-pro interpol_emiss_data,n_e,te,ion=ion, w0=w0,emission_goft=emission_goft, goft=goft, g_logte=g_logte, g_logne=g_logne, tstep=tstep, sav=sav, sdir=sdir, filenm=filenm
+pro interpol_emiss_data,n_e,te,ion=ion, w0=w0,emission_goft=emission_goft, g_logte=g_logte, g_logne=g_logne, tstep=tstep, sav=sav, sdir=sdir, filenm=filenm
+
+if keyword_set(ion) eq 0 then begin
+   print,'interpol_emiss_data,n_e,te,ion=ion, w0=w0,emission_goft=emission_goft, g_logte=g_logte, g_logne=g_logne, tstep=tstep, sav=sav, sdir=sdir, filenm=filenm'
+   return
+endif
+
+; Performs bilinear interpolation to given temperature and density
+; points based on a given G(T,n) contribution function for a specific
+; line transition (or AIA filter), and returns emissivity function (G(t,n)*ne^2). 
+
+; INPUT: 
+; n_e, t_e: (0-2d float arrays) density and temperature values where to interpolate
+; ion: (string) acronym of the ion
+; w0: (float) wavelength of line center 
+
+; OUTPUT:
+; emission_goft: (0-2d float arrays) where interpolated values are returned
+; g_logte & g_logne: (1d float arrays) the log(T) and log(n) values where the G(T,n) function is defined.
+
+; OPTIONAL:
+; sav: set it for saving the calculated emissivity values.
+; filenm & tstep: (string & float, resp.) used for naming the emissivity sav file. 
+; sdir: (string) path to where to save the emissivity table. 
+
+; CALLS:
+; lookup_goft, 
 
 emission_goft = n_e*0.d & interp_goft = n_e*0.d
 siz = size(n_e)
@@ -27,7 +53,7 @@ emission_goft[lgne_sort] = interp_goft[lgne_sort] * n_e[lgne_sort]^2
 
 if keyword_set(sav) eq 1 then begin
    ntstep = string(tstep,"(i4)")
-   save,emission_goft,filename=sdir+'emission_goft'+filenm+'_'+ntstep
+   save,emission_goft,filename=sdir+'emission_goft'+filenm+'_'+ntstep+'.sav'
 endif
 
 end

@@ -2,6 +2,25 @@
 
 pro goft_table, w0=w0, ion=ion,gotdir=gotdir,vers=vers,file_abund=file_abund
 
+if arg_present(w0) lt 1 then begin
+   print,'goft_table, w0=w0, ion=ion,gotdir=gotdir,vers=vers,file_abund=file_abund'
+   return
+endif
+
+; Generates a G(T,n) table (200 pts in temperature, 3000 points in density) for a given line transition
+
+; INPUT:
+; w0 = (float) line center wavelength of line transition in Angstroms
+; ion = (string) acronym of ion (see elements.pro)
+; gotdir = (string) directory path where to save the generated table
+;          (don't forget '/' at end of path) 
+; vers = (int) Chianti version (6 or 7)
+; file_abund = (string) 'coronal' or 'photospheric' depending on whether
+;             'sun_coronal.abund' or 'sun_photospheric.abund' CHIANTI packages,
+;             respectively, are to be used. 
+; CALLS:
+; elements, get_atomic_weight, g_of_t
+
 if keyword_set(ion) eq 0 then begin
    print,'goft_table, w0=w0, ion=ion,gotdir=gotdir,vers=vers,file_abund=file_abund'
    return

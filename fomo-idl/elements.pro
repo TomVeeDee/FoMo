@@ -6,9 +6,12 @@ if keyword_set(w0) eq 0 then begin
    return
 endif
 
+; Reads info for definition of line transitions
+
 ; INPUT:
-; w0: wavelength center of line (float)
+; w0: wavelength center of line in Angstroms (float)
 ; ion: Ion of interest (string, eg:'fe_9')
+
 ; OUTPUT:
 ; logTm: maximum formation Temperature of line
 ; enum: nuclear charge of element

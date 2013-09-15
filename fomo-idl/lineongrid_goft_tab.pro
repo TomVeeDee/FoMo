@@ -1,17 +1,19 @@
 pro lineongrid_goft_tab, rh_s, te_s, ne_s=ne_s, gotdir=gotdir,wave=wave,nwave=nwave,minwave=minwave,maxwave=maxwave,ion=ion, w0=w0, emission_goft=emission_goft, goft=goft, logt=logt, wayemi=wayemi, watom=watom, conv=conv,file_abund=file_abund,vers=vers
 
 if n_params(0) lt 1 then begin
-   print,'Check input directories'
-   print,'lineongrid_goft_tab, rh_s, te_s, wave=wave,nwave=nwave,minwave=minwave,maxwave=maxwave,ion=ion, w0=w0, emission_goft=emission_goft, goft=goft, wayemi=wayem'
+   print,'lineongrid_goft_tab, rh_s, te_s, ne_s=ne_s, gotdir=gotdir,wave=wave,nwave=nwave,minwave=minwave,maxwave=maxwave,ion=ion, w0=w0, emission_goft=emission_goft, goft=goft, logt=logt, wayemi=wayemi, watom=watom, conv=conv,file_abund=file_abund,vers=vers'
    return
 endif
 
 ; Calculates the emission at each point of a given numerical box by
-; reading tabulated G(T) values produced by function goft_table.pro
+; reading tabulated G(T,n) values produced by function goft_table.pro
+; Uses the chianti.eq ionization equilibrium values
+
 ; INPUT:
 ; rh_j = 2D or 3D array of mass density in kg/m^3, normalized by 1.e10
 ; te_j = 2D or 3D array of temperature in K, normalized by
 ; (protonmass/(2*kboltz)*1.e10)
+
 ; OPTIONAL:
 ; ion = ion for which to calculate emissivities (default = fe_9)
 ; w0 = wavelength center of line transition (default = 171.073)
@@ -19,19 +21,20 @@ endif
 ; maxwave = suppremum of wavelength range (default = 171.14)
 ; set keyword wayemi to 1 if emission calculated point by point, else
 ; set to 2 if calculated through binning of G(T)*ne^2 term (default = 2)
+
 ; OUTPUT:
 ; wave = wavelength array set to nwave pts, containing line transition	
 ; w0 = wavelength center
 ; emission_goft = array of emission (x, y, (z), lambda)
 
+; CALLS:
+; lookup_goft, elements, (if wayemi != 4 : make_chianti_spec, ch_synthetic)
+
 if keyword_set(wayemi) eq 0 then begin 
    wayemi = 4
 endif
 
-; set ionization,abundance and DEM packages for CHIANTI:
-;ioneq_name = '/users/cpa/tomvd/ssw/packages/chianti/dbase/ioneq/chianti.ioneq'
-;abund_name = '/users/cpa/tomvd/ssw/packages/chianti/dbase/abundance/sun_coronal.abund'
-;dem_name = '/users/cpa/tomvd/ssw/packages/chianti/dbase/dem/active_region.dem'
+; set ionization and abundance packages from CHIANTI:
 ioneq_name= concat_dir(concat_dir(!xuvtop,'ioneq'),'chianti.ioneq') ; !xuvtop+'/ioneq/chianti.ioneq'
 if keyword_set(file_abund) then begin
    if file_abund eq 'photospheric' then begin
@@ -42,7 +45,6 @@ if keyword_set(file_abund) then begin
       abund_name = concat_dir(concat_dir(!xuvtop,'abundance'),'sun_coronal.abund') ;!xuvtop+'/abundance/sun_coronal.abund'
       print,'Assuming coronal abundances'
    endif
-;dem_name=!xuvtop+'/dem/active_region.dem'
 endif else begin
    abund_name=concat_dir(concat_dir(!xuvtop,'abundance'),'sun_coronal.abund') ; !xuvtop+'/abundance/sun_coronal.abund'
    print,'Assuming coronal abundances'
@@ -53,11 +55,7 @@ kboltz = 1.380658*10^(-23.)
 c = 299792000.
 gamma = 5./3.
 mu = 1.27
-way = 2 ; calculate emission through binning of G(T)*ne^2 matrix
-
 normro = 1.e10
-;   const = 3.5991482e+13 ; = T[mid]*rho[mid]^(-gamma+1)
-;   normte = const*normro^(-gamma+1)
 normte = proton/(2*kboltz)*normro
 if keyword_set(conv) then begin
    rh = rh_s / normro
@@ -75,7 +73,6 @@ logT = alog10(T>1.)
 
 sizes=size(rh)
 dims=sizes[0]
-; if dims<2 exit
 if dims eq 3 then begin
    nx=sizes[1]
    ny=sizes[2]
@@ -85,16 +82,9 @@ endif else begin
    nz = sizes[2]
 endelse
 
-;if (~(keyword_set(ion))) then begin
-;   ion='fe_9'  
-;   ion = 'fe_12'
-;endif
-
 if (~(keyword_set(nwave))) then begin
    nwave=100
 endif
-;if ion eq 'fe_9' then w0 = 171.073 ; wave center
-;if ion eq 'fe_12' then w0 = 193.509
 if round(w0) gt 500. then begin
    minwave = w0-0.3
    maxwave = w0+0.3
@@ -118,8 +108,7 @@ ne_sort = sort(n_e)
 n_e_sorted = n_e[ne_sort]
 Tlg_sorted = logT[ne_sort]
 
-; Read tabulated G(ne,T) values for given number density (n_e_lg) and
-; temperature (t_lg) arrays
+; Read tabulated G(ne,T) values for given number density (n_e_lg) and temperature (t_lg) arrays
 lookup_goft, ion=ion, w0=w0, gotdir=gotdir,n_e_lg=n_e_lg, logt=t_lg, goft_mat=goft_mat, watom= watom,file_abund=file_abund
 elements, w0=w0, ion=ion, logTm=logTm, enum=enum, inum=inum, ind=ind, vers=vers
 

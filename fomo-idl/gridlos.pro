@@ -2,17 +2,33 @@
 
 PRO gridlos, gridx=gridx, gridy=gridy, mua_d=mua_d, velx=velx, vely=vely, dx=dx, dy=dy, n_gridx, n_gridy, ngrid, dl=dl, losvel
 
+if keyword_set(gridx) eq 0 then begin
+   print,'gridlos, gridx=gridx, gridy=gridy, mua_d=mua_d, velx=velx, vely=vely, dx=dx, dy=dy, n_gridx, n_gridy, ngrid, dl=dl, losvel'
+   return
+endif
+
 ; INPUT:
-; gridx = grid along new x axis (longitudinal direction: old z axis)
-; gridy = grid along new y axis (radial direction)
-; mua_d = angle between line-of-sight and perpendicular to cylinder axis
-; velx = (y,z) array of velocity along x
-; vely = (y,z) array of velocity along y
+; gridx = (1d float array) grid along x axis
+; gridy = (1d float array) grid along y axis
+; mua_d = (float) angle between line-of-sight and y-axis
+; velx = (2d float) array of velocity along x
+; vely = (2d float) array of velocity along y
+; dx = spatial resolution along gridx-axis
+; dy = spatial resolution along gridy-axis
+
 ; OUTPUT:
-; n_gridx = grid along new x direction (longitudinal direction)
-; n_gridy = grid along new y direction (radial direction)
-; ngrid = number of points in depth for each x,y position
+; n_gridx = x-coordinates for points along rays
+; n_gridy = y-coordinates for points along rays
+; ngrid = provides number and ordering of rays
+; dl = distance between rays
 ; losvel = line-of-sight velocity
+
+; The returned arrays have the values ordered in the following way:
+; (n_gridx_<num>[ngrid_<num>[i]:ngrid_<num>[i+1]-1] : x-coordinates for the i-th ray of the <num>-th angle (unscaled)
+; (n_gridy_<num>[ngrid_<num>[i]:ngrid_<num>[i+1]-1] : y-coordinates for the i-th ray of the <num>-th angle (unscaled)
+; interpol(gridx,indgen(n_elements(gridx)),n_gridx_<num>[ngrid_<num>[i]:ngrid_<num>[i+1]-1]) : x-coordinates on gridx axis for the i-th ray of the <num>-th angle. 
+; interpol(gridx,indgen(n_elements(gridx)),n_gridx_<num>[ngrid_<num>[i]:ngrid_<num>[i+1]-1]) : same as above but for the y-coordinates.
+; n_elements(ngrid_<num>): number of rays for the <num>-th angle
 
 ; mua_d between -90 and 90 deg
 if (abs(mua_d) gt 90) then begin
