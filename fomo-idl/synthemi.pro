@@ -1,13 +1,13 @@
 
 pro synthemi,rho=rho,nem=nem,tem=tem,v1m=v1m,v2m=v2m,ion=ion,mua_d=mua_d,gridx=gridx,gridy=gridy,gridz=gridz,emission_goft=emission_goft,wave=wave,nwave=nwave,w0=w0,n_gridx_1=n_gridx_1,n_gridy_1=n_gridy_1,ngrid_1=ngrid_1,n_gridx_2=n_gridx_2,n_gridy_2=n_gridy_2,ngrid_2=ngrid_2,n_gridx_3=n_gridx_3,n_gridy_3=n_gridy_3,ngrid_3=ngrid_3,n_gridx_4=n_gridx_4,n_gridy_4=n_gridy_4,ngrid_4=ngrid_4,dl_1=dl_1,dl_2=dl_2,dl_3=dl_3,dl_4=dl_4,line_1=line_1,img_1=img_1,line_2=line_2,img_2=img_2,line_3=line_3,img_3=img_3,line_4=line_4,img_4=img_4,conv=conv, wayemi=wayemi,imgfront=imgfront,filenm=filenm,gotdir=gotdir,file_abund=file_abund,vers=vers
 
-if arg_present(rho) lt 1 then begin
+if arg_present(rho) lt 1 or arg_present(nem) lt 1 then begin
    print,'synthemi,rho=rho,nem=nem,tem=tem,v1m=v1m,v2m=v2m,ion=ion,mua_d=mua_d,gridx=gridx,gridy=gridy,gridz=gridz,emission_goft=emission_goft,wave=wave,nwave=nwave,w0=w0,n_gridx_1=n_gridx_1,n_gridy_1=n_gridy_1,ngrid_1=ngrid_1,n_gridx_2=n_gridx_2,n_gridy_2=n_gridy_2,ngrid_2=ngrid_2,n_gridx_3=n_gridx_3,n_gridy_3=n_gridy_3,ngrid_3=ngrid_3,n_gridx_4=n_gridx_4,n_gridy_4=n_gridy_4,ngrid_4=ngrid_4,dl_1=dl_1,dl_2=dl_2,dl_3=dl_3,dl_4=dl_4,line_1=line_1,img_1=img_1,line_2=line_2,img_2=img_2,line_3=line_3,img_3=img_3,line_4=line_4,img_4=img_4,conv=conv, wayemi=wayemi,imgfront=imgfront,filenm=filenm,gotdir=gotdir,file_abund=file_abund,vers=vers'
    return
 endif
 
 ; INPUT:
-; rho: (2d float array) number density in CGS
+; rho (or nem): (2d float array) density (or number density) in CGS
 ; tem: (2d float array) temperature in CGS 
 ; v1m, v2m: (2d float arrays) x and y components of velocity, in km/s 
 ; gridx, gridy: (floats) x and y axes 
@@ -38,8 +38,8 @@ endif
 ;        parameter 'width' defined below is greater than 0. By doing so you
 ;        define a depth for your 2D plane, and the parameter 'imgfront' will
 ;        therefore represent an intensity image of the 2D plane. 
-; emission_goft: (2d float array) calculated emissivity values at each point point of the 2D
-;        plane. 
+; emission_goft: (2d float array) calculated emissivity values at each
+;        point point of the 2D plane. 
 ; wave: (1d float array) the wavelength array for the line transition of interest
 ; nwave: (float) number of points in wave array as set in routine
 ;       lineongrid_goft_tab.pro. nwave is 100 points by default
@@ -47,9 +47,9 @@ endif
 ;           line-of-sight angle <num>. This is an array with a specific order
 ;           produced by the routine gridlos.pro.
 ; n_gridy_<num>: same as above for the y-coordinates.
-; ngrid_<num>: (1d int array) the i-th position of this array contains the number of
-;             points of the i-th ray for line_of_sight <num>. See
-;             gridlos.pro for more details.
+; ngrid_<num>: (1d int array) the i-th position of this array contains
+;        the number of points of the i-th ray for line_of_sight
+;        <num>. See gridlos.pro for more details.
 ; dl_<num>: (float) the spatial resolution of the grid for line-of-sight
 ;          <num>, as set by gridlos.pro
 ; line_1: 2D float array containing the line profile for each line-of-sight
@@ -69,13 +69,13 @@ if keyword_set(conv) then begin
    nefrac = 1.
    rh = rho*normro*nefrac
    te = tem /normte
-;  ne_s = rh/proton/1.e6 
-   nem = ne_s
+   ne_s = rh/proton/1.e6 
+   if ~keyword_set(nem) then nem = ne_s
 endif else begin
    ; check for CGS
-   rh = rho
    te = tem
-   ne_s = nem
+   if keyword_set(rho) then rh = rho
+   if keyword_set(nem) then ne_s = nem
 endelse
 
 direction = 4
@@ -93,7 +93,6 @@ dy = (gridy[-1]-gridy[0])/ngridsy
 if wayemi eq 5 then begin
    ; SDO AIA filters:
    imaging = 1
-   n_e = nem/1.e6
    logt = alog10(tem)
    if width gt 0. then begin
       dimz = width/dx
@@ -101,7 +100,7 @@ if wayemi eq 5 then begin
    endif else begin
       dimz =1
    endelse
-   interpol_emiss_data,n_e,tem,ion=ion, w0=w0,emission_goft=emission_goft,filenm=filenm
+   interpol_emiss_data,ne_s,tem,ion=ion, w0=w0,emission_goft=emission_goft,filenm=filenm
    imgfront = emission_goft*dimz
    for i=0,nang-1 do begin
       mua = mua_d[i]
@@ -112,7 +111,7 @@ if wayemi eq 5 then begin
       losvel = -losvel/1.e2
       integrateemission,emission=emission_goft,logt=logt,n_gridx=n_gridx,n_gridy=n_gridy,ngrid=ngrid,w0=w0,direction=direction,losvel=losvel,imaging=imaging,imsp
       dlos = (size(imsp))[1]
-      inan = string(i,format="(i1)")
+      inan = string(i+1,format="(i1)")
       exe1 = 'line_'+inan+' = imsp'
       exe2 = 'dl_'+inan+'= dl'
       exe3 = 'n_gridx_'+inan+'=n_gridx'
@@ -127,7 +126,7 @@ if wayemi eq 5 then begin
    endfor
 endif else begin
 
-   lineongrid_goft_tab, rh, te, ne_s=ne_s, gotdir=gotdir,wave=wave,nwave=nwave,minwave=minwave,maxwave=maxwave,ion=ion, w0=w0, emission_goft=emission_goft,goft=goft, logt=logt,wayemi=wayemi,watom=watom,conv=conv,file_abund=file_abund,vers=vers
+   lineongrid_goft_tab, rh_s=rh, te_s=te, ne_s=ne_s, gotdir=gotdir,wave=wave,nwave=nwave,ion=ion, w0=w0, emission_goft=emission_goft,goft=goft, logt=logt,wayemi=wayemi,watom=watom,conv=conv,file_abund=file_abund,vers=vers
 
 ; Frontview:
    if width gt 0. then begin
@@ -149,7 +148,7 @@ endif else begin
       integrateemission,emission=emission_goft,logt=logt,n_gridx=n_gridx,n_gridy=n_gridy,ngrid=ngrid,wave=wave,w0=w0,direction=direction,losvel=losvel,imaging=imaging,imsp,watom=watom,wayemi=wayemi
       
       dlos = (size(imsp))[1]
-      inan = string(i,format="(i1)")
+      inan = string(i+1,format="(i1)")
       exe1 = 'line_'+inan+' = imsp'
       exe2 = 'dl_'+inan+'= dl'
       exe3 = 'n_gridx_'+inan+'=n_gridx'

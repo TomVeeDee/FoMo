@@ -10,16 +10,15 @@ endif
 ; Returns G(T,n) values reading dat files created by table_goft.pro
 
 ; INPUT:
-; ion: (string) acronym of the ion
-; w0: (float) wavelength of line center 
+; ion: (string) acronym of the ion or filter number in case of SDO/AIA filter
+; w0: (float) wavelength of line center (not needed for SDO/AIA filter)
 ; gotdir: (string) directory path to where the .dat G(T,n) file is.
 ; file_abund: (string) file for abundance abundance. 2 kinds are implemented:
 ;            'photospheric' or 'coronal' corresponding, respectively, to the
 ;            CHIANTI packages: sun_coronal.abund and
 ;            sun_photospheric.abund
-
-; OPTIONAL:
-; filenm: (string) name helping defining the .dat file
+; filenm: (string) name helping defining the .dat file. Necessary for
+; SDO/AIA filter: set filenm = 'aia'
 
 ; OUTPUT:
 ; n_e_lg: number density array (logarithm) where G(T,n) is defined
@@ -28,7 +27,7 @@ endif
 ; watom = get_atomic_weight(enum), where enum is the nuclear charge of element
 
 
-w0nm = string(round(w0),format='(i4.4)')
+if keyword_set(w0) then w0nm = string(round(w0),format='(i4.4)')
 if keyword_set(file_abund) then begin
    if file_abund eq 'coronal' then nab = '_abco'
    if file_abund eq 'photospheric' then nab = '_abph'

@@ -1,7 +1,7 @@
-pro lineongrid_goft_tab, rh_s, te_s, ne_s=ne_s, gotdir=gotdir,wave=wave,nwave=nwave,minwave=minwave,maxwave=maxwave,ion=ion, w0=w0, emission_goft=emission_goft, goft=goft, logt=logt, wayemi=wayemi, watom=watom, conv=conv,file_abund=file_abund,vers=vers
+pro lineongrid_goft_tab, rh_s=rh_s, te_s=te_s, ne_s=ne_s, gotdir=gotdir,wave=wave,nwave=nwave,ion=ion, w0=w0, emission_goft=emission_goft, goft=goft, logt=logt, wayemi=wayemi, watom=watom, conv=conv,file_abund=file_abund,vers=vers
 
-if n_params(0) lt 1 then begin
-   print,'lineongrid_goft_tab, rh_s, te_s, ne_s=ne_s, gotdir=gotdir,wave=wave,nwave=nwave,minwave=minwave,maxwave=maxwave,ion=ion, w0=w0, emission_goft=emission_goft, goft=goft, logt=logt, wayemi=wayemi, watom=watom, conv=conv,file_abund=file_abund,vers=vers'
+if arg_present(rh_s) lt 1 or arg_present(ne_s) lt 1 then begin
+   print,'lineongrid_goft_tab, rh_s=rh_s, te_s=te_s, ne_s=ne_s, gotdir=gotdir,wave=wave,nwave=nwave,ion=ion, w0=w0, emission_goft=emission_goft, goft=goft, logt=logt, wayemi=wayemi, watom=watom, conv=conv,file_abund=file_abund,vers=vers'
    return
 endif
 
@@ -10,22 +10,38 @@ endif
 ; Uses the chianti.eq ionization equilibrium values
 
 ; INPUT:
-; rh_j = 2D or 3D array of mass density in kg/m^3, normalized by 1.e10
-; te_j = 2D or 3D array of temperature in K, normalized by
-; (protonmass/(2*kboltz)*1.e10)
-
-; OPTIONAL:
+; rh_s (or ne_s): 2D or 3D array of mass density in CGS. If SI and
+;                  normalized by 1.e10 then set keyword conv
+; te_s: 2D or 3D array of temperature in K. If normalized by
+;                 (protonmass/(2*kboltz)*1.e10) then set keyword conv
 ; ion = ion for which to calculate emissivities (default = fe_9)
 ; w0 = wavelength center of line transition (default = 171.073)
-; minwave = infimum of wavelength range (default = 171.0)
-; maxwave = suppremum of wavelength range (default = 171.14)
-; set keyword wayemi to 1 if emission calculated point by point, else
-; set to 2 if calculated through binning of G(T)*ne^2 term (default = 2)
+; gotdir: (string) directory path to where the .dat G(T,n) file is
+; file_abund: (string) file for abundance abundance. 2 kinds are implemented:
+;            'photospheric' or 'coronal' corresponding, respectively, to the
+;            CHIANTI packages: sun_coronal.abund and sun_photospheric.abund
+; vers: (int) the CHIANTI version (6 or 7).
+; wayemi: (int) for different ways of calculating the emissivity in the
+;        routine lineongrid_goft_tab.pro. The default is wayemi = 4
+;        If wayemi = 5 for imaging then this procedure should not
+;        be called 
+
+; OPTIONAL:
+; nwave: (float) number of points in wave array as set in routine
+;        set keyword wayemi to 1 if emission calculated point by
+;        point, else set to 2-4 if calculated through binning of
+;        G(T)*ne^2 term (default = 4) 
+; conv: set for converting density into number density when the latter is
+;       in SI units, has been normalized by 1.e10 and the plasma is
+;       fully ionized
 
 ; OUTPUT:
 ; wave = wavelength array set to nwave pts, containing line transition	
-; w0 = wavelength center
-; emission_goft = array of emission (x, y, (z), lambda)
+; w0 = wavelength center in Angstroms
+; emission_goft = array of emissivities G(T,n)*ne^2 (x, y, (z), (lambda))
+; goft = array of contribution function G(T,n)
+; logt = logarithmic values of temperature array
+; watom = get_atomic_weight(enum), where enum is the nuclear charge of element
 
 ; CALLS:
 ; lookup_goft, elements, (if wayemi != 4 : make_chianti_spec, ch_synthetic)
@@ -58,15 +74,22 @@ mu = 1.27
 normro = 1.e10
 normte = proton/(2*kboltz)*normro
 if keyword_set(conv) then begin
-   rh = rh_s / normro
    T = te_s * normte
-   if ~keyword_set(ne_s) then n_e = rh/proton/1.e6 else n_e = ne_s   ; in cgs
-   pe = n_e * kboltz * T * 1.e7 ; in cgs
+   if ~keyword_set(ne_s) then begin
+       rh = rh_s / normro
+       n_e = rh/proton/1.e6 
+   endif else begin
+       n_e = ne_s               ; in cgs
+   endelse
 endif else begin
-   ; check for CGS
-   rh = rh_s
+                                ; check for CGS
    T = te_s
-   if ~keyword_set(ne_s) then n_e = rh/proton else n_e = ne_s
+   if ~keyword_set(ne_s) then begin
+       rh = rh_s
+       n_e = rh/proton 
+   endif else begin
+       n_e = ne_s
+   endelse
 endelse
 
 logT = alog10(T>1.)

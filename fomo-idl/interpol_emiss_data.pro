@@ -11,17 +11,20 @@ endif
 ; line transition (or AIA filter), and returns emissivity function (G(t,n)*ne^2). 
 
 ; INPUT: 
-; n_e, t_e: (0-2d float arrays) density and temperature values where to interpolate
+; n_e, t_e: (0-2d float arrays) density and temperature values where
+;           to interpolate (in CGS)
 ; ion: (string) acronym of the ion
 ; w0: (float) wavelength of line center 
 
 ; OUTPUT:
 ; emission_goft: (0-2d float arrays) where interpolated values are returned
-; g_logte & g_logne: (1d float arrays) the log(T) and log(n) values where the G(T,n) function is defined.
+; g_logte & g_logne: (1d float arrays) the log(T) and log(n) values
+;           where the G(T,n) function is defined. 
 
 ; OPTIONAL:
 ; sav: set it for saving the calculated emissivity values.
-; filenm & tstep: (string & float, resp.) used for naming the emissivity sav file. 
+; filenm & tstep: (string & float, resp.) used for naming the
+;           emissivity sav file.  
 ; sdir: (string) path to where to save the emissivity table. 
 
 ; CALLS:
