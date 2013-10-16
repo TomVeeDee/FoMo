@@ -1,8 +1,8 @@
 
-pro rotmat, dimx, dimy, dimz, ro, re, va, vae, co, ce, bo, be, waka_ini, waka_ini_ar, no_init_guess = no_init, high_t_ext = high_t, nmode = nmode
+pro rotmat, dimx=dimx, dimy=dimy, dimz=dimz, ro=ro, re=re, vao=vao, vae=vae, co=co, ce=ce, bo=bo, be=be, waka_ini_f=waka_ini_f, waka_ini_ar=waka_ini_ar, no_init_guess = no_init, high_t_ext = high_t, nmode = nmode
 
-if n_params(0) lt 1 then begin
-   print,'rotmat, dimx, dimy, dimz, ro, re, va, vae, co, ce, bo, be, waka_ini,waka_ini_ar, [nmode=nmode,no_init_guess = no_guess, high_t_ext = high_t]'
+if ~keyword_set(dimx) then begin
+   print,'rotmat, dimx=dimx, dimy=dimy, dimz=dimz, ro=ro, re=re, vao=vao, vae=vae, co=co, ce=ce, bo=bo, be=be, waka_ini_f=waka_ini_f, waka_ini_ar=waka_ini_ar, no_init_guess = no_init, high_t_ext = high_t, nmode = nmode'
    return
 endif
 
@@ -16,13 +16,13 @@ endif
 ; dimz = dimension along z axis of structure
 ; ro = internal density: rho[dimx/2,dimy/2,dimz/2]
 ; re = external density: rho[0,0,0]
-; va = internal Alfven velocity: calculated at (dimx/2,dimy/2,dimz/2)
+; vao = internal Alfven velocity: calculated at (dimx/2,dimy/2,dimz/2)
 ; vae = external Alfven velocity: calculated at (0,0,0)
 ; co = internal sound speed: calculated at (dimx/2,dimy/2,dimz/2)
 ; ce = external sound speed: calculated at (0,0,0)
 ; bo = internal magnetic field calculated at (dimx/2,dimy/2,dimz/2)
 ; be = external magnetic field calculated at (0,0,0)
-; waka_ini = initial guess of w/k for solving dispersion relation
+; waka_ini_f = initial guess of w/k for solving dispersion relation
 ; OPTIONAL:
 ; if keyword 'no_init' is set then calculation of initial guess is avoided
 ; if keyword 'high_t' is set then external temperature is increased to
@@ -32,12 +32,12 @@ if keyword_set(no_init) then initial = 0 else initial = 1
 if keyword_set(high_t) then val = 1 else val = 0
 
 ;RESTORE,'/users/cpa/tomvd/data/forwardmodelling/sausage_marcin2/imagesave0000integratey.sav'
-RESTORE,'../../sav/imagesave0000integratey.sav' 
+RESTORE,'~/Modeling/kink/sav/imagesave0000integratey.sav' 
 ;RESTORE,'/users/cpa/tomvd/data/forwardmodelling/sausage_marcin2/forpatrick.sav'
-RESTORE,'../../sav/forpatrick.sav'
+RESTORE,'~/Modeling/kink/sav/forpatrick.sav'
 ;RESTORE,'/users/cpa/pantolin/Modeling/Bfield_s.sav'
 ;RESTORE,'/users/cpa/pantolin/Modeling/Bfield.sav'
-RESTORE,'../../sav/Bfield_s.sav'
+RESTORE,'~/Modeling/kink/sav/Bfield_s.sav'
 
 rho = data.rho
 rho = reform(rho[0:201:20,*,0:100:2,0])
@@ -150,17 +150,17 @@ if initial eq 1 then begin
 
    ro = rho_in*norm^2
    re = rho_out*norm^2
-   va = sqrt(rBx[xm,ym,zm]^2+rBy[xm,ym,zm]^2+rBz[xm,ym,zm]^2)/sqrt(mup*ro)
+   vao = sqrt(rBx[xm,ym,zm]^2+rBy[xm,ym,zm]^2+rBz[xm,ym,zm]^2)/sqrt(mup*ro)
    vae = sqrt(rBx[0,0,0]^2+rBy[0,0,0]^2+rBz[0,0,0]^2)/sqrt(mup*re)
    co = sqrt(2*gamma*kboltz/proton*te_in)/1.e5
    ce = sqrt(2*gamma*kboltz/proton*te_out)/1.e5
-   bo = va*sqrt(mup*ro)
+   bo = vao*sqrt(mup*ro)
    be = vae*sqrt(mup*re)
-   ct = co*va/sqrt(co^2+va^2)
+   ct = co*vao/sqrt(co^2+vao^2)
    cte = ce*vae/sqrt(ce^2+vae^2)
-
-   nummoa2 = (ka^2*co^2-wa^2)*(ka^2*va^2-wa^2)
-   dnummoa2 = (ka^2*ct^2-wa^2)*(co^2+va^2)
+stop
+   nummoa2 = (ka^2*co^2-wa^2)*(ka^2*vao^2-wa^2)
+   dnummoa2 = (ka^2*ct^2-wa^2)*(co^2+vao^2)
    moa2 = nummoa2/dnummoa2
    nummea2 = (ka^2*ce^2-wa^2)*(ka^2*vae^2-wa^2)
    dnummea2 = (ka^2*cte^2-wa^2)*(ce^2+vae^2)
@@ -213,13 +213,13 @@ if initial eq 1 then begin
    endif
 
    if reg1[0] ne -1 then L[reg1] = wa[reg1]^2*(re*sqrt(sigi[reg1]*moa2[reg1])*dbslij[reg1]*bslky[reg1]-ro*sqrt(sigk[reg1]*mea2[reg1])*dbslky[reg1]*bslij[reg1])-$
-    ka^2*(re*vae^2*sqrt(sigi[reg1]*moa2[reg1])*dbslij[reg1]*bslky[reg1]-ro*va^2*sqrt(sigk[reg1]*mea2[reg1])*dbslky[reg1]*bslij[reg1])
+    ka^2*(re*vae^2*sqrt(sigi[reg1]*moa2[reg1])*dbslij[reg1]*bslky[reg1]-ro*vao^2*sqrt(sigk[reg1]*mea2[reg1])*dbslky[reg1]*bslij[reg1])
    if reg2[0] ne -1 then L[reg2] = wa[reg2]^2*(re*sqrt(sigi[reg2]*moa2[reg2])*dbslij[reg2]*bslky[reg2]-ro*sqrt(sigk[reg2]*mea2[reg2])*dbslky[reg2]*bslij[reg2])-$
-    ka^2*(re*vae^2*sqrt(sigi[reg2]*moa2[reg2])*dbslij[reg2]*bslky[reg2]-ro*va^2*sqrt(sigk[reg2]*mea2[reg2])*dbslky[reg2]*bslij[reg2])
+    ka^2*(re*vae^2*sqrt(sigi[reg2]*moa2[reg2])*dbslij[reg2]*bslky[reg2]-ro*vao^2*sqrt(sigk[reg2]*mea2[reg2])*dbslky[reg2]*bslij[reg2])
    if reg3[0] ne -1 then L[reg3] = wa[reg3]^2*(re*sqrt(sigi[reg3]*moa2[reg3])*dbslij[reg3]*bslky[reg3]-ro*sqrt(sigk[reg3]*mea2[reg3])*dbslky[reg3]*bslij[reg3])-$
-    ka^2*(re*vae^2*sqrt(sigi[reg3]*moa2[reg3])*dbslij[reg3]*bslky[reg3]-ro*va^2*sqrt(sigk[reg3]*mea2[reg3])*dbslky[reg3]*bslij[reg3])
+    ka^2*(re*vae^2*sqrt(sigi[reg3]*moa2[reg3])*dbslij[reg3]*bslky[reg3]-ro*vao^2*sqrt(sigk[reg3]*mea2[reg3])*dbslky[reg3]*bslij[reg3])
    if reg4[0] ne -1 then L[reg4] = wa[reg4]^2*(re*sqrt(sigi[reg4]*moa2[reg4])*dbslij[reg4]*bslky[reg4]-ro*sqrt(sigk[reg4]*mea2[reg4])*dbslky[reg4]*bslij[reg4])-$
-    ka^2*(re*vae^2*sqrt(sigi[reg4]*moa2[reg4])*dbslij[reg4]*bslky[reg4]-ro*va^2*sqrt(sigk[reg4]*mea2[reg4])*dbslky[reg4]*bslij[reg4])
+    ka^2*(re*vae^2*sqrt(sigi[reg4]*moa2[reg4])*dbslij[reg4]*bslky[reg4]-ro*vao^2*sqrt(sigk[reg4]*mea2[reg4])*dbslky[reg4]*bslij[reg4])
 
    window,0
 ;plot,wa/ka,L/max(sqrt(abs(dnummoa2*dnummea2))),/xs,/ys,psym=3;,xr=[2,5],yr=[-1,1]
@@ -228,11 +228,11 @@ if initial eq 1 then begin
    plot,wa/ka,L,/xs,/ys,psym=3,yr=[-2,10]  ;,yr=[-0.01,0.01]
    locs = where(abs(L) lt 2.e-3)
    if locs[0] ne -1 then begin
-      waka_ini = max(wa[locs]/ka[locs])
+      waka_ini_f = max(wa[locs]/ka[locs])
       waka_ini_0 = round(wa[locs]/ka[locs]*1.e5)/1.e5
-      wrlocs = where(waka_ini_0[uniq(waka_ini_0)] gt va*1.01)
+      wrlocs = where(waka_ini_0[uniq(waka_ini_0)] gt vao*1.01)
       waka_ini_ar = waka_ini_0[(uniq(waka_ini_0))[wrlocs]]
-      print,'waka_ini = ', waka_ini_ar
+      print,'waka_ini_f = ', waka_ini_ar
    endif else begin
       print,'no solution'
    endelse

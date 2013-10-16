@@ -13,20 +13,34 @@ nmode = 1
 ;of the dispersion relation at ka = 4 (where a is the radius of the
 ;cylinder and k is the wavenumber).
 
-rotmat, dimx, dimy, dimz, ro, re, va, vae, co, ce, bo, be, waka_ini,waka_ini_ar,nmode=nmode
+;---- 
+       init,ro=ro,re=re,vao=vao,vae=vae,co=co,ce=ce,bo=bo,be=be,waka_ini=waka_ini,waka_ini_ar=waka_ini_ar,nmode=nmode
 
-; find all solutions to the dispersion relation (all branches)
+       ;take values from numerical model of Gruszecki et al.:
 
-tubemodes, rho_int=ro, rho_ext=re, valfv_int=va, valv_ext=vae, cs_int=co, cs_ext=ce,  bo_int=bo, be_ext=be, waka_ini=waka_ini, waka_root, ka_root, nmode = nmode
+       ;rotmat, dimx=dimx, dimy=dimy, dimz=dimz, ro=ro, re=re, vao=vao, vae=vae, co=co, ce=ce, bo=bo, be=be, waka_ini_f=waka_ini_f, waka_ini_ar=waka_ini_ar,nmode=nmode
+;-----
 
-; or find all solutions for a specific radial mode (1 branch)
-; in this case set waka_ini equal to the approximate solution at ka =
-; 4 for the branch of interest (waka_ini_ar contains the
-; approximations to different branches)
+; find solutions to the dispersion relation (all branches)
+       
+       ; if ALL solutions are desired (all branches, this routine does not
+       ; always work. It's quite sensitive to the initial condition):
 
-tubemodes_branch, rho_int=ro, rho_ext=re, valfv_int=va, valv_ext=vae, cs_int=co, cs_ext=ce, bo_int=bo, be_ext=be, waka_ini=waka_ini, waka_root, ka_root, nmode = nmode
+;       tubemodes, ro=ro, re=re, vao=vao, vae=vae, co=co, ce=ce, bo=bo, be=be, waka_ini_f=waka_ini_f, waka_root=waka_root, ka_root=ka_root, nmode = nmode
+
+       ; or find all solutions for a specific radial mode (1 branch)
+       ; in this case set waka_ini equal to the approximate solution at ka =
+       ; 4 for the branch of interest (waka_ini_ar contains the
+       ; approximations to different branches). By default, waka_ini
+       ; is set to the fundamental mode
+
+       tubemodes_branch, ro=ro, re=re, vao=vao, vae=vae, co=co, ce=ce, bo=bo, be=be, waka_ini_f=waka_ini_f, waka_root=waka_root, ka_root=ka_root, nmode = nmode
+
+
+;----
 
 ; set dimensions of your model
+
 dimx = 204 ; x-axis
 dimy = 204 ; y-axis
 dimt = 30 ; time steps
@@ -35,16 +49,18 @@ dimt = 30 ; time steps
 ; on thermodynamic and geometrical quantities (vr, vt, vz, pr, rr,...) 
 ; according to Edwin & Roberts 1983
 
-vel_modes, waka_root=waka_root, ka_root=ka_root, dimx=dimx, reg0, reg1, reg2, reg3, reg4, vr_md, vt_md, vz_md, pr_md, ptot_md, rr_md, br_md, bt_md, bz_md, btot_md, gridr=gridr, gridx=gridx, nmode=nmode
+vel_modes, waka_root=waka_root, ka_root=ka_root, dimx=dimx, reg0=reg0, reg1=reg1, reg2=reg2, reg3=reg3, reg4=reg4, vr_md=vr_md, vt_md=vt_md, vz_md=vz_md, pr_md=pr_md, ptot_md=ptot_md, rr_md=rr_md, br_md=br_md, bt_md=bt_md, bz_md=bz_md, btot_md=btot_md, gridr=gridr, gridx=gridx, aa=aa,nmode=nmode
 
-; Calculate the modulation in time and space (r,z) of the MHD mode 
-; on thermodynamic and geometrical quantities (vr, vt, vz, pr, rr,...) for
-; a specific wavenumber, according to Edwin & Roberts 1983. Include
-; /mag keyword for returning also magnetic field quantities.
-; Specify first the wavenumber:
-kafix_0 = 2.244
+; Calculate the modulation in time and space (cylindrical coordinates) 
+; of the MHD mode on thermodynamic and geometrical quantities (vr, vt,
+; vz, pr, rr,...) for a specific wavenumber, according to Edwin &
+; Roberts 1983.
+; Specify first the wavenumber. See routine for more details
 
-velmod_wt, waka_root=waka_root, ka_root=ka_root, gridx=gridx, gridr=gridr, dimt=dimt, reg3=reg3, vr_md=vr_md, kafix_0=kafix_0, aa, wk_rt, ka_rt, kafix, diml, dimz, theta, tarr, gridz, vr_t, vt_t, vz_t, rr_t, rtot_t, ptot_t, dispr, te_t, br_t, bt_t, bz_t, btot_t,nmode=nmode
+ka_0 = !pi/200. ; 200 Mm length loop
+modelname = 'choose_model_name'
+
+velmod_wt,waka_root=waka_root,ka_root=ka_root,gridx=gridx,gridr=gridr,dimt=dimt,dimz=dimz,reg3=reg3,vr_md=vr_md,ka_0=ka_0,aa=aa,wk_rt=wk_rt,ka_rt=ka_rt,kafix=kafix,theta=theta,tarr=tarr,gridz=gridz,mag=mag,nmode=nmode,/save,modelname=modelname
 
 ; set model = string with name of treated model:
 ;      model = 'base' corresponds to ka = 2.24, 

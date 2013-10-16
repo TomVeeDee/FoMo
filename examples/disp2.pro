@@ -2,7 +2,7 @@
 FUNCTION disp2,X
 
   common vars1, A1, A2, A3, A4, A5, B1, B2, B3, B4, B5, n, ka
-  common vars2, amp, rad, wk, moaa, t_k, th_l, z_j,r_i
+  common vars2, amp, rad, wk, moaa, meaa, t_k, th_l, z_j, r_i, aa1
   
   co = A1 & va = A2 & ct = A3 & ro = A4 & bo = A5
   ce = B1 & vae = B2 & cte = B3 & re = B4 & be = B5

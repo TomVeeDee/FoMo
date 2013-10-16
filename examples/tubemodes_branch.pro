@@ -1,23 +1,23 @@
 
-PRO tubemodes_branch, rho_int=ro, rho_ext=re, valfv_int=va, valv_ext=vae, cs_int=co, cs_ext=ce, bo_int=bo, be_ext=be, waka_ini=waka_ini, waka_root, ka_root, nmode = nmode, normcase = normcase
+PRO tubemodes_branch, ro=ro, re=re, vao=vao, vae=vae, co=co, ce=ce, bo=bo, be=be, waka_ini_f=waka_ini_f, waka_root=waka_root, ka_root=ka_root, nmode = nmode, normcase = normcase
 
-if n_params(0) lt 1 then begin
-   print,'tubemodes_branch, rho_int=ro, rho_ext=re, valfv_int=va, valv_ext=vae, cs_int=co, cs_ext=ce, bo_int=bo, be_ext=be, waka_ini=waka_ini, waka_root, ka_root,nmode=nmode [,normcase = normcase]'
+if ~keyword_set(ro) then begin
+   print,'tubemodes_branch, ro=ro, re=re, vao=vao, vae=vae, co=co, ce=ce, bo=bo, be=be, waka_ini_f=waka_ini_f, waka_root=waka_root, ka_root=ka_root, nmode = nmode, normcase = normcase'
    return
 endif
 
 ; Solves dispersion relation based on parameters ro, re, va, vae, co,
-; ce, waka_ini.
+; ce, waka_ini_f.
 ; INPUT:
 ; ro = internal density: rho[dimx/2,dimy/2,dimz/2]
 ; re = external density: rho[0,0,0]
-; va = internal Alfven velocity: calculated at (dimx/2,dimy/2,dimz/2)
+; vao = internal Alfven velocity: calculated at (dimx/2,dimy/2,dimz/2)
 ; vae = external Alfven velocity: calculated at (0,0,0)
 ; co = internal sound speed: calculated at (dimx/2,dimy/2,dimz/2)
 ; ce = external sound speed: calculated at (0,0,0)
 ; bo = internal magnetic field calculated at (dimx/2,dimy/2,dimz/2)
 ; be = external magnetic field calculated at (0,0,0)
-; waka_ini = initial guess of w/k for solving dispersion relation
+; waka_ini_f = initial guess of w/k for solving dispersion relation
 ; OUTPUT:
 ; waka_root = roots of w/k from dispersion relation
 ; ka_root = values of ka corresponding to w/k roots (a = radius of cylinder)
@@ -46,22 +46,22 @@ waka_root = fltarr(nka)
 if keyword_set(normcase) then begin
    co = 1.
    ce = 0.5 * co
-   va = 2 * co
+   vao = 2 * co
    vae = 5 * co
    ro = 1.
    re = 0.1
-   bo = va*sqrt(ro)
+   bo = vao*sqrt(ro)
    be = vae*sqrt(re)
-   ck = sqrt((ro*va^2+re*vae^2)/(ro+re))
+   ck = sqrt((ro*vao^2+re*vae^2)/(ro+re))
 endif
 
-ct = co*va/sqrt(co^2+va^2)
+ct = co*vao/sqrt(co^2+vao^2)
 cte = ce*vae/sqrt(ce^2+vae^2)
 
-A1 = co & A2 = va & A3 = ct & A4 = ro & A5 = bo
+A1 = co & A2 = vao & A3 = ct & A4 = ro & A5 = bo
 B1 = ce & B2 = vae & B3 = cte & B4 = re & B5 = be
 mrk = 0 & mrk2 = 0
-waka_j = waka_ini;
+waka_j = waka_ini_f;
 dwa1 = 1.
 j = 0.
 ;for j=1,nka-1 do begin
@@ -112,6 +112,6 @@ print,'inital=',waka0
 endwhile
 ;endfor 
 
-plot,ka_root,waka_root,/xs,/ys,psym=3,yr=[va-va/5,vae+vae/5.]
+plot,ka_root,waka_root,/xs,/ys,psym=3,yr=[vao-vao/5,vae+vae/5.]
 
 end
