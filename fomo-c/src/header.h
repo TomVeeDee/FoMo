@@ -29,6 +29,7 @@ enum EqType
 	emisscube,
 	observcube,
 	patricksausage,
+	stiefkink,
 	empty, // this should always be at the end, because it is tested for in the reademissioncube routine in io.cpp
 };
 

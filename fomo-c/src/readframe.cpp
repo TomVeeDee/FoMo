@@ -184,7 +184,7 @@ void cube::fillcube()
 				double z=grid[2][i];
 				// curvature radius in Mm
 				double R = length*1000./M_PI;
-				// map the torus to a cylinder, using simple toroidal coordinates 
+				// map the torus to a cylinder, using simple toroidal coordinates (IF no equilibrium file is specified!)
 		                double r = sqrt(pow(sqrt(pow(x,2)+pow(z,2))-R,2)+pow(y,2));
 		                double phi = atan2(y,(sqrt(pow(x,2)+pow(z,2))-R));
 		                double z_or;
@@ -206,7 +206,14 @@ void cube::fillcube()
 			}
 			cout << "Done!" << endl << flush;
 			break;
-		case patricksausage:
+		case patricksausage:				// not sure what we have to do with this equilibrium here...
+			for (int i=0; i<ng; i++)
+				for (int j=2; j<5; j++)
+				{
+					vars[j][i]*=1e5;
+				}
+			break;
+		case stiefkink:
 			for (int i=0; i<ng; i++)
 				for (int j=2; j<5; j++)
 				{

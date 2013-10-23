@@ -1,4 +1,4 @@
-pro velmod_wt,waka_root=waka_root,ka_root=ka_root,gridx=gridx,gridr=gridr,dimt=dimt,dimz=dimz,reg3=reg3,vr_md=vr_md,ka_0=ka_0,aa=aa,wk_rt=wk_rt,ka_rt=ka_rt,kafix=kafix,theta=theta,tarr=tarr,gridz=gridz,mag=mag,nmode=nmode,uniform=uniform,save=save,modelname=modelname
+pro velmod_wt,waka_root=waka_root,ka_root=ka_root,gridx=gridx,gridr=gridr,dimt=dimt,dimz=dimz,diml=diml,reg3=reg3,vr_md=vr_md,ka_0=ka_0,aa=aa,wk_rt=wk_rt,ka_rt=ka_rt,kafix=kafix,theta=theta,tarr=tarr,gridz=gridz,mag=mag,nmode=nmode,uniform=uniform,save=save,modelname=modelname,vr_t=vr_t,vt_t=vt_t,vz_t=vz_t,rtot_t=rtot_t,te_t=te_t
 
 if ~keyword_set(waka_root) then begin
     print,'velmod_wt,waka_root=waka_root,ka_root=ka_root,gridx=gridx,gridr=gridr,dimt=dimt,dimz=dimz,reg3=reg3,vr_md=vr_md,ka_0=ka_0,aa=aa,wk_rt=wk_rt,ka_rt=ka_rt,kafix=kafix,theta=theta,tarr=tarr,gridz=gridz,mag=mag,nmode=nmode,uniform=uniform,save=save,modelname=modelname'
@@ -75,6 +75,7 @@ dimx = n_elements(gridx)
 dimr = n_elements(gridr)
 if (~(keyword_set(gridy))) then gridy = gridx[dimx/2:*]
 dimy = n_elements(gridy)
+diml = dimx/2
 
 if n eq 0 then amp = 0.1 else amp = 5.e-5 ; amplitude of perturbation
 wk_rt = waka_root[reg3] ; reg3 corresponds to the range of coronal solutions
@@ -118,18 +119,18 @@ print,'type .c to continue'
 stop
 
 ; quantities in time:vr_t = fltarr(dimx,dimy,dimz)
-vr_t = fltarr(dimr,diml,dimz)
-vt_t = fltarr(dimr,diml,dimz)
-vz_t = fltarr(dimr,diml,dimz)
-rr_t = fltarr(dimr,diml,dimz)
-rtot_t = fltarr(dimr,diml,dimz)
+vr_t = fltarr(dimr,diml,dimz,dimt)
+vt_t = fltarr(dimr,diml,dimz,dimt)
+vz_t = fltarr(dimr,diml,dimz,dimt)
+rr_t = fltarr(dimr,diml,dimz,dimt)
+rtot_t = fltarr(dimr,diml,dimz,dimt)
 ;ptot_t = fltarr(dimr,diml,dimz,dimt)
-te_t = fltarr(dimr,diml,dimz)
+te_t = fltarr(dimr,diml,dimz,dimt)
 if keyword_set(mag) then begin
-   br_t = fltarr(dimr,diml,dimz)
-   bt_t = fltarr(dimr,diml,dimz)
-   bz_t = fltarr(dimr,diml,dimz)
-   btot_t = fltarr(dimr,diml,dimz)
+   br_t = fltarr(dimr,diml,dimz,dimt)
+   bt_t = fltarr(dimr,diml,dimz,dimt)
+   bz_t = fltarr(dimr,diml,dimz,dimt)
+   btot_t = fltarr(dimr,diml,dimz,dimt)
 endif
 
 nummor2 = (co^2-wk_rt^2)*(vao^2-wk_rt^2)
@@ -147,6 +148,21 @@ aa0 = 1.
 
 for k=0,dimt-1 do begin
     st = string(k,format="(i3.3)")
+    if n eq 0 then begin                    ;Reinitialize the variables for each time step
+      vr_t = fltarr(dimr,diml,dimz,dimt)
+      vt_t = fltarr(dimr,diml,dimz,dimt)
+      vz_t = fltarr(dimr,diml,dimz,dimt)
+      rr_t = fltarr(dimr,diml,dimz,dimt)
+      rtot_t = fltarr(dimr,diml,dimz,dimt)
+      ;ptot_t = fltarr(dimr,diml,dimz,dimt)
+      te_t = fltarr(dimr,diml,dimz,dimt)
+      if keyword_set(mag) then begin
+        br_t = fltarr(dimr,diml,dimz,dimt)
+        bt_t = fltarr(dimr,diml,dimz,dimt)
+        bz_t = fltarr(dimr,diml,dimz,dimt)
+        btot_t = fltarr(dimr,diml,dimz,dimt)
+      endif
+    endif
     for j=0,dimz-1 do begin
         for l=0,diml-1 do begin
             t_k = tarr[k] & th_l = theta[l]  & z_j = gridz[j]
@@ -171,26 +187,26 @@ for k=0,dimt-1 do begin
                 
                 if (abs(displac) lt aa) then begin
                     mor2 = moa2[kafix]*(displac/aa)^2
-                    vr_t[i,l,j] = amp*((vao^2+co^2)*(wk_rt[kafix]^2-ct^2)/(wk_rt[kafix]^2*(wk_rt[kafix]^2-vao^2))*aa0*sqrt(sigi*moa2[kafix]/aa^2)*dbeselj(sqrt(sigi*mor2),n)*(aa/ka_rt[kafix])^2)*cos(wk_rt[kafix]*ka_rt[kafix]*tarr[k]/aa)*cos(n*th_ll)*sin(ka_rt[kafix]*gridz[j]/aa)
+                    vr_t[i,l,j,k] = amp*((vao^2+co^2)*(wk_rt[kafix]^2-ct^2)/(wk_rt[kafix]^2*(wk_rt[kafix]^2-vao^2))*aa0*sqrt(sigi*moa2[kafix]/aa^2)*dbeselj(sqrt(sigi*mor2),n)*(aa/ka_rt[kafix])^2)*cos(wk_rt[kafix]*ka_rt[kafix]*tarr[k]/aa)*cos(n*th_ll)*sin(ka_rt[kafix]*gridz[j]/aa)
                     if displac eq 0. then begin
-                        if n gt 0 then vt_t[i,l,j] = amp*(-(vao^2+co^2-vao^2*co^2/wk_rt[kafix]^2)*aa0*n*1./((wk_rt[kafix]*ka_rt[kafix])^2-vao^2*ka_rt[kafix]^2)*aa^2*1./gamma(n+1)*(sqrt(sigi*moa2[kafix]/aa^2)*0.5)^n*(displac)^(n-1))*cos(wk_rt[kafix]*ka_rt[kafix]*tarr[k]/aa)*sin(n*th_ll)*sin(ka_rt[kafix]*gridz[j]/aa) else vt_t[i,l,j] = 0.
+                        if n gt 0 then vt_t[i,l,j,k] = amp*(-(vao^2+co^2-vao^2*co^2/wk_rt[kafix]^2)*aa0*n*1./((wk_rt[kafix]*ka_rt[kafix])^2-vao^2*ka_rt[kafix]^2)*aa^2*1./gamma(n+1)*(sqrt(sigi*moa2[kafix]/aa^2)*0.5)^n*(displac)^(n-1))*cos(wk_rt[kafix]*ka_rt[kafix]*tarr[k]/aa)*sin(n*th_ll)*sin(ka_rt[kafix]*gridz[j]/aa) else vt_t[i,l,j,k] = 0.
                     endif else begin
-                        vt_t[i,l,j] = amp*(-(vao^2+co^2-vao^2*co^2/wk_rt[kafix]^2)*aa0*n*beselj(sqrt(sigi*mor2),n,/double)/((wk_rt[kafix]*ka_rt[kafix])^2-vao^2*ka_rt[kafix]^2)/abs(displac)*aa^2)*cos(wk_rt[kafix]*ka_rt[kafix]*tarr[k]/aa)*sin(n*th_ll)*sin(ka_rt[kafix]*gridz[j]/aa)
+                        vt_t[i,l,j,k] = amp*(-(vao^2+co^2-vao^2*co^2/wk_rt[kafix]^2)*aa0*n*beselj(sqrt(sigi*mor2),n,/double)/((wk_rt[kafix]*ka_rt[kafix])^2-vao^2*ka_rt[kafix]^2)/abs(displac)*aa^2)*cos(wk_rt[kafix]*ka_rt[kafix]*tarr[k]/aa)*sin(n*th_ll)*sin(ka_rt[kafix]*gridz[j]/aa)
                     endelse
-                    vz_t[i,l,j] = amp*(1./wk_rt[kafix]^2/ka_rt[kafix]*aa*co^2*aa0*beselj(sqrt(sigi*mor2),n,/double))*cos(wk_rt[kafix]*ka_rt[kafix]*tarr[k]/aa)*cos(n*th_ll)*cos(ka_rt[kafix]*gridz[j]/aa)
-                    rr_t[i,l,j] = amp*(ro/wk_rt[kafix]/ka_rt[kafix]*aa*aa0*beselj(sqrt(sigi*mor2),n,/double))*sin(wk_rt[kafix]*ka_rt[kafix]*tarr[k]/aa)*cos(n*th_ll)*sin(ka_rt[kafix]*gridz[j]/aa)
-                    rtot_t[i,l,j] = rr_t[i,l,j]+ro
+                    vz_t[i,l,j,k] = amp*(1./wk_rt[kafix]^2/ka_rt[kafix]*aa*co^2*aa0*beselj(sqrt(sigi*mor2),n,/double))*cos(wk_rt[kafix]*ka_rt[kafix]*tarr[k]/aa)*cos(n*th_ll)*cos(ka_rt[kafix]*gridz[j]/aa)
+                    rr_t[i,l,j,k] = amp*(ro/wk_rt[kafix]/ka_rt[kafix]*aa*aa0*beselj(sqrt(sigi*mor2),n,/double))*sin(wk_rt[kafix]*ka_rt[kafix]*tarr[k]/aa)*cos(n*th_ll)*sin(ka_rt[kafix]*gridz[j]/aa)
+                    rtot_t[i,l,j,k] = rr_t[i,l,j,k]+ro
                     ptot_t = amp*(co^2*ro/wk_rt[kafix]/ka_rt[kafix]*aa*aa0*beselj(sqrt(sigi*mor2),n,/double))*sin(wk_rt[kafix]*ka_rt[kafix]*tarr[k]/aa)*cos(n*th_ll)*sin(ka_rt[kafix]*gridz[j]/aa)+po
-                    te_t[i,l,j] = ptot_t/rtot_t[i,l,j]
+                    te_t[i,l,j,k] = ptot_t/rtot_t[i,l,j,k]
                     if keyword_set(mag) then begin
-                        br_t[i,l,j] = amp*bo/wk_rt[kafix]*((vao^2+co^2)*(wk_rt[kafix]^2-ct^2)/(wk_rt[kafix]^2*(wk_rt[kafix]^2-vao^2))*aa0*sqrt(sigi*moa2[kafix]/aa^2)*dbeselj(sqrt(sigi*mor2),n)*(aa/ka_rt[kafix])^2)*sin(wk_rt[kafix]*ka_rt[kafix]*tarr[k]/aa)*cos(n*th_ll)*cos(ka_rt[kafix]*gridz[j]/aa)
+                        br_t[i,l,j,k] = amp*bo/wk_rt[kafix]*((vao^2+co^2)*(wk_rt[kafix]^2-ct^2)/(wk_rt[kafix]^2*(wk_rt[kafix]^2-vao^2))*aa0*sqrt(sigi*moa2[kafix]/aa^2)*dbeselj(sqrt(sigi*mor2),n)*(aa/ka_rt[kafix])^2)*sin(wk_rt[kafix]*ka_rt[kafix]*tarr[k]/aa)*cos(n*th_ll)*cos(ka_rt[kafix]*gridz[j]/aa)
                         if displac eq 0. then begin
-                            if n gt 0 then bt_t[i,l,j] = amp*bo/wk_rt[kafix]*(-(vao^2+co^2-vao^2*co^2/wk_rt[kafix]^2)*aa0*n*1./((wk_rt[kafix]*ka_rt[kafix])^2-vao^2*ka_rt[kafix]^2)*aa^2*1./gamma(n+1)*(sqrt(sigi*moa2[kafix]/aa^2)*0.5)^n*(displac)^(n-1))*sin(wk_rt[kafix]*ka_rt[kafix]*tarr[k]/aa)*cos(n*th_ll)*cos(ka_rt[kafix]*gridz[j]/aa) else bt_t[i,l,j] = 0.
+                            if n gt 0 then bt_t[i,l,j,k] = amp*bo/wk_rt[kafix]*(-(vao^2+co^2-vao^2*co^2/wk_rt[kafix]^2)*aa0*n*1./((wk_rt[kafix]*ka_rt[kafix])^2-vao^2*ka_rt[kafix]^2)*aa^2*1./gamma(n+1)*(sqrt(sigi*moa2[kafix]/aa^2)*0.5)^n*(displac)^(n-1))*sin(wk_rt[kafix]*ka_rt[kafix]*tarr[k]/aa)*cos(n*th_ll)*cos(ka_rt[kafix]*gridz[j]/aa) else bt_t[i,l,j,k] = 0.
                         endif else begin
-                            bt_t[i,l,j] = amp*bo/wk_rt[kafix]*(-(vao^2+co^2-vao^2*co^2/wk_rt[kafix]^2)*aa0*n*beselj(sqrt(sigi*mor2),n,/double)/((wk_rt[kafix]*ka_rt[kafix])^2-vao^2*ka_rt[kafix]^2)/abs(displac)*aa^2)*sin(wk_rt[kafix]*ka_rt[kafix]*tarr[k]/aa)*sin(n*th_ll)*cos(ka_rt[kafix]*gridz[j]/aa)
+                            bt_t[i,l,j,k] = amp*bo/wk_rt[kafix]*(-(vao^2+co^2-vao^2*co^2/wk_rt[kafix]^2)*aa0*n*beselj(sqrt(sigi*mor2),n,/double)/((wk_rt[kafix]*ka_rt[kafix])^2-vao^2*ka_rt[kafix]^2)/abs(displac)*aa^2)*sin(wk_rt[kafix]*ka_rt[kafix]*tarr[k]/aa)*sin(n*th_ll)*cos(ka_rt[kafix]*gridz[j]/aa)
                         endelse
-                        bz_t[i,l,j] = amp*bo/wk_rt[kafix]/ka_rt[kafix]*aa*(1.-co^2/wk_rt[kafix]^2)*aa0*beselj(sqrt(sigi*mor2),n,/double)*sin(wk_rt[kafix]*ka_rt[kafix]*tarr[k]/aa)*cos(n*th_ll)*sin(ka_rt[kafix]*gridz[j]/aa)
-                        btot_t[i,l,j] = sqrt(br_t[i,l,j]^2+bt_t[i,l,j]^2+bz_t[i,l,j]^2+2*bo*bz_t[i,l,j]+bo^2)
+                        bz_t[i,l,j,k] = amp*bo/wk_rt[kafix]/ka_rt[kafix]*aa*(1.-co^2/wk_rt[kafix]^2)*aa0*beselj(sqrt(sigi*mor2),n,/double)*sin(wk_rt[kafix]*ka_rt[kafix]*tarr[k]/aa)*cos(n*th_ll)*sin(ka_rt[kafix]*gridz[j]/aa)
+                        btot_t[i,l,j,k] = sqrt(br_t[i,l,j,k]^2+bt_t[i,l,j,k]^2+bz_t[i,l,j,k]^2+2*bo*bz_t[i,l,j,k]+bo^2)
                     endif
                 endif else begin
                     r_i = displac
@@ -211,34 +227,52 @@ for k=0,dimt-1 do begin
                     mera2 = mea2[kafix]*(daa/aa)^2
                     aa1 = aa0*beselj(sqrt(sigi*mora2),n,/double)/beselk(sqrt(sigk*mera2),n,/double)*(co^2+vao^2)*(wk_rt[kafix]^2-ct^2)/((ce^2+vae^2)*(wk_rt[kafix]^2-cte^2))*ro/re
                     mer2 = mea2[kafix]*(displac/aa)^2
-                    vr_t[i,l,j] = amp*((vae^2+ce^2)*(wk_rt[kafix]^2-cte^2)/(wk_rt[kafix]^2*(wk_rt[kafix]^2-vae^2))*aa1*sqrt(sigk*mea2[kafix]/aa^2)*dbeselk(sqrt(sigk*mer2),n)*(aa/ka_rt[kafix])^2)*cos(wk_rt[kafix]*ka_rt[kafix]*tarr[k]/aa)*cos(n*displact)*sin(ka_rt[kafix]*gridz[j]/aa)
-                    vt_t[i,l,j] = amp*(-(vae^2+ce^2-vae^2*ce^2/wk_rt[kafix]^2)*aa1*n*beselk(sqrt(sigk*mer2),n,/double)/((wk_rt[kafix]*ka_rt[kafix])^2-vae^2*ka_rt[kafix]^2)/abs(displac)*aa^2)*cos(wk_rt[kafix]*ka_rt[kafix]*tarr[k]/aa)*sin(n*displact)*sin(ka_rt[kafix]*gridz[j]/aa)
-                    vz_t[i,l,j] = amp*(1./wk_rt[kafix]^2/ka_rt[kafix]*aa*ce^2*aa1*beselk(sqrt(sigk*mer2),n,/double))*cos(wk_rt[kafix]*ka_rt[kafix]*tarr[k]/aa)*cos(n*displact)*cos(ka_rt[kafix]*gridz[j]/aa)
-                    rr_t[i,l,j] = amp*(re/wk_rt[kafix]/ka_rt[kafix]*aa*aa1*beselk(sqrt(sigk*mer2),n,/double))*sin(wk_rt[kafix]*ka_rt[kafix]*tarr[k]/aa)*cos(n*displact)*sin(ka_rt[kafix]*gridz[j]/aa)
-                    rtot_t[i,l,j] = rr_t[i,l,j]+re
+                    vr_t[i,l,j,k] = amp*((vae^2+ce^2)*(wk_rt[kafix]^2-cte^2)/(wk_rt[kafix]^2*(wk_rt[kafix]^2-vae^2))*aa1*sqrt(sigk*mea2[kafix]/aa^2)*dbeselk(sqrt(sigk*mer2),n)*(aa/ka_rt[kafix])^2)*cos(wk_rt[kafix]*ka_rt[kafix]*tarr[k]/aa)*cos(n*displact)*sin(ka_rt[kafix]*gridz[j]/aa)
+                    vt_t[i,l,j,k] = amp*(-(vae^2+ce^2-vae^2*ce^2/wk_rt[kafix]^2)*aa1*n*beselk(sqrt(sigk*mer2),n,/double)/((wk_rt[kafix]*ka_rt[kafix])^2-vae^2*ka_rt[kafix]^2)/abs(displac)*aa^2)*cos(wk_rt[kafix]*ka_rt[kafix]*tarr[k]/aa)*sin(n*displact)*sin(ka_rt[kafix]*gridz[j]/aa)
+                    vz_t[i,l,j,k] = amp*(1./wk_rt[kafix]^2/ka_rt[kafix]*aa*ce^2*aa1*beselk(sqrt(sigk*mer2),n,/double))*cos(wk_rt[kafix]*ka_rt[kafix]*tarr[k]/aa)*cos(n*displact)*cos(ka_rt[kafix]*gridz[j]/aa)
+                    rr_t[i,l,j,k] = amp*(re/wk_rt[kafix]/ka_rt[kafix]*aa*aa1*beselk(sqrt(sigk*mer2),n,/double))*sin(wk_rt[kafix]*ka_rt[kafix]*tarr[k]/aa)*cos(n*displact)*sin(ka_rt[kafix]*gridz[j]/aa)
+                    rtot_t[i,l,j,k] = rr_t[i,l,j,k]+re
                     ptot_t = amp*(ce^2*re/wk_rt[kafix]/ka_rt[kafix]*aa*aa1*beselk(sqrt(sigk*mer2),n,/double))*sin(wk_rt[kafix]*ka_rt[kafix]*tarr[k]/aa)*cos(n*displact)*sin(ka_rt[kafix]*gridz[j]/aa)+pe
-                    te_t[i,l,j] = ptot_t/rtot_t[i,l,j]
+                    te_t[i,l,j,k] = ptot_t/rtot_t[i,l,j,k]
                     if keyword_set(mag) then begin
-                        br_t[i,l,j] = amp*be/wk_rt[kafix]*((vae^2+ce^2)*(wk_rt[kafix]^2-cte^2)/(wk_rt[kafix]^2*(wk_rt[kafix]^2-vae^2))*aa1*sqrt(sigk*mea2[kafix]/aa^2)*dbeselk(sqrt(sigk*mer2),n)*(aa/ka_rt[kafix])^2)*sin(wk_rt[kafix]*ka_rt[kafix]*tarr[k]/aa)*cos(n*displact)*cos(ka_rt[kafix]*gridz[j]/aa)
-                        bt_t[i,l,j] = amp*be/wk_rt[kafix]*(-(vae^2+ce^2-vae^2*ce^2/wk_rt[kafix]^2)*aa1*n*beselk(sqrt(sigk*mer2),n,/double)/((wk_rt[kafix]*ka_rt[kafix])^2-vae^2*ka_rt[kafix]^2)/abs(displac)*aa^2)*sin(wk_rt[kafix]*ka_rt[kafix]*tarr[k]/aa)*sin(n*displact)*cos(ka_rt[kafix]*gridz[j]/aa)
-                        bz_t[i,l,j] = amp*(be/wk_rt[kafix]/ka_rt[kafix]*aa*(1.-ce^2/wk_rt[kafix]^2)*aa1*beselk(sqrt(sigk*mer2),n,/double))*sin(wk_rt[kafix]*ka_rt[kafix]*tarr[k]/aa)*cos(n*displact)*sin(ka_rt[kafix]*gridz[j]/aa)
-                        btot_t[i,l,j] = sqrt(br_t[i,l,j]^2+bt_t[i,l,j]^2+bz_t[i,l,j]^2+2*be*bz_t[i,l,j]+be^2)
+                        br_t[i,l,j,k] = amp*be/wk_rt[kafix]*((vae^2+ce^2)*(wk_rt[kafix]^2-cte^2)/(wk_rt[kafix]^2*(wk_rt[kafix]^2-vae^2))*aa1*sqrt(sigk*mea2[kafix]/aa^2)*dbeselk(sqrt(sigk*mer2),n)*(aa/ka_rt[kafix])^2)*sin(wk_rt[kafix]*ka_rt[kafix]*tarr[k]/aa)*cos(n*displact)*cos(ka_rt[kafix]*gridz[j]/aa)
+                        bt_t[i,l,j,k] = amp*be/wk_rt[kafix]*(-(vae^2+ce^2-vae^2*ce^2/wk_rt[kafix]^2)*aa1*n*beselk(sqrt(sigk*mer2),n,/double)/((wk_rt[kafix]*ka_rt[kafix])^2-vae^2*ka_rt[kafix]^2)/abs(displac)*aa^2)*sin(wk_rt[kafix]*ka_rt[kafix]*tarr[k]/aa)*sin(n*displact)*cos(ka_rt[kafix]*gridz[j]/aa)
+                        bz_t[i,l,j,k] = amp*(be/wk_rt[kafix]/ka_rt[kafix]*aa*(1.-ce^2/wk_rt[kafix]^2)*aa1*beselk(sqrt(sigk*mer2),n,/double))*sin(wk_rt[kafix]*ka_rt[kafix]*tarr[k]/aa)*cos(n*displact)*sin(ka_rt[kafix]*gridz[j]/aa)
+                        btot_t[i,l,j,k] = sqrt(br_t[i,l,j,k]^2+bt_t[i,l,j,k]^2+bz_t[i,l,j,k]^2+2*be*bz_t[i,l,j,k]+be^2)
                     endif
                 endelse
             endfor
-        endfor      
+        endfor  
+        print, 'step '+string(j)+' of time '+string(k)   
       endfor 
-      if keyword_set(save) then begin
-          save,vr_t,vt_t,vz_t,rr_t,rtot_t,te_t,br_t,bt_t,bz_t,filename='variables'+modnm+'_'+st+'.sav'
-      endif else begin
+      if n ne 0 then print,string(13b)+' % finished: ',float(k)*100./(dimt-1),format='(a,f4.0,$)'
+      if n eq 0 then begin
+        vr_t = reform(vr_t[*,*,*,k])
+        vt_t = reform(vt_t[*,*,*,k])
+        vz_t = reform(vz_t[*,*,*,k])
+        rr_t = reform(rr_t[*,*,*,k])
+        rtot_t = reform(rtot_t[*,*,*,k])
+;        ptot_t = reform(ptot_t[*,*,*,k])
+        te_t = reform(te_t[*,*,*,k])
+        if keyword_set(mag) then begin
+          br_t = reform(br_t[*,*,*,k])
+          bt_t = reform(bt_t[*,*,*,k])
+          bz_t = reform(bz_t[*,*,*,k])
+          btot_t = reform(btot_t[*,*,*,k])
+          endif
+        if keyword_set(save) then begin
+          save,vr_t,vt_t,vz_t,rr_t,rtot_t,te_t,br_t,bt_t,bz_t,filename='variables'+modnm+st+'.sav'
+          endif         
+        endif    
+  endfor
+ if keyword_set(save) then begin
+      save,vr_t,vt_t,vz_t,rr_t,rtot_t,te_t,br_t,bt_t,bz_t,filename='variables'+modnm+'.sav'
+  endif else begin
           print,'end of time step. Warning: SAVE keyword not set.'
           stop
-      endelse
-      if n ne 0 then print,string(13b)+' % finished: ',float(k)*100./(dimt-1),format='(a,f4.0,$)'
-  endfor
-
+ endelse
   if keyword_set(save) then begin
-      save,nmode,wk_rt,ka_rt,gridx,gridy,gridz,gridr,theta,dimt,dimz,diml,tarr,filename='params'+modnm+'.sav'
+      save,ro,re,va,vae,co, ce, bo, be, aa,nmode,wk_rt,ka_rt,kafix,gridx,gridy,gridz,gridr,theta,dimr,dimt,dimz,diml,tarr,nmode,filename='params'+modnm+'.sav'
   endif
 
 end

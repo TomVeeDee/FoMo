@@ -1,10 +1,14 @@
 
 PRO tubemodes_branch, ro=ro, re=re, vao=vao, vae=vae, co=co, ce=ce, bo=bo, be=be, waka_ini_f=waka_ini_f, waka_root=waka_root, ka_root=ka_root, nmode = nmode, normcase = normcase
 
-if ~keyword_set(ro) then begin
-   print,'tubemodes_branch, ro=ro, re=re, vao=vao, vae=vae, co=co, ce=ce, bo=bo, be=be, waka_ini_f=waka_ini_f, waka_root=waka_root, ka_root=ka_root, nmode = nmode, normcase = normcase'
-   return
-endif
+; ------------------------------------------------------------------
+; Is this a clause so you have to set the inner density first?  (SG)
+
+;if ~keyword_set(ro) then begin
+;   print,'tubemodes_branch, ro=ro, re=re, vao=vao, vae=vae, co=co, ce=ce, bo=bo, be=be, waka_ini_f=waka_ini_f, waka_root=waka_root, ka_root=ka_root, nmode = nmode, normcase = normcase'
+;   return
+;endif
+;-------------------------------------------------------------------
 
 ; Solves dispersion relation based on parameters ro, re, va, vae, co,
 ; ce, waka_ini_f.

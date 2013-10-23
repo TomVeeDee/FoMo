@@ -1,10 +1,16 @@
 
 pro init,ro=ro,re=re,vao=vao,vae=vae,co=co,ce=ce,bo=bo,be=be,waka_ini_f=waka_ini_f,waka_ini_ar=waka_ini_ar,nmode=nmode
 
-if ~keyword_set(ro) then begin
-    print,'init,ro=ro,re=re,vao=vao,vae=vae,co=co,ce=ce,bo=bo,be=be,waka_ini_f=waka_ini_f,waka_ini_ar=waka_ini_ar,nmode=nmode'
-    return
-endif
+
+; ------------------------------------------------------------------
+; Is this a clause so you have to set the inner density first?  (SG)
+
+;if ~keyword_set(ro) then begin    ; if this keyword is not set  (i.e., it is not present or zero)
+;    print,'init,ro=ro,re=re,vao=vao,vae=vae,co=co,ce=ce,bo=bo,be=be,waka_ini_f=waka_ini_f,waka_ini_ar=waka_ini_ar,nmode=nmode'
+;    return
+;endif
+
+;--------------------------------------------------------------------
 
 ; INPUT:
 
@@ -48,7 +54,6 @@ endif
    ne_in_cgs = 3.e9
    te_out = 3.e6
    te_in = 1.e6
-   beta = 1./50
    
    ne_out = ne_out_cgs * 1.e6
    ne_in = ne_in_cgs * 1.e6
@@ -58,10 +63,12 @@ endif
 ; (Uniform magnetic field)
    Bx_out = 0.
    Bz_out = 0.
-   By_out = sqrt(ne_out*te_out*kboltz/beta*mup*2)
+   By_out = 0.003
    Bx_in = 0.
    Bz_in = 0.
-   By_in = sqrt(ne_in*te_in*kboltz/beta*mup*2)
+   By_in = By_out
+   
+   beta = 2*ne_in*te_in*kboltz*mup/(Bx_out^2+By_out^2+Bz_out^2)
    
    ro = rho_in*norm^2
    re = rho_out*norm^2
@@ -140,14 +147,17 @@ endif
    if reg4[0] ne -1 then L[reg4] = wa[reg4]^2*(re*sqrt(sigi[reg4]*moa2[reg4])*dbslij[reg4]*bslky[reg4]-ro*sqrt(sigk[reg4]*mea2[reg4])*dbslky[reg4]*bslij[reg4])-$
     ka^2*(re*vae^2*sqrt(sigi[reg4]*moa2[reg4])*dbslij[reg4]*bslky[reg4]-ro*vao^2*sqrt(sigk[reg4]*mea2[reg4])*dbslky[reg4]*bslij[reg4])
 
+bound = 5e-3
+
    window,0
 ;plot,wa/ka,L/max(sqrt(abs(dnummoa2*dnummea2))),/xs,/ys,psym=3;,xr=[2,5],yr=[-1,1]
 ;locs = where(abs(L/max(sqrt(abs(dnummoa2*dnummea2)))) lt 1.e-5)
 
-   plot,wa/ka,L,/xs,/ys,psym=3,yr=[-2,10]  ;,yr=[-0.01,0.01]
-   locs = where(abs(L) lt 2.e-3)
+   plot,wa/ka,L,/xs,/ys,psym=3,yr=[-0.1,0.1]  ;,yr=[-0.01,0.01]
+   locs = where(abs(L) lt bound)
    if locs[0] ne -1 then begin
-      waka_ini_f = max(wa[locs]/ka[locs])
+      ;waka_ini_f = max(wa[locs]/ka[locs])             ; Two possibilities for setting an initial guess
+      waka_ini_f = wa(where(L eq min(abs(L))))/ka     ; Normally each one selects a different branch to compute roots
       waka_ini_0 = round(wa[locs]/ka[locs]*1.e5)/1.e5
       wrlocs = where(waka_ini_0[uniq(waka_ini_0)] gt vao*1.01)
       waka_ini_ar = waka_ini_0[(uniq(waka_ini_0))[wrlocs]]

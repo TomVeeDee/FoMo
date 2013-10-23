@@ -170,7 +170,9 @@ int main(int argc, char* argv[])
 		if (commrank==0)
 		{
 			// write out observ cube
-			writeemissioncube(observ,"fomo-c.observ");
+			stringstream ss;
+			ss << "fomo-c" << ".l" << l << ".b" << b << ".observ";
+			writeemissioncube(observ,ss.str());
 		// allocate image
 			double **image;
 			image = (double **)malloc(y_pixel*sizeof(double *));
@@ -211,7 +213,9 @@ int main(int argc, char* argv[])
 #endif
 	}
 	} // ofstream s destroyed
-#ifdef HAVEMPEG
+#ifdef HAVEMPEGstringstream ss;
+	ss << "outputfile.t" << seqnum << ".l" << l << ".b" << b << ".png";
+	string graphic_out=ss.str();
 	if (commrank==0)
 	{
 		// write movie

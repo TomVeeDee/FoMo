@@ -7,14 +7,14 @@ pro main
 ; nmode = 0 for sausage mode
 ; nmode = 1 for kink mode
 
-nmode = 1
+nmode = 0
 
 ;define numerical model and calculate an initial guess to solutions
 ;of the dispersion relation at ka = 4 (where a is the radius of the
 ;cylinder and k is the wavenumber).
 
 ;---- 
-       init,ro=ro,re=re,vao=vao,vae=vae,co=co,ce=ce,bo=bo,be=be,waka_ini=waka_ini,waka_ini_ar=waka_ini_ar,nmode=nmode
+init,ro=ro,re=re,vao=vao,vae=vae,co=co,ce=ce,bo=bo,be=be,waka_ini_f=waka_ini_f,waka_ini_ar=waka_ini_ar,nmode=nmode
 
        ;take values from numerical model of Gruszecki et al.:
 
@@ -34,7 +34,7 @@ nmode = 1
        ; approximations to different branches). By default, waka_ini
        ; is set to the fundamental mode
 
-       tubemodes_branch, ro=ro, re=re, vao=vao, vae=vae, co=co, ce=ce, bo=bo, be=be, waka_ini_f=waka_ini_f, waka_root=waka_root, ka_root=ka_root, nmode = nmode
+tubemodes_branch, ro=ro, re=re, vao=vao, vae=vae, co=co, ce=ce, bo=bo, be=be, waka_ini_f=waka_ini_f, waka_root=waka_root, ka_root=ka_root, nmode = nmode
 
 
 ;----
@@ -42,8 +42,8 @@ nmode = 1
 ; set dimensions of your model
 
 dimx = 204 ; x-axis
-dimy = 204 ; y-axis
-dimt = 30 ; time steps
+dimy = 102 ; y-axis
+dimt = 2 ; time steps
 
 ; Calculate the initial setup of the modulation of the MHD mode
 ; on thermodynamic and geometrical quantities (vr, vt, vz, pr, rr,...) 
@@ -57,8 +57,8 @@ vel_modes, waka_root=waka_root, ka_root=ka_root, dimx=dimx, reg0=reg0, reg1=reg1
 ; Roberts 1983.
 ; Specify first the wavenumber. See routine for more details
 
-ka_0 = !pi/200. ; 200 Mm length loop
-modelname = 'choose_model_name'
+ka_0 = !pi/85. ; 85 Mm length loop, this specifies also the wave number by standing modes.
+modelname = 'sausage_oscillation_ne_1e9_0.012beta'
 
 velmod_wt,waka_root=waka_root,ka_root=ka_root,gridx=gridx,gridr=gridr,dimt=dimt,dimz=dimz,reg3=reg3,vr_md=vr_md,ka_0=ka_0,aa=aa,wk_rt=wk_rt,ka_rt=ka_rt,kafix=kafix,theta=theta,tarr=tarr,gridz=gridz,mag=mag,nmode=nmode,/save,modelname=modelname
 
@@ -78,11 +78,16 @@ velmod_wt,waka_root=waka_root,ka_root=ka_root,gridx=gridx,gridr=gridr,dimt=dimt,
 ; define whether to work with all variables (='all') or with single
 ; variables (='vr', 'vz', 'rh', or 'te')
 sngcub = 'all'
+model = 'base'
+
+restore, '/users/cpa/sgijsen/fomo/version_161013_idl_and_c/examples/data/params_'+modelname+'.sav'
+restore, '/users/cpa/sgijsen/fomo/version_161013_idl_and_c/examples/data/variables_'+modelname+'.sav'
 
 ; Produce 2D or 3D cubes (dimx,(dimy),dimz) of thermodynamic quantities for each
 ; time step by rotating around the axis of the cylinder in case of
 ; sausage mode, or just interpolating for kink mode
-datacubes_wt, rho_int=ro, rho_ext=re, valfv_int=va, valv_ext=vae, cs_int=co, cs_ext=ce, b_int=bo, b_ext=be, radius = aa, gridx=gridx, gridz=gridz, gridr=gridr, dimt=dimt, diml=diml, tarr=tarr, ka_rt=ka_rt, kafix=kafix, wk_rt=wk_rt, vr_t=vr_t, vt_t=vt_t, vz_t=vz_t, rtot_t=rtot_t, te_t=te_t, br_t=br_t, bt_t=bt_t, bz_t=bz_t, model=model, vr_cube, vt_cube, vz_cube, te_cube, rh_cube, br_cube, bt_cube, bz_cube, sngcub=sngcub, mag=mag, nmode=nmode,/save_cubes
+datacubes_wt, rho_int=ro, rho_ext=re, valfv_int=va, valv_ext=vae, cs_int=co, cs_ext=ce, b_int=bo, b_ext=be, radius = aa, gridx=gridx, gridz=gridz, gridr=gridr, dimt=dimt, diml=diml, tarr=tarr, ka_rt=ka_rt, kafix=kafix, wk_rt=wk_rt, vr_t=vr_t, vt_t=vt_t, vz_t=vz_t, rtot_t=rtot_t, te_t=te_t, br_t=br_t, bt_t=bt_t, bz_t=bz_t, btot_t=btot_t, model=model, $
+   vr_cube = vr_cube, vt_cube=vt_cube, vz_cube=vz_cube, te_cube=te_cube, rh_cube=rh_cube, br_cube=br_cube, bt_cube=bt_cube, bz_cube=bz_cube, sngcub=sngcub, mag=mag, nmode=nmode,/save_cubes
 
 ; for 3d datasets, divide in 2D (radial) slices:
 divcubes,dimt=dimt,dimx=dimx,dimy=dimy,model=model,sngcub=sngcub,nmode=nmode

@@ -1,5 +1,6 @@
 
-pro datacubes_wt, rho_int=ro, rho_ext=re, valfv_int=va, valv_ext=vae, cs_int=co, cs_ext=ce, b_int=bo, b_ext=be, radius = aa, gridx=gridx, gridz=gridz, gridr=gridr, dimt=dimt, diml=diml, tarr=tarr, ka_rt=ka_rt, kafix=kafix, wk_rt=wk_rt, vr_t=vr_t, vt_t=vt_t, vz_t=vz_t, rtot_t=rtot_t, te_t=te_t, br_t=br_t, bt_t=bt_t, bz_t=bz_t, btot_t=btot_t, model=model, sngcub=sngcub, mag=mag, save_cubes=save_cubes, nmode=nmode, smooth=smooth
+pro datacubes_wt, rho_int=ro, rho_ext=re, valfv_int=va, valv_ext=vae, cs_int=co, cs_ext=ce, b_int=bo, b_ext=be, radius = aa, gridx=gridx, gridz=gridz, gridr=gridr, dimt=dimt, diml=diml, tarr=tarr, ka_rt=ka_rt, kafix=kafix, wk_rt=wk_rt, vr_t=vr_t, vt_t=vt_t, vz_t=vz_t, rtot_t=rtot_t, te_t=te_t, br_t=br_t, bt_t=bt_t, bz_t=bz_t, btot_t=btot_t, model=model, $ 
+  vr_cube = vr_cube, vt_cube=vt_cube, vx_cube=vx_cube, vy_cube=vy_cube, vz_cube=vz_cube, te_cube=te_cube, rh_cube=rh_cube, br_cube=br_cube, bt_cube=bt_cube, bz_cube=bz_cube, sngcub=sngcub, mag=mag, save_cubes=save_cubes, nmode=nmode, smooth=smooth
 
 if (~keyword_set(ro)) then begin
    print,'Check output directories first'
@@ -47,6 +48,11 @@ endif
 ; if keyword 'save' is set then saves the cubes at each time step
 ; together with a parameter list file
 
+proton = 1.67262158*10^(-27.)     ; Reconverting density to absolute (no normalisation) particle/cm^3 for usage in fomo-c functions
+norm = 1.e5
+cgsfactor = 1.e6
+factor = norm^2*proton*cgsfactor
+
 if keyword_set(smooth) then sm = 1 else sm = 0 
 if keyword_set(save_cubes) then sav = 1 else sav = 0
 if keyword_set(sngcub) eq 0 then sngcub = 'all'
@@ -61,7 +67,7 @@ dimr = n_elements(gridr)
 r0 = gridx[dimx-1]/2.
 
 ; OUTPUT DIRECTORY:
-cubedir='../cubes/set2/'
+; cubedir='../cubes/set2/'
 
 if model eq 'base' then  kanm = 'ka2.24'
 if model eq 'long' then  kanm = 'ka1.25'
@@ -70,7 +76,11 @@ if model eq 'high_res2d' then  kanm = 'ka2.24_hgres2d'
 if model eq 'highT' then kanm = 'ka2.24highT'
 if model eq 'kink' then kanm = 'kk_ka0.03'
 
-if model eq 'ka2.24_hgres2d' then begin
+
+; --------------------------------------------------------------------------------
+; --------------------------------------------------------------------------------
+
+if model eq 'ka2.24_hgres2d' then begin   ; Only for high-resolution model
    vr_cube=fltarr(dimx,dimz)
    vz_cube=fltarr(dimx,dimz)
    te_cube=fltarr(dimx,dimz)
@@ -118,12 +128,18 @@ if model eq 'ka2.24_hgres2d' then begin
       print,string(13b)+' % finished: ',float(j)*100./(dimt-1),format='(a,f4.0,$)'
    endfor
    if sav eq 1 then save, ro, re, va, vae, co, ce, bo, be, aa, r0, gridx, gridz, dimx, dimz, dimt, tarr, kafix, ka_rt, wk_rt,filename=cubedir+'params_'+kanm+'.sav'
+   
+   ; --------------------------------------------------------------------------------
+   ; --------------------------------------------------------------------------------
+                                                 ;This always when not high-resolution
 endif else begin
    gridy = gridx
    dimy = dimx
    print,'doing '+sngcub+' cube'
    if sngcub eq 'all' or sngcub eq 'vr' then vr_cube=fltarr(dimx,dimy,dimz)
    if sngcub eq 'all' or sngcub eq 'vt' then vt_cube=fltarr(dimx,dimy,dimz)
+   if sngcub eq 'all' or sngcub eq 'vx' then vx_cube=fltarr(dimx,dimy,dimz)
+   if sngcub eq 'all' or sngcub eq 'vy' then vy_cube=fltarr(dimx,dimy,dimz)
    if sngcub eq 'all' or sngcub eq 'vz' then vz_cube=fltarr(dimx,dimy,dimz)
    if sngcub eq 'all' or sngcub eq 'te' then te_cube=fltarr(dimx,dimy,dimz)
    if sngcub eq 'all' or sngcub eq 'rh' then rh_cube=fltarr(dimx,dimy,dimz)
@@ -134,7 +150,11 @@ endif else begin
 
    print,'1st step check'
 ; (frequency, x, y, z, time)
-   if mode eq 'sausage' then begin
+
+; --------------------------------------------------------------------------------
+; --------------------------------------------------------------------------------
+
+   if mode eq 'sausage' then begin            ; Only for sausage mode
 
       dist_cube=fltarr(dimx,dimy,dimz)
       distance = fltarr(dimx,dimy)
@@ -230,14 +250,24 @@ endif else begin
             endfor
          endif
          if sav eq 1 then begin
-            if keyword_set(mag) then save,vr_cube,vz_cube,te_cube,rh_cube,br_cube,bz_cube,btot_cube,filename=cubedir+'cubes_'+sngcub+'_'+kanm+'_'+string(j,format="(i3.3)")+'.sav' else save,vr_cube,vz_cube,te_cube,rh_cube,filename=cubedir+'cubes_'+sngcub+'_'+kanm+'_'+string(j,format="(i3.3)")+'.sav'
+            if keyword_set(mag) then save,vr_cube,vz_cube,te_cube,rh_cube,br_cube,bz_cube,btot_cube,filename='cubes_B_sausage_'+sngcub+'_'+kanm+'_'+string(j,format="(i3.3)")+'.sav' else save,vr_cube,vz_cube,te_cube,rh_cube,filename='cubes_sausage_'+sngcub+'_'+kanm+'_'+string(j,format="(i3.3)")+'.sav'
          endif
          print,string(13b)+' % finished: ',float(j)*100./(dimt-1),format='(a,f4.0,$)'
       endfor
       if sav eq 1 then save, ro, re, va, vae, co, ce, bo, be, aa, r0, gridx, gridy, gridz, dimx, dimy, dimz, dimt, tarr, kafix, ka_rt, wk_rt,filename=cubedir+'params_'+kanm+'.sav'
    endif
-   if mode eq 'kink' then begin
+   
+   ; --------------------------------------------------------------------------------
+   ; --------------------------------------------------------------------------------
+   
+   if mode eq 'kink' then begin      ; Only for kink mode --> output is saved in .sav-file as well as .dat-file (for usage in fomo-c)
       for k=0,dimt-1 do begin
+      filename = '/users/cpa/sgijsen/fomo/version_161013_idl_and_c/examples/data/data_cubes_for_cpp/data_cube_kink'+string(k,format="(i3.3)")+'.dat'
+      OPENW, lun, filename, /GET_LUN           
+      printf, lun, 3
+      printf, lun, 8812+k
+      printf, lun, dimx*dimy*dimz
+      printf, lun, 5         
          for i=0,dimx-1 do begin
             for j=0,dimy-1 do begin
                for l=0,dimz-1 do begin
@@ -251,9 +281,11 @@ endif else begin
                   if (gridx[i]-r0) gt 0. and (gridy[j]-r0) lt 0. then th = th0
 ;                  lr = (r+r0)*(dimr-1)/(gridr[-1]+r0)
                   lr = r*(dimr-1)/gridr[-1]
-                  lth = th*diml/(2*!pi)
+                  lth = th*dimx/2/(2*!pi)
                   vr_cube[i,j,l] = interpolate(reform(vr_t[*,*,l,k]),lr,lth)
                   vt_cube[i,j,l] = interpolate(reform(vt_t[*,*,l,k]),lr,lth)
+                  vx_cube[i,j,l] = vr_cube[i,j,l]*cos(th)-r*vt_cube[i,j,l]*sin(th)  ;also calculate x- and y-components of velocity
+                  vy_cube[i,j,l] = vr_cube[i,j,l]*sin(th)+r*vt_cube[i,j,l]*cos(th)
                   vz_cube[i,j,l] = interpolate(reform(vz_t[*,*,l,k]),lr,lth)
                   rh_cube[i,j,l] = interpolate(reform(rtot_t[*,*,l,k]),lr,lth)
                   te_cube[i,j,l] = interpolate(reform(te_t[*,*,l,k]),lr,lth)
@@ -263,15 +295,19 @@ endif else begin
                      bz_cube[i,j,l] = interpolate(reform(bz_t[*,*,l,k]),r,lth)
                      btot_cube[i,j,l] = interpolate(reform(btot_t[*,*,l,k]),r,lth)
                   endif
+                  printf, lun, gridx[i], gridy[j], gridz[l], rh_cube[i,j,l]/factor, te_cube[i,j,l]*norm, vr_cube[i,j,l], vt_cube[i,j,l], vz_cube[i,j,l]          
                endfor
             endfor
+            if i MOD 10 eq 0 then print, 'step '+string(i)+' of time '+string(k)
          endfor
          if sav eq 1 then begin
-            if keyword_set(mag) then save,vr_cube,vt_cube,vz_cube,te_cube,rh_cube,br_cube,bt_cube,bz_cube,btot_cube,filename=cubedir+'cubes_'+kanm+'_'+string(k,format="(i3.3)")+'.sav' else save,vr_cube,vt_cube,vz_cube,te_cube,rh_cube,filename=cubedir+'cubes_'+kanm+'_'+string(k,format="(i3.3)")+'.sav'
+            if keyword_set(mag) then save,vr_cube,vt_cube,vz_cube,te_cube,rh_cube,br_cube,bt_cube,bz_cube,btot_cube,filename='cubes_B_kink_'+kanm+'_'+string(k,format="(i3.3)")+'.sav' else save,vr_cube,vt_cube,vz_cube,te_cube,rh_cube,filename='cubes_kink_'+kanm+'_'+string(k,format="(i3.3)")+'.sav'
          endif
+         CLOSE, lun
+         FREE_LUN, lun
          print,string(13b)+' % finished: ',float(k)*100./(dimt-1),format='(a,f4.0,$)'
       endfor
-      if sav eq 1 then save, ro, re, va, vae, co, ce, bo, be, aa, r0, gridx, gridy, gridz, dimx, dimy, dimz, dimt, tarr, kafix, ka_rt, wk_rt,filename=cubedir+'params_'+kanm+'.sav'
+      if sav eq 1 then save, ro, re, va, vae, co, ce, bo, be, aa, r0, gridx, gridy, gridz, dimx, dimy, dimz, dimt, tarr, kafix, ka_rt, wk_rt,filename='params_'+kanm+'.sav'
    endif
 endelse
 

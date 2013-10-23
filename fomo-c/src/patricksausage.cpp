@@ -10,7 +10,7 @@
 
 int main(int argc, char* argv[])
 {
-// Initialize global paramters, get arguments and set physical parameters
+// Initialize global paramters, get arguments and set physical parametersugt
 	int commrank,commsize;
 	commrank = 0;
 	commsize = 1;
@@ -28,7 +28,7 @@ int main(int argc, char* argv[])
 	results = (double *)malloc(maxsize*sizeof(double));
 
 	// Let's first get the code working for a single frame. Later on, we can still change to more frames, although that 
-	const int nframes=30;
+	const int nframes=2;
 	double pi=4*atan(1.);
 	vector<double> angles={pi/2.,pi/3.,pi/4.,pi/6.};
 	int nangles=angles.size();
@@ -42,7 +42,7 @@ int main(int argc, char* argv[])
 	{
 		cout << endl << "Doing timestep " << t << endl << flush;
 		//ss << "patrickfiles/datcubes_ka2.24_";
-		ss << "/volume1/scratch/tomvd/patrickdata/datcubes_ka2.24_";
+		ss << "/users/cpa/sgijsen/fomo/version_161013_idl_and_c/examples/data/data_cubes_for_cpp/data_cube_kink";
 		ss << setfill('0') << setw(3) << t;
 		ss << ".dat";
 		string filename=ss.str();
@@ -55,9 +55,9 @@ int main(int argc, char* argv[])
 		if (reuse!=1) 
 		{
 			cube datacube(nvars,ng);
-			EqType qtype=patricksausage;
+			EqType qtype=stiefkink;
 			datacube.settype(qtype);
-			if (datacube.readtype() == patricksausage) 
+			if (datacube.readtype() == stiefkink) 
 			{
 				if (commrank == 0) cout << "Reading in snapshot " << filename << "... " << flush;
 				reademissioncube(datacube, filename, &DT);
@@ -110,7 +110,7 @@ int main(int argc, char* argv[])
 			fillccd(observ,results,0,x_pixel-1,0,y_pixel-1);
 			// write out observ cube
 			ss.str("");
-			ss << "/volume1/scratch/tomvd/patrickdata/fomo-c.observ.b";
+			ss << "/users/cpa/sgijsen/fomo/version_161013_idl_and_c/fomo-c/data_observ/stiefkink/fomo-c.observ.b";
 			ss << setfill('0') << setw(3) << int((angles[i]*180./pi)+.5);
 			ss << "t";
 			ss << setfill('0') << setw(3) << t;

@@ -248,4 +248,6 @@ if reg4[0] ne -1 then begin
    endfor
 endif
 
+print, size(vz_md)
+
 end
