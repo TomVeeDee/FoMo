@@ -87,8 +87,8 @@ velx = v1m
 vely = v2m
 ngridsx = n_elements(gridx)
 ngridsy = n_elements(gridy)
-dx = (gridx[-1]-gridx[0])/ngridsx
-dy = (gridy[-1]-gridy[0])/ngridsy
+dx = gridx[1]-gridx[0]
+dy = gridy[1]-gridy[0]
 
 if wayemi eq 5 then begin
    ; SDO AIA filters:
@@ -104,8 +104,8 @@ if wayemi eq 5 then begin
    imgfront = emission_goft*dimz
    for i=0,nang-1 do begin
       mua = mua_d[i]
-      if mua eq 0. then direction = 1
-      if mua eq 90. then direction = 2
+      if mua eq 0. then direction = 2
+      if mua eq 90. then direction = 1
       if mua ne 0. and mua ne 90. then direction = 4
       gridlos, gridx=gridx, gridy=gridy, mua_d=mua, velx=velx, vely=vely, dx=dx, dy=dy, n_gridx, n_gridy, ngrid, dl=dl, losvel
       losvel = -losvel/1.e2
@@ -140,8 +140,8 @@ endif else begin
 ; Sideview:
    for i=0,nang-1 do begin
       mua = mua_d[i]
-      if mua eq 0. then direction = 1
-      if mua eq 90. then direction = 2
+      if mua eq 0. then direction = 2
+      if mua eq 90. then direction = 1
       if mua ne 0. and mua ne 90. then direction = 4
       gridlos, gridx=gridx, gridy=gridy, mua_d=mua, velx=velx, vely=vely, dx=dx, dy=dy, n_gridx, n_gridy, ngrid, dl=dl, losvel
       losvel = -losvel/1.e2
