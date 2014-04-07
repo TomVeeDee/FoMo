@@ -1,0 +1,20 @@
+#IncludeRegexLine: ^[ 	]*#[ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/users/cpa/sgijsen/fomo/version_patrick_nov13/fomo-c/tools/interpolate_colour_eigenfunctions.cpp
+math.h
+-
+iostream
+-
+fstream
+-
+string
+-
+sstream
+-
+

@@ -1,0 +1,22 @@
+#IncludeRegexLine: ^[ 	]*#[ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/users/cpa/sgijsen/fomo/version_patrick_nov13/fomo-c/tools/writegrid.cpp
+stdio.h
+-
+math.h
+-
+iostream
+-
+fstream
+-
+string
+-
+sstream
+-
+
