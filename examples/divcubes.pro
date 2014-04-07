@@ -1,12 +1,11 @@
 
-
 pro divcubes,dimt=dimt,dimx=dimx,dimy=dimy,model=model,sngcub=sngcub,mag=mag,nmode=nmode
 
-if n_params(0) lt 1 then begin
-   print,'Check input and output directories first'
-   print,'divcubes,dimt=dimt,dimx=dimx,dimy=dimy,model=model,sngcube=sngcube,nmode=nmode,mag=mag'
-   return
-endif
+;if n_params(0) lt 1 then begin
+;   print,'Check input and output directories first'
+;   print,'divcubes,dimt=dimt,dimx=dimx,dimy=dimy,model=model,sngcube=sngcube,nmode=nmode,mag=mag'
+;   return
+;endif
 
 ; Divides cubes produced by datacubes_wt.pro into slices of cylinder
 ; for each x position (up to half the cylinder) and time step
@@ -35,15 +34,19 @@ endif
 
   if n eq 0 then mode = 'sausage'
   if n eq 1 then mode = 'kink'
+  
+  
+  dimt=3  ; Change to do all cubes
+  
 
 ; INPUT DIRECTORY:
-  cubedir='../cubes/set2/'
+  cubedir='/users/cpa/sgijsen/FoMo/examples_propagating/Run_t41_propsauP2L15/'
 ; OUTPUT DIRECTORY:
-  savedir='../cubes/set2/'
+  savedir='/users/cpa/sgijsen/FoMo/examples_propagating/Run_t41_propsauP2L15/'
 ;  dir = '/volume1/scratch/set3/'
 
   for i=0,dimt-1 do begin
-     restore,cubedir+'cubes_'+kanm+'_'+string(i,format='(i3.3)')+'.sav'
+     restore,cubedir+'cubes_sausage_all_'+kanm+'_'+string(i,format='(i3.3)')+'.sav'
      for j=0,dimx/2 do begin
         if sngcub eq 'all' or sngcub eq 'te' then te = te_cube[j,*,*]
         if sngcub eq 'all' or sngcub eq 'rh' then rho = rh_cube[j,*,*]
