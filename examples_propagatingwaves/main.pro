@@ -40,7 +40,7 @@ tubemodes_branch, ro=ro, re=re, vao=vao, vae=vae, co=co, ce=ce, bo=bo, be=be, wa
 
 dimx = 204 ; x-axis
 dimy = 102 ; y-axis
-dimt = 2 ; time steps
+dimt = 11 ; time steps
 
 ; Calculate the initial setup of the modulation of the MHD mode
 ; on thermodynamic and geometrical quantities (vr, vt, vz, pr, rr,...) 
@@ -55,14 +55,13 @@ vel_modes, waka_root=waka_root, ka_root=ka_root, dimx=dimx, reg0=reg0, reg1=reg1
 ; Specify driving frequency as omega/kz (in km/s divided by 100)  and loop length (in Mm) (running waves) or wave number (standing waves)
 
 wk_0 = 18.5
-;L = 100.  ; Specify length of box in z-direction (in Mm). If not set, default is four wavelengths.
-
+;L = 100.  ; Specify length of box in z-direction (in Mm). If not set, default is n wavelengths. (Determined in velmod_wt)
 
 ;ka_0 = !pi/85. ; 85 Mm length loop, this specifies also the wave number for standing modes.
 
 modelname = 'propagating_sausage_0.012beta'
 
-velmod_wt,waka_root=waka_root,ka_root=ka_root,gridx=gridx,gridr=gridr,dimt=dimt,dimz=dimz,reg3=reg3,vr_md=vr_md,wk_0=wk_0,L=L,aa=aa,wk_rt=wk_rt,ka_rt=ka_rt,kafix=kafix,theta=theta,tarr=tarr,gridz=gridz,mag=mag,nmode=nmode,/save,modelname=modelname
+velmod_wt,waka_root=waka_root,ka_root=ka_root,gridx=gridx,gridr=gridr,dimt=dimt,dimz=dimz,reg3=reg3,vr_md=vr_md,wk_0=wk_0,L=L,aa=aa,wk_rt=wk_rt,ka_rt=ka_rt,kafix=kafix,theta=theta,tarr=tarr,gridz=gridz,nmode=nmode,/save,modelname=modelname, /mag
 
 ; set model = string with name of treated model:
 ;      model = 'base' corresponds to ka = 2.24, 
@@ -82,15 +81,15 @@ velmod_wt,waka_root=waka_root,ka_root=ka_root,gridx=gridx,gridr=gridr,dimt=dimt,
 sngcub = 'all'
 model = 'base'
 
-restore, '/users/cpa/sgijsen/FoMo/examples_propagating/params_'+modelname+'.sav'
-restore, '/users/cpa/sgijsen/FoMo/examples_propagating/variables_'+modelname+'.sav'
+restore, '/users/cpa/sgijsen/fomo/version_stief_080414/examples_propagatingwaves/params_'+modelname+'.sav'
+restore, '/users/cpa/sgijsen/fomo/version_stief_080414/examples_propagatingwaves/variables_'+modelname+'.sav'
 
 ; Produce 2D or 3D cubes (dimx,(dimy),dimz) of thermodynamic quantities for each
 ; time step by rotating around the axis of the cylinder in case of
 ; sausage mode, or just interpolating for kink mode
 
 datacubes_wt, rho_int=ro, rho_ext=re, valfv_int=va, valv_ext=vae, cs_int=co, cs_ext=ce, b_int=bo, b_ext=be, radius = aa, gridx=gridx, gridz=gridz, gridr=gridr, dimt=dimt, diml=diml, tarr=tarr, ka_rt=ka_rt, kafix=kafix, wk_rt=wk_rt, vr_t=vr_t, vt_t=vt_t, vz_t=vz_t, rtot_t=rtot_t, te_t=te_t, br_t=br_t, bt_t=bt_t, bz_t=bz_t, btot_t=btot_t, model=model, $
-   vr_cube = vr_cube, vt_cube=vt_cube, vz_cube=vz_cube, te_cube=te_cube, rh_cube=rh_cube, br_cube=br_cube, bt_cube=bt_cube, bz_cube=bz_cube, sngcub=sngcub, mag=mag, nmode=nmode,/save_cubes
+   vr_cube = vr_cube, vt_cube=vt_cube, vz_cube=vz_cube, te_cube=te_cube, rh_cube=rh_cube, br_cube=br_cube, bt_cube=bt_cube, bz_cube=bz_cube, sngcub=sngcub, nmode=nmode,/save_cubes, /mag
 
 ; for 3d datasets, divide in 2D (radial) slices:
 divcubes,dimt=dimt,dimx=dimx,dimy=dimy,model=model,sngcub=sngcub,nmode=nmode

@@ -35,14 +35,11 @@ pro divcubes,dimt=dimt,dimx=dimx,dimy=dimy,model=model,sngcub=sngcub,mag=mag,nmo
   if n eq 0 then mode = 'sausage'
   if n eq 1 then mode = 'kink'
   
-  
-  dimt=3  ; Change to do all cubes
-  
 
 ; INPUT DIRECTORY:
-  cubedir='/users/cpa/sgijsen/FoMo/examples_propagating/Run_t41_propsauP2L15/'
+  cubedir='/users/cpa/sgijsen/fomo/version_stief_080414/examples_propagatingwaves/T41_P2_L15_A5/'
 ; OUTPUT DIRECTORY:
-  savedir='/users/cpa/sgijsen/FoMo/examples_propagating/Run_t41_propsauP2L15/'
+  savedir='/users/cpa/sgijsen/fomo/version_stief_080414/examples_propagatingwaves/T41_P2_L15_A5/'
 ;  dir = '/volume1/scratch/set3/'
 
   for i=0,dimt-1 do begin
