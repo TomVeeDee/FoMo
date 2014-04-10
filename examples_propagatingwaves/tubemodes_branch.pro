@@ -115,6 +115,6 @@ j = 0.
 endwhile
 ;endfor 
 
-plot,ka_root,waka_root,/xs,/ys,psym=3,yr=[vao-vao/5,vae+vae/5.]
+;plot,ka_root,waka_root,/xs,/ys,psym=3,yr=[vao-vao/5,vae+vae/5.]
 
 end

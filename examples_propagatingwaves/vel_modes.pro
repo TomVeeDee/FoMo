@@ -33,7 +33,8 @@ if keyword_set(nmode) then n = nmode else n = 0 ; default is sausage mode
 co = A1 & vao = A2 & ct = A3 & ro = A4 & bo = A5
 ce = B1 & vae = B2 & cte = B3 & re = B4 & be = B5
 
-gridx = findgen(dimx)/float(dimx-1)*40.
+aa = 10.
+gridx = findgen(dimx)/float(dimx-1)*aa*4.
 ;if n eq 0 then gridx = findgen(dimx)/float(dimx-1)*50. else gridx = findgen(dimx)/float(dimx-1)*100.
 r0 = gridx[n_elements(gridx)-1]/2.
 ;if n eq 0 then begin
@@ -51,7 +52,6 @@ gridr = findgen(dimr)/(dimr-1)*abs(r0-gridx[dimx-1])
 ;   gridr = gridx[dimx/2:dimx-1]-r0
 ;endelse
 
-aa = 10.
 polyind = 5./3.
 dim = n_elements(waka_root)
 bslij = fltarr(dim,dimr)

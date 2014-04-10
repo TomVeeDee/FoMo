@@ -2,21 +2,21 @@ pro visualeigfsav
 
 ; Specify time step in simulation, choice of plane and resolution of vector field relative to grid resolution
 
-t=4
+t=5
 planecte = 'x'           ; Choice between slices of the form x=x0 ('x'), y=y0 ('y') and z=z0 ('z') (Determine x0,y0,z0 below)
 coarsefactorvf = 4
-varnb = 7            ; 3=density, 4=temperature, 5=bx, 6=by, 7=bz, 8=br, 9=vr, 10=vy, 11=vz, 12=vr
+varnb = 8            ; 3=density, 4=temperature, 5=bx, 6=by, 7=bz, 8=br, 9=vr, 10=vy, 11=vz, 12=vr
 
-restore, '/users/cpa/sgijsen/fomo/version_stief_080414/examples_propagatingwaves/T41_P2_L15_A5/cubes_B_sausage_all_ka2.24_'+string(t,format="(i3.3)")+'.sav'
-restore, '/users/cpa/sgijsen/fomo/version_stief_080414/examples_propagatingwaves/T41_P2_L15_A5/variables_propagating_sausage_0.012beta.sav'
-restore, '/users/cpa/sgijsen/fomo/version_stief_080414/examples_propagatingwaves/T41_P2_L15_A5/params_ka2.24.sav'
+restore, '/users/cpa/sgijsen/FoMo/examples_propagatingwaves/cubes_B_sausage_all_ka2.24_'+string(t,format="(i3.3)")+'.sav'
+restore, '/users/cpa/sgijsen/FoMo/examples_propagatingwaves/variables_propagating_sausage_0.012beta.sav'
+restore, '/users/cpa/sgijsen/FoMo/examples_propagatingwaves/params_ka2.24.sav'
 
 ;--------------------------------------------------------------------------
 ;--------------------------------------------------------------------------
 
-nx = 204
-ny = 204
-nz = 102
+nx = dimx
+ny = dimy
+nz = dimz
 
 ; Select data to be plotted --- v_theta=0 for sausage mode
 
@@ -91,8 +91,8 @@ if planecte eq 'z' then begin
 
   for i = 1, nx/coarsefactorvf do begin
     for j = 1, ny/coarsefactorvf do begin
-      bxrd[i-1,j-1]=vx[coarsefactorvf*i-1,coarsefactorvf*j-1]
-      byrd[i-1,j-1]=vy[coarsefactorvf*i-1,coarsefactorvf*j-1]
+      bxrd[i-1,j-1]=bx[coarsefactorvf*i-1,coarsefactorvf*j-1]
+      byrd[i-1,j-1]=by[coarsefactorvf*i-1,coarsefactorvf*j-1]
     endfor
   endfor
 
@@ -116,7 +116,7 @@ if planecte eq 'z' then begin
    /OutLine, Position=position, XTitle=xtitle, YTitle=ytitle
  
   cgColorbar, NColors=nlevels, Bottom=1, Position=cbposition, $
-   Range=[Float(Round(MinValue*10)/10.), Float(Round(MaxValue*10)/10.)], Divisions=nLevels, $
+   Range=[Float(Round(MinValue*1000)/1000.), Float(Round(MaxValue*10)/10.)], Divisions=nLevels, $
    Title=cbTitle, TLocation='Top'
   
   ;window,1
@@ -165,7 +165,7 @@ if planecte eq 'y' then begin
    /OutLine, Position=position, XTitle=xtitle, YTitle=ytitle
  
   cgColorbar, NColors=nlevels, Bottom=1, Position=cbposition, $
-   Range=[Float(Round(MinValue*10)/10.), Float(Round(MaxValue*10)/10.)], Divisions=nLevels, $
+   Range=[Float(Round(MinValue*1000)/1000.), Float(Round(MaxValue*1000)/1000.)], Divisions=nLevels, $
    Title=cbTitle, TLocation='Top'
     
   v = VECTOR(bxrd, bzrd, x,z)
@@ -208,7 +208,7 @@ if planecte eq 'x' then begin
    /OutLine, Position=position, XTitle=xtitle, YTitle=ytitle
  
   cgColorbar, NColors=nlevels, Bottom=1, Position=cbposition, $
-   Range=[Float(Round(MinValue*1000)/1000.), Float(Round(MaxValue*1000)/1000.)], Divisions=nLevels, $
+   Range=[Float(Round(MinValue*1000000.)/1000000.), Float(Round(MaxValue*1)/1.)], Divisions=nLevels, $
    Title=cbTitle, TLocation='Top'
   
   v = VECTOR(byrd, bzrd, y,z)
