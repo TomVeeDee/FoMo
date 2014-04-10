@@ -1,10 +1,13 @@
 pro velmod_wt,waka_root=waka_root,ka_root=ka_root,gridx=gridx,gridr=gridr,dimt=dimt,dimz=dimz,diml=diml,reg3=reg3,vr_md=vr_md,wk_0=wk_0,L=L,aa=aa,wk_rt=wk_rt,ka_rt=ka_rt,kafix=kafix,theta=theta,tarr=tarr,gridz=gridz,mag=mag,nmode=nmode,uniform=uniform,save=save,modelname=modelname,vr_t=vr_t,vt_t=vt_t,vz_t=vz_t,rtot_t=rtot_t,te_t=te_t, btot_t=btot_t
 
-if ~keyword_set(waka_root) then begin
-    print,'velmod_wt,waka_root=waka_root,ka_root=ka_root,gridx=gridx,gridr=gridr,dimt=dimt,dimz=dimz,reg3=reg3,vr_md=vr_md,ka_0=ka_0,aa=aa,wk_rt=wk_rt,ka_rt=ka_rt,kafix=kafix,theta=theta,tarr=tarr,gridz=gridz,mag=mag,nmode=nmode,uniform=uniform,save=save,modelname=modelname'
-    return
-endif
-
+;if ~keyword_set(waka_root) then begin
+;    ;print,'velmod_wt,waka_root=waka_root,ka_root=ka_root,gridx=gridx,gridr=gridr,dimt=dimt,dimz=dimz,reg3=reg3,vr_md=vr_md,ka_0=ka_0,aa=aa,wk_rt=wk_rt,ka_rt=ka_rt,kafix=kafix,theta=theta,tarr=tarr,gridz=gridz,mag=mag,nmode=nmode,uniform=uniform,save=save,modelname=modelname'
+;    return
+;endif
+;if n_params(0) lt 1 then begin
+  ; print,'velmod_wt, waka_root=waka_root, ka_root=ka_root, gridx=gridx, gridr=gridr, dimt=dimt, reg3=reg3, vr_md=vr_md, aa, wk_rt, ka_rt, kafix, diml, dimz, theta, tarr, gridz, vr_t, vt_t, vz_t, rr_t, rtot_t, ptot_t, dispr, te_t, br_t, bt_t, bz_t, mag=mag, nmode=nmode, no_standing=no_standing,uniform=uniform'
+  ; return
+;endif
 ; Calculates the advected modulation in time and space (cylindrical
 ; coordinates) of a standing MHD mode on thermodynamic and geometrical
 ; quantities (vr, vt, vz, pr, rr, br, bt, bz) for
@@ -91,7 +94,7 @@ wkfix = wfixar[wfloc]
 
 t_u = 2*!pi/(wk_rt[wkfix]*ka_rt[wkfix])*aa      ; Change number of periods here
 tarr = findgen(dimt)/(dimt-1.)*t_u
-if ~keyword_set(L) then z_u = 2*!pi/ka_rt[wkfix]*aa else z_u = L     ; Box dimension in z-direction as a number of wavelengths, if L is not specified
+if ~keyword_set(L) then z_u = 2*!pi/ka_rt[wkfix] else z_u = L     ; Box dimension in z-direction as a number of wavelengths, if L is not specified
 
 if keyword_set(uniform) and ~keyword_set(dimz) then begin
     dimz = round(z_u*dimx/gridx[n_elements(gridx)-1]) 
@@ -241,22 +244,21 @@ for k=0,dimt-1 do begin
      rtot_t = reform(rtot_t[*,*,*,*])
 ;    ptot_t = reform(ptot_t[*,*,*,*])
      te_t = reform(te_t[*,*,*,*])
-     if keyword_set(mag) then begin
+           if keyword_set(mag) then begin
        br_t = reform(br_t[*,*,*,*])
        bt_t = reform(bt_t[*,*,*,*])
        bz_t = reform(bz_t[*,*,*,*])
        btot_t = reform(btot_t[*,*,*,*])
      endif
 endif
-if keyword_set(save) then begin
+  if keyword_set(save) then begin
     save,vr_t,vt_t,vz_t,rr_t,rtot_t,te_t,br_t,bt_t,bz_t,btot_t,filename='variables'+modnm+'.sav'
 endif else begin
         print,'end of time step. Warning: SAVE keyword not set.'
         stop
 endelse
 if keyword_set(save) then begin
-    save,ro,re,vao,vae,co, ce, bo, be, aa,nmode,wk_rt,ka_rt,wkfix,gridx,gridy,gridz,gridr,theta,dimr,dimt,dimz,diml,tarr,nmode,filename='params'+modnm+'.sav'
+    save,ro,re,va,vae,co, ce, bo, be, aa,nmode,wk_rt,ka_rt,wkfix,gridx,gridy,gridz,gridr,theta,dimr,dimt,dimz,diml,tarr,nmode,filename='params'+modnm+'.sav'
     print, 'Counter is: '+string(counter)
 endif
-
 end
