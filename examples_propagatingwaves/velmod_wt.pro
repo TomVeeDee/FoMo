@@ -115,9 +115,11 @@ proton = 1.67262158*10^(-27.)
 kboltz = 1.380658*10^(-23.)
 print,'wavenumber: ',ka
 print,'phase speed: ',wk*100,' km/s'
-print,'Height of box: ',z_u,' (*100 km)'
+print,'Height of box (z): ',z_u,' (*100 km)'
 print, 'Loop radius: ', aa/10,' Mm'
 print,'Period of oscillation: ',t_u/2/60,' min'
+print, 'Resolution: xres = yres = ',gridx[1]*100, ' km'
+print, 'zres = ', gridz[1]*100, ' km'
 
 print,'type .c to continue'
 stop
@@ -149,7 +151,6 @@ meaa = mea2[wkfix]
 sigi = -1.
 sigk = 1.
 aa0 = 1.
-counter = 0
 
 for k=0,dimt-1 do begin
     st = string(k,format="(i3.3)")
@@ -259,6 +260,6 @@ endif else begin
 endelse
 if keyword_set(save) then begin
     save,ro,re,vao,vae,co, ce, bo, be, aa,nmode,wk_rt,ka_rt,wkfix,gridx,gridy,gridz,gridr,theta,dimr,dimt,dimz,diml,tarr,nmode,filename='params'+modnm+'.sav'
-    print, 'Counter is: '+string(counter)
+    ;print, 'Counter is: '+string(counter)
 endif
 end

@@ -154,12 +154,12 @@ bound = 5e-2
    plot,wa/ka,L,/xs,/ys,psym=3,yr=[-15,15]  ;,yr=[-0.01,0.01]
    locs = where(abs(L) lt bound)
    if locs[0] ne -1 then begin
-      ;waka_ini_f = max(wa[locs]/ka[locs])             ; Two possibilities for setting an initial guess
+      ;waka_ini_f = max(wa[locs]/ka[locs])             ; Possibilities for setting an initial guess
       ;waka_ini_f = wa(where(L eq min(abs(L))))/ka     ; Normally each one selects a different branch to compute roots
-      waka_ini_f = 14.3787
+      waka_ini_f = 14.3787                             ; Copied from GS pressure balance file (normally via waka_ini_f and wrlocs)
       waka_ini_0 = round(wa[locs]/ka[locs]*1.e5)/1.e5
       wrlocs = where(waka_ini_0[uniq(waka_ini_0)] gt vao*1.01)
-      waka_ini_ar = waka_ini_f                                     ; Copied from GS pressure balance file (normally via waka_ini_f and wrlocs)
+      waka_ini_ar = waka_ini_f
       ;waka_ini_ar = waka_ini_0[(uniq(waka_ini_0))[wrlocs]]
       print,'waka_ini_f = ', waka_ini_f
    endif else begin
