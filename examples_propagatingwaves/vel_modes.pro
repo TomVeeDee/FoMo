@@ -34,7 +34,7 @@ co = A1 & vao = A2 & ct = A3 & ro = A4 & bo = A5
 ce = B1 & vae = B2 & cte = B3 & re = B4 & be = B5
 
 aa = 10.
-gridx = findgen(dimx)/float(dimx-1)*aa*4.
+gridx = findgen(dimx)/float(dimx-1)*aa*(2.*2.47788)  ; Same resolution as in z-direction
 ;if n eq 0 then gridx = findgen(dimx)/float(dimx-1)*50. else gridx = findgen(dimx)/float(dimx-1)*100.
 r0 = gridx[n_elements(gridx)-1]/2.
 ;if n eq 0 then begin

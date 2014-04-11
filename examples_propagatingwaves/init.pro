@@ -66,12 +66,12 @@ pro init,ro=ro,re=re,vao=vao,vae=vae,co=co,ce=ce,bo=bo,be=be,waka_ini_f=waka_ini
    Bz_in = 0.005
    By_in = 0.
    
-   beta = 2*ne_in*te_in*kboltz*mup/(Bx_out^2+By_out^2+Bz_out^2)
+   beta = 2*ne_in*te_in*kboltz*mup/(Bx_in^2+By_in^2+Bz_in^2)
    
    ro = rho_in*norm^2
    re = rho_out*norm^2
-   vao = sqrt(Bx_out^2+By_out^2+Bz_out^2)/sqrt(mup*ro)
-   vae = sqrt(Bx_in^2+By_in^2+Bz_in^2)/sqrt(mup*re)
+   vae = sqrt(Bx_out^2+By_out^2+Bz_out^2)/sqrt(mup*re)
+   vao = sqrt(Bx_in^2+By_in^2+Bz_in^2)/sqrt(mup*ro)
    co = sqrt(2*gamma*kboltz/proton*te_in)/norm
    ce = sqrt(2*gamma*kboltz/proton*te_out)/norm
    bo = vao*sqrt(mup*ro)
@@ -79,7 +79,7 @@ pro init,ro=ro,re=re,vao=vao,vae=vae,co=co,ce=ce,bo=bo,be=be,waka_ini_f=waka_ini
    ct = co*vao/sqrt(co^2+vao^2)
    cte = ce*vae/sqrt(ce^2+vae^2)
 
-   vmin = 3.
+   vmin = 4.
    va_mx = ceil(max([vao,vae]))
    wa = findgen(dim+1)/float(dim)*(va_mx-vmin)*ka+vmin*ka
 
@@ -145,21 +145,23 @@ pro init,ro=ro,re=re,vao=vao,vae=vae,co=co,ce=ce,bo=bo,be=be,waka_ini_f=waka_ini
    if reg4[0] ne -1 then L[reg4] = wa[reg4]^2*(re*sqrt(sigi[reg4]*moa2[reg4])*dbslij[reg4]*bslky[reg4]-ro*sqrt(sigk[reg4]*mea2[reg4])*dbslky[reg4]*bslij[reg4])-$
     ka^2*(re*vae^2*sqrt(sigi[reg4]*moa2[reg4])*dbslij[reg4]*bslky[reg4]-ro*vao^2*sqrt(sigk[reg4]*mea2[reg4])*dbslky[reg4]*bslij[reg4])
 
-bound = 5e-3
+bound = 5e-2
 
    window,0
 ;plot,wa/ka,L/max(sqrt(abs(dnummoa2*dnummea2))),/xs,/ys,psym=3;,xr=[2,5],yr=[-1,1]
 ;locs = where(abs(L/max(sqrt(abs(dnummoa2*dnummea2)))) lt 1.e-5)
 
-   plot,wa/ka,L,/xs,/ys,psym=3,yr=[-0.1,0.1]  ;,yr=[-0.01,0.01]
+   plot,wa/ka,L,/xs,/ys,psym=3,yr=[-15,15]  ;,yr=[-0.01,0.01]
    locs = where(abs(L) lt bound)
    if locs[0] ne -1 then begin
       ;waka_ini_f = max(wa[locs]/ka[locs])             ; Two possibilities for setting an initial guess
-      waka_ini_f = wa(where(L eq min(abs(L))))/ka     ; Normally each one selects a different branch to compute roots
+      ;waka_ini_f = wa(where(L eq min(abs(L))))/ka     ; Normally each one selects a different branch to compute roots
+      waka_ini_f = 14.3787
       waka_ini_0 = round(wa[locs]/ka[locs]*1.e5)/1.e5
       wrlocs = where(waka_ini_0[uniq(waka_ini_0)] gt vao*1.01)
-      waka_ini_ar = waka_ini_0[(uniq(waka_ini_0))[wrlocs]]
-      print,'waka_ini_f = ', waka_ini_ar
+      waka_ini_ar = waka_ini_f                                     ; Copied from GS pressure balance file (normally via waka_ini_f and wrlocs)
+      ;waka_ini_ar = waka_ini_0[(uniq(waka_ini_0))[wrlocs]]
+      print,'waka_ini_f = ', waka_ini_f
    endif else begin
       print,'no solution'
    endelse

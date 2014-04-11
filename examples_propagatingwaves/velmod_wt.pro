@@ -94,7 +94,7 @@ wkfix = wfixar[wfloc]
 
 t_u = 2*!pi/(wk_rt[wkfix]*ka_rt[wkfix])*aa      ; Change number of periods here
 tarr = findgen(dimt)/(dimt-1.)*t_u
-if ~keyword_set(L) then z_u = 2*!pi/ka_rt[wkfix] else z_u = L     ; Box dimension in z-direction as a number of wavelengths, if L is not specified
+if ~keyword_set(L) then z_u = 2*!pi/ka_rt[wkfix]*aa else z_u = L*aa     ; Box dimension in z-direction as a number of wavelengths (units of 100km), if L is not specified
 
 if keyword_set(uniform) and ~keyword_set(dimz) then begin
     dimz = round(z_u*dimx/gridx[n_elements(gridx)-1]) 
@@ -115,8 +115,8 @@ proton = 1.67262158*10^(-27.)
 kboltz = 1.380658*10^(-23.)
 print,'wavenumber: ',ka
 print,'phase speed: ',wk*100,' km/s'
-print,'vertical wavelength: ',z_u,' Mm'
-print, 'Loop radius: ', aa,' Mm'
+print,'Height of box: ',z_u,' (*100 km)'
+print, 'Loop radius: ', aa/10,' Mm'
 print,'Period of oscillation: ',t_u/2/60,' min'
 
 print,'type .c to continue'
@@ -258,7 +258,7 @@ endif else begin
         stop
 endelse
 if keyword_set(save) then begin
-    save,ro,re,va,vae,co, ce, bo, be, aa,nmode,wk_rt,ka_rt,wkfix,gridx,gridy,gridz,gridr,theta,dimr,dimt,dimz,diml,tarr,nmode,filename='params'+modnm+'.sav'
+    save,ro,re,vao,vae,co, ce, bo, be, aa,nmode,wk_rt,ka_rt,wkfix,gridx,gridy,gridz,gridr,theta,dimr,dimt,dimz,diml,tarr,nmode,filename='params'+modnm+'.sav'
     print, 'Counter is: '+string(counter)
 endif
 end
