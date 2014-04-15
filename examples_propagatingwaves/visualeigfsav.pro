@@ -2,7 +2,7 @@ pro visualeigfsav
 
 ; Specify time step in simulation, choice of plane and resolution of vector field relative to grid resolution
 
-t=5
+t=9
 planecte = 'x'           ; Choice between slices of the form x=x0 ('x'), y=y0 ('y') and z=z0 ('z') (Determine x0,y0,z0 below)
 coarsefactorvf = 6
 varnb = 8            ; 3=density, 4=temperature, 5=bx, 6=by, 7=bz, 8=br, 9=vr, 10=vy, 11=vz, 12=vr
