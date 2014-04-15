@@ -28,7 +28,7 @@ pro init,ro=ro,re=re,vao=vao,vae=vae,co=co,ce=ce,bo=bo,be=be,waka_ini_f=waka_ini
 
 
    dim = 10000
-   ka = 4.
+   ka = 6.
    norm = 1.e5
    L = fltarr(dim+1)
    moa2 = fltarr(dim+1)
@@ -48,8 +48,8 @@ pro init,ro=ro,re=re,vao=vao,vae=vae,co=co,ce=ce,bo=bo,be=be,waka_ini_f=waka_ini
    gamma = 5./3.
 
 ; INPUT:
-   ne_out_cgs = 3.e9
-   ne_in_cgs = 1.e10
+   ne_out_cgs = 1.e9
+   ne_in_cgs = 4.e9
    te_out = 2.e6
    te_in = 1.e7
    
@@ -60,10 +60,10 @@ pro init,ro=ro,re=re,vao=vao,vae=vae,co=co,ce=ce,bo=bo,be=be,waka_ini_f=waka_ini
    
 ; (Uniform magnetic field)
    Bx_out = 0.
-   Bz_out = 0.00561431
+   Bz_out = 0.01608
    By_out = 0.
    Bx_in = 0.
-   Bz_in = 0.005
+   Bz_in = 0.015999
    By_in = 0.
    
    beta = 2*ne_in*te_in*kboltz*mup/(Bx_in^2+By_in^2+Bz_in^2)
@@ -156,7 +156,7 @@ bound = 5e-2
    if locs[0] ne -1 then begin
       ;waka_ini_f = max(wa[locs]/ka[locs])             ; Possibilities for setting an initial guess
       ;waka_ini_f = wa(where(L eq min(abs(L))))/ka     ; Normally each one selects a different branch to compute roots
-      waka_ini_f = 14.3787                             ; Copied from GS pressure balance file (normally via waka_ini_f and wrlocs)
+      waka_ini_f = 69.5984                             ; Copied from GS pressure balance file (normally via waka_ini_f and wrlocs)
       waka_ini_0 = round(wa[locs]/ka[locs]*1.e5)/1.e5
       wrlocs = where(waka_ini_0[uniq(waka_ini_0)] gt vao*1.01)
       waka_ini_ar = waka_ini_f

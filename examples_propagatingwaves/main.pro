@@ -55,14 +55,14 @@ vel_modes, waka_root=waka_root, ka_root=ka_root, dimx=dimx, reg0=reg0, reg1=reg1
 ; Roberts 1983.
 ; Specify driving frequency as omega/kz (in km/s divided by 100)  and loop length (in Mm) (running waves) or wave number (standing waves)
 
-wk_0 = 18
+wk_0 = 77
 ;L = 2.8  ; Specify length of box in z-direction (in Mm). If not set, default is n wavelengths. (Determined in velmod_wt)
 
 ;ka_0 = !pi/85. ; 85 Mm length loop, this specifies also the wave number for standing modes.
 
 modelname = 'propagating_sausage_0.012beta'
 
-velmod_wt,waka_root=waka_root,ka_root=ka_root,gridx=gridx,gridr=gridr,dimt=dimt,dimz=dimz,reg3=reg3,vr_md=vr_md,wk_0=wk_0,L=L,aa=aa,wk_rt=wk_rt,ka_rt=ka_rt,kafix=kafix,theta=theta,tarr=tarr,gridz=gridz,nmode=nmode,/save,modelname=modelname, /mag
+velmod_wt,waka_root=waka_root,ka_root=ka_root,gridx=gridx,gridr=gridr,dimt=dimt,dimx=dimx,dimz=dimz,reg3=reg3,vr_md=vr_md,wk_0=wk_0,L=L,aa=aa,wk_rt=wk_rt,ka_rt=ka_rt,kafix=kafix,theta=theta,tarr=tarr,gridz=gridz,nmode=nmode,/save,modelname=modelname, /mag
 
 ; set model = string with name of treated model:
 ;      model = 'base' corresponds to ka = 2.24, 

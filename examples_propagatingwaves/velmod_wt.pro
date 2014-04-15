@@ -1,4 +1,4 @@
-pro velmod_wt,waka_root=waka_root,ka_root=ka_root,gridx=gridx,gridr=gridr,dimt=dimt,dimz=dimz,diml=diml,reg3=reg3,vr_md=vr_md,wk_0=wk_0,L=L,aa=aa,wk_rt=wk_rt,ka_rt=ka_rt,kafix=kafix,theta=theta,tarr=tarr,gridz=gridz,mag=mag,nmode=nmode,uniform=uniform,save=save,modelname=modelname,vr_t=vr_t,vt_t=vt_t,vz_t=vz_t,rtot_t=rtot_t,te_t=te_t, btot_t=btot_t
+pro velmod_wt,waka_root=waka_root,ka_root=ka_root,gridx=gridx,gridr=gridr,dimx=dimx,dimt=dimt,dimz=dimz,diml=diml,reg3=reg3,vr_md=vr_md,wk_0=wk_0,L=L,aa=aa,wk_rt=wk_rt,ka_rt=ka_rt,kafix=kafix,theta=theta,tarr=tarr,gridz=gridz,mag=mag,nmode=nmode,uniform=uniform,save=save,modelname=modelname,vr_t=vr_t,vt_t=vt_t,vz_t=vz_t,rtot_t=rtot_t,te_t=te_t, btot_t=btot_t
 
 ;if ~keyword_set(waka_root) then begin
 ;    ;print,'velmod_wt,waka_root=waka_root,ka_root=ka_root,gridx=gridx,gridr=gridr,dimt=dimt,dimz=dimz,reg3=reg3,vr_md=vr_md,ka_0=ka_0,aa=aa,wk_rt=wk_rt,ka_rt=ka_rt,kafix=kafix,theta=theta,tarr=tarr,gridz=gridz,mag=mag,nmode=nmode,uniform=uniform,save=save,modelname=modelname'
@@ -71,14 +71,6 @@ if keyword_set(nmode) then n = nmode else n = 0 ; default is sausage mode
 co = A1 & vao = A2 & ct = A3 & ro = A4 & bo = A5
 ce = B1 & vae = B2 & cte = B3 & re = B4 & be = B5
 
-rad = aa
-r0 = gridx[n_elements(gridx)-1]/2.
-dimx = n_elements(gridx)
-dimr = n_elements(gridr)
-if (~(keyword_set(gridy))) then gridy = gridx[dimx/2:*]
-dimy = n_elements(gridy)
-diml = dimx/2.
-
 if n eq 0 then amp = 2.5 else amp = 5.e-5      ; amplitude of perturbation
 wk_rt = waka_root[reg3] ; reg3 corresponds to the range of coronal solutions
 ka_rt = ka_root[reg3]
@@ -94,7 +86,18 @@ wkfix = wfixar[wfloc]
 
 t_u = 2*!pi/(wk_rt[wkfix]*ka_rt[wkfix])*aa      ; Change number of periods here
 tarr = findgen(dimt)/(dimt-1.)*t_u
+
 if ~keyword_set(L) then z_u = 2*!pi/ka_rt[wkfix]*aa else z_u = L*aa     ; Box dimension in z-direction as a number of wavelengths (units of 100km), if L is not specified
+gridz = findgen(dimz)/(dimz-1.)*z_u
+
+rad = aa
+gridx = findgen(dimx)*gridz[1]
+r0 = gridx[n_elements(gridx)-1]/2.
+dimx = n_elements(gridx)
+dimr = n_elements(gridr)
+if (~(keyword_set(gridy))) then gridy = gridx[dimx/2:*]
+dimy = n_elements(gridy)
+diml = dimx/2.
 
 if keyword_set(uniform) and ~keyword_set(dimz) then begin
     dimz = round(z_u*dimx/gridx[n_elements(gridx)-1]) 
@@ -102,7 +105,6 @@ endif else begin
     if ~keyword_set(dimz) then dimz = dimx/2
 endelse
 
-gridz = findgen(dimz)/(dimz-1.)*z_u
 
 if n eq 0 then diml = 1 else diml = dimx/2.
 l_u = !pi
@@ -170,7 +172,7 @@ for k=0,dimt-1 do begin
                         displac = 0.
                         th_ll = th_l
                     endif else begin
-                        if dr2 lt 0. then counter = counter+1
+                        ;if dr2 lt 0. then counter = counter+1
                         displac = dr2
                         th_ll = th_l+!pi 
                     endelse
