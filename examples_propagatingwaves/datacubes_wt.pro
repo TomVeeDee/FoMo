@@ -69,7 +69,7 @@ r0 = gridx[dimx-1]/2.
 ; OUTPUT DIRECTORY:
 ; cubedir='../cubes/set2/'
 
-if model eq 'base' then  kanm = 'ka2.24'
+if model eq 'base' then  kanm = 'ka3.00'
 if model eq 'long' then  kanm = 'ka1.25'
 if model eq 'high_res' then  kanm = 'ka2.24_hgres'
 if model eq 'high_res2d' then  kanm = 'ka2.24_hgres2d'
@@ -256,7 +256,7 @@ endif else begin
             endfor
          endif
          if sav eq 1 then begin
-            if keyword_set(mag) then save,vr_cube,vz_cube,te_cube,rh_cube,br_cube,bz_cube,btot_cube,x_cube,y_cube,z_cube,dist_cube,filename='cubes_B_sausage_'+sngcub+'_'+kanm+'_'+string(j,format="(i3.3)")+'.sav' else save,vr_cube,vz_cube,te_cube,rh_cube,x_cube,y_cube,z_cube,dist_cube,filename='cubes_sausage_'+sngcub+'_'+kanm+'_'+string(j,format="(i3.3)")+'.sav'
+            if keyword_set(mag) then save,vr_cube,vz_cube,te_cube,rh_cube,br_cube,bz_cube,btot_cube,x_cube,y_cube,z_cube,dist_cube,filename='cubes_B_sausage_lowdensity_'+sngcub+'_'+kanm+'_'+string(j,format="(i3.3)")+'.sav' else save,vr_cube,vz_cube,te_cube,rh_cube,x_cube,y_cube,z_cube,dist_cube,filename='cubes_sausage_'+sngcub+'_'+kanm+'_'+string(j,format="(i3.3)")+'.sav'
          endif
          print,string(13b)+' % finished: ',float(j)*100./(dimt-1),format='(a,f4.0,$)'
       endfor

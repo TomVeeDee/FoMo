@@ -71,7 +71,7 @@ if keyword_set(nmode) then n = nmode else n = 0 ; default is sausage mode
 co = A1 & vao = A2 & ct = A3 & ro = A4 & bo = A5
 ce = B1 & vae = B2 & cte = B3 & re = B4 & be = B5
 
-if n eq 0 then amp = 2.5 else amp = 5.e-5      ; amplitude of perturbation
+if n eq 0 then amp = 0.5 else amp = 0.5     ; amplitude of perturbation
 wk_rt = waka_root[reg3] ; reg3 corresponds to the range of coronal solutions
 ka_rt = ka_root[reg3]
 vr_0 = vr_md[reg3,*]
