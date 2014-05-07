@@ -7,7 +7,7 @@ pro main
 ; nmode = 0 for sausage mode
 ; nmode = 1 for kink mode
 
-nmode = 0
+nmode = 1
 
 ;define numerical model and calculate an initial guess to solutions
 ;of the dispersion relation at ka = 4 (where a is the radius of the
@@ -41,9 +41,10 @@ tubemodes_branch, ro=ro, re=re, vao=vao, vae=vae, co=co, ce=ce, bo=bo, be=be, wa
 
 ; set dimensions of your model
 
-dimx = 204 ; x-axis
-dimy = 102 ; y-axis
-dimt = 2 ; time steps
+dimx = 162. ; x-axis
+dimy = 162. ; y-axis
+dimz = 114. ; z-axis
+dimt = 7. ; time steps
 
 ; Calculate the initial setup of the modulation of the MHD mode
 ; on thermodynamic and geometrical quantities (vr, vt, vz, pr, rr,...) 
@@ -57,10 +58,10 @@ vel_modes, waka_root=waka_root, ka_root=ka_root, dimx=dimx, reg0=reg0, reg1=reg1
 ; Roberts 1983.
 ; Specify first the wavenumber. See routine for more details
 
-ka_0 = !pi/85. ; 85 Mm length loop, this specifies also the wave number by standing modes.
-modelname = 'sausage_oscillation_ne_1e9_0.012beta'
+ka_0 = !pi/1.402 ; 3.5 Mm length loop (since aa is defined in units of 100 km), this specifies also the wave number by standing modes.
+modelname = 'standingkink_ne_1e9_0.012beta'
 
-velmod_wt,waka_root=waka_root,ka_root=ka_root,gridx=gridx,gridr=gridr,dimt=dimt,dimz=dimz,reg3=reg3,vr_md=vr_md,ka_0=ka_0,aa=aa,wk_rt=wk_rt,ka_rt=ka_rt,kafix=kafix,theta=theta,tarr=tarr,gridz=gridz,mag=mag,nmode=nmode,/save,modelname=modelname
+eigmod_wt,waka_root=waka_root,ka_root=ka_root,gridx=gridx,gridr=gridr,dimt=dimt,dimx=dimx,dimz=dimz,reg3=reg3,vr_md=vr_md,ka_0=ka_0,aa=aa,wk_rt=wk_rt,ka_rt=ka_rt,kafix=kafix,theta=theta,tarr=tarr,gridz=gridz,mag=mag,nmode=nmode,/save,modelname=modelname
 
 ; set model = string with name of treated model:
 ;      model = 'base' corresponds to ka = 2.24, 
@@ -79,6 +80,7 @@ velmod_wt,waka_root=waka_root,ka_root=ka_root,gridx=gridx,gridr=gridr,dimt=dimt,
 ; variables (='vr', 'vz', 'rh', or 'te')
 sngcub = 'all'
 model = 'base'
+stop
 
 restore, '/users/cpa/sgijsen/fomo/version_161013_idl_and_c/examples/data/params_'+modelname+'.sav'
 restore, '/users/cpa/sgijsen/fomo/version_161013_idl_and_c/examples/data/variables_'+modelname+'.sav'
