@@ -1,0 +1,79 @@
+---------------------------------------------------------------------
+------Advected eigenfunctions (vx, vy, rho, br, bth, bz) kink mode---
+------------------- Finite plasma beta solution ---------------------
+---------------------------------------------------------------------
+
+
+
+----------------------
+Equilibrium parameters
+----------------------
+
+Interior electron density (per cm^3), magnetic field strength (G), temperature (K)
+ 5e10	      180           5e6
+
+Exterior
+ 1.66667e10   182.22	    1e6
+
+Interior sound speed, alfven (km/s)
+262.2      1755.83      
+
+Exterior
+117.3      3078.91
+
+R (in Mm), amp/R, L/R
+ 6.60000    0.0500000	5.00000   (hence L = 33 Mm)
+
+
+dimx dimy dimz
+ 180.000      180.000      210.000
+
+
+resolution in x,y,z,t
+ 146.67 (km)	  146.67 (km)	 157.14 (km)
+
+lower left corner
+(-13.127 Mm, -13.127 Mm)   (slight deviation from -13.2 due to 180 points instead of 180 intervals)
+
+
+----------------------------
+First harmonic (fundamental)
+----------------------------
+
+wave number k_z (per megameter),  phase speed (km/s),  period (s), 	dimt, 	resolution in t
+ 0.0952      2094.28	   31.5145	48.0000		0.657
+
+
+----------------
+Second harmonic
+---------------
+
+wave number k_z (per megameter),  phase speed (km/s),  period (s), 	dimt, 	resolution in t
+ 0.1904      2010.53	   16.413	24.0000		0.684
+
+
+
+---------------
+Third harmonic
+---------------
+
+wave number k_z (per megameter),  phase speed (km/s),  period (s), 	dimt, 	resolution in t
+0.2856		1947.55		11.2963		16.0000		0.706
+
+
+
+--------------------------
+Data structure and remarks
+--------------------------
+
+The equilibrium parameters have been chosen identically to the model of Kupriyanova et al. (2013).
+
+The oscillation periods are P_1 = 31.5s, P_2 = 16.4s and P_3 = 10.5s. These values are slightly increased due to a finite plasma beta. They are in very good agreement with the observations of K2013.
+
+The data which are saved at each time step and for each harmonic are (with units in parentheses):
+n (electrons per cm^3)		T (K)		B_r (T)		B_th (T)	B_z (T)
+
+The data are saved in regular cubic grids with dimensions and resolutions prescribed above. The x- and y- coordinate both range from -2R to 2R in 180 steps of 146.67 km, the longitudinal coordinate varies from 0 to L = 33Mm in 210 steps of 157.14 km.
+
+
+
