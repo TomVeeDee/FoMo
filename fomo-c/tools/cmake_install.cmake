@@ -1,4 +1,4 @@
-# Install script for directory: /users/cpa/sgijsen/fomo/version_patrick_nov13/fomo-c/tools
+# Install script for directory: /users/cpa/sgijsen/fomo/stiefApr1614/fomo-c/tools
 
 # Set the install prefix
 IF(NOT DEFINED CMAKE_INSTALL_PREFIX)
@@ -38,7 +38,7 @@ ELSE(CMAKE_INSTALL_COMPONENT)
   SET(CMAKE_INSTALL_MANIFEST "install_manifest.txt")
 ENDIF(CMAKE_INSTALL_COMPONENT)
 
-FILE(WRITE "/users/cpa/sgijsen/fomo/version_patrick_nov13/fomo-c/tools/${CMAKE_INSTALL_MANIFEST}" "")
+FILE(WRITE "/users/cpa/sgijsen/fomo/stiefApr1614/fomo-c/tools/${CMAKE_INSTALL_MANIFEST}" "")
 FOREACH(file ${CMAKE_INSTALL_MANIFEST_FILES})
-  FILE(APPEND "/users/cpa/sgijsen/fomo/version_patrick_nov13/fomo-c/tools/${CMAKE_INSTALL_MANIFEST}" "${file}\n")
+  FILE(APPEND "/users/cpa/sgijsen/fomo/stiefApr1614/fomo-c/tools/${CMAKE_INSTALL_MANIFEST}" "${file}\n")
 ENDFOREACH(file)

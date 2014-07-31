@@ -25,6 +25,7 @@ if ( CGAL_FOUND )
 
 	create_single_source_cgal_program( "main.cpp" )
 	create_single_source_cgal_program( "interpolate_colour_eigenfunctions.cpp" )
+	create_single_source_cgal_program( "interpolate2d.cpp" )
 
 else()
   

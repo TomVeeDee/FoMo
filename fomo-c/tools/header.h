@@ -24,3 +24,4 @@
 extern void build_polyhedron();
 extern void writegrid(double xl, double xr, int dimx, double yl, double yr, int dimy, double zl, double zr, int dimz);
 extern void polyhedron_prog_inside_test();
+extern void interpolate2d();
