@@ -186,7 +186,7 @@ for k=0,dimt-1 do begin
                     endif else begin
                         vt_t[i,l,j,k] = amp*(-(vao^2+co^2-vao^2*co^2/wk_rt[wkfix]^2)*aa0*n*beselj(sqrt(sigi*mor2),n,/double)/((wk_rt[wkfix]*ka_rt[wkfix])^2-vao^2*ka_rt[wkfix]^2)/abs(displac)*aa^2)*cos(wk_rt[wkfix]*ka_rt[wkfix]*tarr[k]/aa)*sin(n*th_ll)*sin(ka_rt[wkfix]*gridz[j]/aa)
                     endelse
-                    vz_t[i,l,j,k] = -amp*(1./wk_rt[wkfix]^2/ka_rt[wkfix]*aa*co^2*aa0*beselj(sqrt(sigi*mor2),n,/double))*cos(ka_rt[wkfix]*gridz[j]/aa-wk_rt[wkfix]*ka_rt[wkfix]*tarr[k]/aa)*cos(n*th_ll)
+                    vz_t[i,l,j,k] = amp*(1./wk_rt[wkfix]^2/ka_rt[wkfix]*aa*co^2*aa0*beselj(sqrt(sigi*mor2),n,/double))*cos(ka_rt[wkfix]*gridz[j]/aa-wk_rt[wkfix]*ka_rt[wkfix]*tarr[k]/aa)*cos(n*th_ll)
                     rr_t[i,l,j,k] = amp*(ro/wk_rt[wkfix]/ka_rt[wkfix]*aa*aa0*beselj(sqrt(sigi*mor2),n,/double))*cos(ka_rt[wkfix]*gridz[j]/aa-wk_rt[wkfix]*ka_rt[wkfix]*tarr[k]/aa)*cos(n*th_ll)
                     rtot_t[i,l,j,k] = rr_t[i,l,j,k]+ro
                     ptot_t = amp*(co^2*ro/wk_rt[wkfix]/ka_rt[wkfix]*aa*aa0*beselj(sqrt(sigi*mor2),n,/double))*cos(ka_rt[wkfix]*gridz[j]/aa-wk_rt[wkfix]*ka_rt[wkfix]*tarr[k]/aa)*cos(n*th_ll)+po
@@ -222,14 +222,14 @@ for k=0,dimt-1 do begin
                     mer2 = mea2[wkfix]*(displac/aa)^2
                     vr_t[i,l,j,k] = amp*((vae^2+ce^2)*(wk_rt[wkfix]^2-cte^2)/(wk_rt[wkfix]^2*(wk_rt[wkfix]^2-vae^2))*aa1*sqrt(sigk*mea2[wkfix]/aa^2)*dbeselk(sqrt(sigk*mer2),n)*(aa/ka_rt[wkfix])^2)*sin(ka_rt[wkfix]*gridz[j]/aa-wk_rt[wkfix]*ka_rt[wkfix]*tarr[k]/aa)*cos(n*displact)
                     vt_t[i,l,j,k] = amp*(-(vae^2+ce^2-vae^2*ce^2/wk_rt[wkfix]^2)*aa1*n*beselk(sqrt(sigk*mer2),n,/double)/((wk_rt[wkfix]*ka_rt[wkfix])^2-vae^2*ka_rt[wkfix]^2)/abs(displac)*aa^2)*sin(ka_rt[wkfix]*gridz[j]/aa-wk_rt[wkfix]*ka_rt[wkfix]*tarr[k]/aa)*sin(n*displact)
-                    vz_t[i,l,j,k] = -amp*(1./wk_rt[wkfix]^2/ka_rt[wkfix]*aa*ce^2*aa1*beselk(sqrt(sigk*mer2),n,/double))*cos(ka_rt[wkfix]*gridz[j]/aa-wk_rt[wkfix]*ka_rt[wkfix]*tarr[k]/aa)*cos(n*displact)
+                    vz_t[i,l,j,k] = amp*(1./wk_rt[wkfix]^2/ka_rt[wkfix]*aa*ce^2*aa1*beselk(sqrt(sigk*mer2),n,/double))*cos(ka_rt[wkfix]*gridz[j]/aa-wk_rt[wkfix]*ka_rt[wkfix]*tarr[k]/aa)*cos(n*displact)
                     rr_t[i,l,j,k] = amp*(re/wk_rt[wkfix]/ka_rt[wkfix]*aa*aa1*beselk(sqrt(sigk*mer2),n,/double))*cos(ka_rt[wkfix]*gridz[j]/aa-wk_rt[wkfix]*ka_rt[wkfix]*tarr[k]/aa)*cos(n*displact)
                     rtot_t[i,l,j,k] = rr_t[i,l,j,k]+re
                     ptot_t = amp*(ce^2*re/wk_rt[wkfix]/ka_rt[wkfix]*aa*aa1*beselk(sqrt(sigk*mer2),n,/double))*cos(ka_rt[wkfix]*gridz[j]/aa-wk_rt[wkfix]*ka_rt[wkfix]*tarr[k]/aa)*cos(n*displact)+pe
                     te_t[i,l,j,k] = ptot_t/rtot_t[i,l,j,k]
                     if keyword_set(mag) then begin
                         br_t[i,l,j,k] = amp*be/wk_rt[wkfix]*((vae^2+ce^2)*(wk_rt[wkfix]^2-cte^2)/(wk_rt[wkfix]^2*(wk_rt[wkfix]^2-vae^2))*aa1*sqrt(sigk*mea2[wkfix]/aa^2)*dbeselk(sqrt(sigk*mer2),n)*(aa/ka_rt[wkfix])^2)*sin(ka_rt[wkfix]*gridz[j]/aa-wk_rt[wkfix]*ka_rt[wkfix]*tarr[k]/aa)*cos(n*displact)
-                        bt_t[i,l,j,k] = amp*be/wk_rt[wkfix]*(-(vae^2+ce^2-vae^2*ce^2/wk_rt[wkfix]^2)*aa1*n*beselk(sqrt(sigk*mer2),n,/double)/((wk_rt[wkfix]*ka_rt[wkfix])^2-vae^2*ka_rt[wkfix]^2)/abs(displac)*aa^2)*sin(wk_rt[wkfix]*ka_rt[wkfix]*tarr[k]/aa)*sin(n*displact)*cos(ka_rt[wkfix]*gridz[j]/aa)
+                        bt_t[i,l,j,k] = amp*be/wk_rt[wkfix]*(-(vae^2+ce^2-vae^2*ce^2/wk_rt[wkfix]^2)*aa1*n*beselk(sqrt(sigk*mer2),n,/double)/((wk_rt[wkfix]*ka_rt[wkfix])^2-vae^2*ka_rt[wkfix]^2)/abs(displac)*aa^2)*sin(wk_rt[wkfix]*ka_rt[wkfix]*tarr[k]/aa)*sin(n*displact)*cos(ka_rt[wkfix]*gridz[j]/aa)  ; proportional to n, i.e. equql to zero for n=0
                         bz_t[i,l,j,k] = amp*(be/wk_rt[wkfix]/ka_rt[wkfix]*aa*(1.-ce^2/wk_rt[wkfix]^2)*aa1*beselk(sqrt(sigk*mer2),n,/double))*cos(ka_rt[wkfix]*gridz[j]/aa-wk_rt[wkfix]*ka_rt[wkfix]*tarr[k]/aa)*cos(n*displact)+be
                         btot_t[i,l,j,k] = sqrt(br_t[i,l,j,k]^2+bt_t[i,l,j,k]^2+bz_t[i,l,j,k]^2+2*be*bz_t[i,l,j,k]+be^2)
                     endif

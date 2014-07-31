@@ -2,14 +2,14 @@ pro visualeigfsav
 
 ; Specify time step in simulation, choice of plane and resolution of vector field relative to grid resolution
 
-t=9
+t=1
 planecte = 'x'           ; Choice between slices of the form x=x0 ('x'), y=y0 ('y') and z=z0 ('z') (Determine x0,y0,z0 below)
 coarsefactorvf = 6
-varnb = 8            ; 3=density, 4=temperature, 5=bx, 6=by, 7=bz, 8=br, 9=vr, 10=vy, 11=vz, 12=vr
+varnb = 3            ; 3=density, 4=temperature, 5=bx, 6=by, 7=bz, 8=br, 9=vr, 10=vy, 11=vz, 12=vr
 
-restore, '/users/cpa/sgijsen/FoMo/examples_propagatingwaves/cubes_B_sausage_all_ka2.24_'+string(t,format="(i3.3)")+'.sav'
-restore, '/users/cpa/sgijsen/FoMo/examples_propagatingwaves/variables_propagating_sausage_0.012beta.sav'
-restore, '/users/cpa/sgijsen/FoMo/examples_propagatingwaves/params_ka2.24.sav'
+restore, '/users/cpa/sgijsen/FoMo/examples_propagatingwaves/Cubes_lowdensity/cubes_B_sausage_lowdensity_all_ka3.00_'+string(t,format="(i3.3)")+'.sav'
+restore, '/users/cpa/sgijsen/FoMo/examples_propagatingwaves/Cubes_lowdensity/variables_propagating_sausage_0.012beta.sav'
+restore, '/users/cpa/sgijsen/FoMo/examples_propagatingwaves/Cubes_lowdensity/params_ka3.00.sav'
 
 ;--------------------------------------------------------------------------
 ;--------------------------------------------------------------------------
