@@ -3,6 +3,7 @@ AC_PREREQ(2.59)
 AM_INIT_AUTOMAKE(1.9)
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_HEADERS(config.h)
+AC_PROG_CC
 # check if mpi is wanted
 AC_ARG_WITH(mpi,
 [AC_HELP_STRING([--with-mpi],[build MPI version of POLLUX])],
