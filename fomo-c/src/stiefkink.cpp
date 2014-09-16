@@ -29,8 +29,8 @@ int main(int argc, char* argv[])
 	double globalmax, globalmin;
 	globalmax = 0.; globalmin = 0.;
 
-	// Let's first get the code working for a single frame. Later on, we can still change to more frames, although that 
-	const int nframes=4;
+	// Create G(T) interpolated cube or artificial images (depending on --reuse option) 
+	const int nframes=16;
 	double pi=4*atan(1.);
 	vector<double> angles={pi/2.,pi/3.,pi/4.,pi/6.};
 	int nangles=angles.size();
@@ -42,11 +42,11 @@ int main(int argc, char* argv[])
 
 	stringstream ss;
 	Delaunay_triangulation_3 DT;
-	for (int t=0; t<nframes; t+=5)
+	for (int t=0; t<nframes; t++)
 	{
 		cout << endl << "Doing timestep " << t << endl << flush;
 		//ss << "patrickfiles/datcubes_ka2.24_";
-		ss << "/users/cpa/sgijsen/fomo/stiefApr1614/examples/advectedeigf/Testrun_k0.39/eigft";
+		ss << "/users/cpa/sgijsen/fomo/stiefJul14/smalladveigf/eigfhar1t";
 		ss << setfill('0') << setw(3) << t;
 		ss << ".dat";
 		string filename=ss.str();
@@ -56,7 +56,7 @@ int main(int argc, char* argv[])
 		string snapsave=ss.str();
 		ss.str("");
 		cube goftcube(1,1,1);
-		if (reuse!=1) 
+		if (reuse!=1)
 		{
 			cube datacube(nvars,ng);
 			EqType qtype=stiefkink;
@@ -80,7 +80,7 @@ int main(int argc, char* argv[])
 				}
 
 			// Perform some checks on the Delaunay triangulation and data cube that have been read in
-			cout << DT.number_of_vertices() << goftcube.readdim() << endl << flush;
+			cout << DT.number_of_vertices() << " " << goftcube.readdim() << endl << flush;
 
 //			}
 //			else	// 
@@ -119,7 +119,7 @@ int main(int argc, char* argv[])
 			fillccd(observ,results,0,x_pixel-1,0,y_pixel-1);
 			// write out observ cube
 			ss.str("");
-			ss << "/users/cpa/sgijsen/fomo/stiefApr1614/fomo-c/data_observ/";
+			ss << "/users/cpa/sgijsen/tmp/fomo-c/tmpadv/data_observ";
 			ss << setfill('0') << setw(3) << int((angles[i]*180./pi)+.5);
 			ss << "t";
 			ss << setfill('0') << setw(3) << t;
@@ -128,7 +128,6 @@ int main(int argc, char* argv[])
 			cout << "Writing out computed emission to " << outfile << "... " << flush;
 			writeemissioncube(observ,outfile);
 			cout << "Done!" << endl << flush;
-
 
 		// Experiment: try to add png images as in the example of the torus.
 
@@ -139,8 +138,10 @@ int main(int argc, char* argv[])
                 		image[row] = (double *)malloc(x_pixel*sizeof(double));
 		// initialize image to black
 				for (int j=0; j<x_pixel; j++)
+						{
 					image[row][j]=0;
 		        }
+						}
 			tgrid grid=observ.readgrid();
 			tphysvar intens=observ.readvar(0);
 			int row, column;
@@ -159,13 +160,13 @@ int main(int argc, char* argv[])
 #ifdef HAVEPNG
 			if (png) {
 			  cout << "Writing png file... " << flush;
-			  writepng(image,t,b);
+			  writepng(image,t);
 			  cout << "Done!" << endl << flush;
 			}
 #endif
-		}
-		}
-	}
+		}		// end angles
+		}		// end reuse=1
+	}			// end t
 	if (commrank==0) cout << "Gelukt\n" ;
 	return EXIT_SUCCESS;
 }
