@@ -44,7 +44,7 @@ pro advected_kink
    vae = sqrt(Bx_out^2+By_out^2+Bz_out^2)/sqrt(mup*re)
    bo = vao*sqrt(mup*ro)
    be = vae*sqrt(mup*re)
-   co = sqrt(2*gmma*kboltz/proton*te_in)/norm     ; Equals the usual definition, with factor 2 removed since we consider n as electron density
+   co = sqrt(2*gmma*kboltz/proton*te_in)/norm     ; From ideal gas law; ne = electron density.
    ce = sqrt(2*gmma*kboltz/proton*te_out)/norm
    ct = co*vao/sqrt(co^2+vao^2)
    cte = ce*vae/sqrt(ce^2+vae^2)
