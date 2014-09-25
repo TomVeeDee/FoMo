@@ -10,29 +10,32 @@
 
 int main(int argc, char* argv[])
 {
+
 // Initialize global paramters, get arguments and set physical parameters
 	int commrank,commsize;
+
 	commrank = 0;
 	commsize = 1;
-	getarg(argc,argv);
-	writeparameters(cout,'v');
+	getarg(argc,argv);  
+// Read in arguments from call to main function. For an overview of different input parameters, run program with --help argument.
+
 	writefile();
 
-	// here starts mpi
+	// Variables used for parallellisation using mpi (as per 26/09/14 not yet implemented)
 	int workheight = y_pixel;
 	if (commsize>1)	workheight = 1;
 	int maxsize = x_pixel*workheight*lambda_pixel;
 	double *results;
-	// results is a one dimensional array with all data from rectangle [x1,x2]*[y1,y2]
+	// Results is a one dimensional array with all data from rectangle [x1,x2]*[y1,y2]
 	// borders included!!!
 	results = (double *)malloc(maxsize*sizeof(double));
 	double globalmax, globalmin;
 	globalmax = 0.; globalmin = 0.;
 
 	// Create G(T) interpolated cube or artificial images (depending on --reuse option) 
-	const int nframes=16;
+	const int nframes=16; //Number of time steps = number of simulation snapshots
 	double pi=4*atan(1.);
-	vector<double> angles={pi/2.,pi/3.,pi/4.,pi/6.};
+	vector<double> angles={pi/2.,pi/3.,pi/6.};
 	int nangles=angles.size();
 	int ng = eqx*eqy*eqz;
 	int nvars = 5; // \rho, T, vx, vy, vz
@@ -46,7 +49,7 @@ int main(int argc, char* argv[])
 	{
 		cout << endl << "Doing timestep " << t << endl << flush;
 		//ss << "patrickfiles/datcubes_ka2.24_";
-		ss << "/users/cpa/sgijsen/fomo/stiefJul14/smalladveigf/eigfhar1t";
+		ss << "/users/cpa/sgijsen/FoMo/eigft/";
 		ss << setfill('0') << setw(3) << t;
 		ss << ".dat";
 		string filename=ss.str();
@@ -69,7 +72,7 @@ int main(int argc, char* argv[])
 			}
 			datacube.fillcube();
 			goftcube=emissionfromdatacube(datacube);
-//			if (t==0)	(Stief) kink mode: new triangulation for each time step (new set of points). Uncomment for same triangulation each time step.
+//			The uncommented lines below assume an irregular grid that changes with time. Uncomment the following lines for grids that are constant for each time step (this saves time; same triangulation at each time step).
 //			{
 				DT=triangulationfromdatacube(datacube);
 				if (emissionsave.compare("none")!=0)
@@ -79,8 +82,6 @@ int main(int argc, char* argv[])
 					if (commrank==0) cout << "Done!" << endl << flush;
 				}
 
-			// Perform some checks on the Delaunay triangulation and data cube that have been read in
-			cout << DT.number_of_vertices() << " " << goftcube.readdim() << endl << flush;
 
 //			}
 //			else	// 
@@ -104,8 +105,9 @@ int main(int argc, char* argv[])
 //			{
 //				reademissioncube(goftcube, snapsave);
 //			}
-			// Perform some checks on the Delaunay triangulation and data cube that have been read in
-			cout << DT.number_of_vertices() << goftcube.readdim() << endl << flush;
+
+
+// 
 
 			if (commrank==0) cout << "Done!" << endl << flush;
 		

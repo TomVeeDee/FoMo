@@ -2,7 +2,7 @@ pro visualadvection, t=t
 
 varnb = 4                       ; 2=vx, 3=vy, 4=rh, 5=br, 6=bth, 7=bz
 coarsefactorvf = 2
-eigfcube = '/users/cpa/sgijsen/idl_general/test_advection/eigft'+string(t,format="(i3.3)")+'.dat'
+eigfcube = 'eigft'+string(t,format="(i3.3)")+'.dat'
 nx = 204.
 ny = 204.
 
@@ -48,6 +48,6 @@ x = findgen(nx/coarsefactorvf)*coarsefactorvf
 y = findgen(ny/coarsefactorvf)*coarsefactorvf
 wait, 0.2
 
-if t mod 5 eq 0 then v = VECTOR(vxrd, vyrd, x, y, xrange=[0,50], yrange=[0,50], xtitle = 'x', ytitle = 'y', title='Velocity field at z=L/2, t=' + string(t))
+if t mod 15 eq 0 then v = VECTOR(vxrd, vyrd, x, y, xrange=[0,50], yrange=[0,50], xtitle = 'x', ytitle = 'y', title='Velocity field at z=L/2, t=' + string(t))
 
 end
