@@ -8,17 +8,27 @@
 #include <cstdlib>
 #include <cmath>
 
+/* Example of main routine to generate synthetic observations from irregularly gridded input data.
+This program is adapted to process data written into a text file as follows:
+--------------------------------------------------------------------------------
+dimension
+"intqtype": large integer (although unused), we override 'Eqtype' directly in main function
+number of grid points
+number of variables
+{x, y, z, ne, T, vx, vy, vz} for every grid point
+--------------------------------------------------------------------------------
+For more information about the underlying geometric operations, please visit the FoMo-C Wiki on https://wiki.esat.kuleuven.be/FoMo/FoMo-C
+*/
+
 int main(int argc, char* argv[])
 {
 
 // Initialize global paramters, get arguments and set physical parameters
-	int commrank,commsize;
+	int commrank,commsize; // For parallellisation
 
 	commrank = 0;
 	commsize = 1;
-	getarg(argc,argv);  
-// Read in arguments from call to main function. For an overview of different input parameters, run program with --help argument.
-
+	getarg(argc,argv);  // Read in arguments from call to main function. For an overview of different input parameters, run program with --help argument.
 	writefile();
 
 	// Variables used for parallellisation using mpi (as per 26/09/14 not yet implemented)
@@ -33,9 +43,9 @@ int main(int argc, char* argv[])
 	globalmax = 0.; globalmin = 0.;
 
 	// Create G(T) interpolated cube or artificial images (depending on --reuse option) 
-	const int nframes=16; //Number of time steps = number of simulation snapshots
+	const int nframes=12; //Number of time steps = number of simulation snapshots
 	double pi=4*atan(1.);
-	vector<double> angles={pi/2.,pi/3.,pi/6.};
+	vector<double> angles={pi/2.,pi/3.,pi/6.}; // Rotation angles around y-axis
 	int nangles=angles.size();
 	int ng = eqx*eqy*eqz;
 	int nvars = 5; // \rho, T, vx, vy, vz
@@ -48,8 +58,7 @@ int main(int argc, char* argv[])
 	for (int t=0; t<nframes; t++)
 	{
 		cout << endl << "Doing timestep " << t << endl << flush;
-		//ss << "patrickfiles/datcubes_ka2.24_";
-		ss << "/users/cpa/sgijsen/FoMo/eigft/";
+		ss << "/users/cpa/sgijsen/FoMo/eigft/eigft";
 		ss << setfill('0') << setw(3) << t;
 		ss << ".dat";
 		string filename=ss.str();
@@ -61,19 +70,22 @@ int main(int argc, char* argv[])
 		cube goftcube(1,1,1);
 		if (reuse!=1)
 		{
+
+// Initialise datacube (member of class 'cube', see header.h) and set
 			cube datacube(nvars,ng);
 			EqType qtype=stiefkink;
 			datacube.settype(qtype);
-			if (datacube.readtype() == stiefkink) 
-			{
 				if (commrank == 0) cout << "Reading in snapshot " << filename << "... " << flush;
 				reademissioncube(datacube, filename, &DT);
 				if (commrank == 0) cout << "Done!" << endl << flush;
-			}
+
 			datacube.fillcube();
 			goftcube=emissionfromdatacube(datacube);
-//			The uncommented lines below assume an irregular grid that changes with time. Uncomment the following lines for grids that are constant for each time step (this saves time; same triangulation at each time step).
+
+//		In this part the emission data cubes are written to a file, they can be restored to view the emission from different angles with respect to the loop axis. For this purpose the triangulation of the original data are stored together with the emission.
+// The uncommented lines below assume an irregular grid that changes with time. Uncomment the following lines for grids that are constant for each time step (this saves time; same triangulation at each time step).
 //			{
+
 				DT=triangulationfromdatacube(datacube);
 				if (emissionsave.compare("none")!=0)
 				{
@@ -107,7 +119,7 @@ int main(int argc, char* argv[])
 //			}
 
 
-// 
+// Here ends distinction between constant and time-varying grid
 
 			if (commrank==0) cout << "Done!" << endl << flush;
 		
@@ -121,7 +133,7 @@ int main(int argc, char* argv[])
 			fillccd(observ,results,0,x_pixel-1,0,y_pixel-1);
 			// write out observ cube
 			ss.str("");
-			ss << "/users/cpa/sgijsen/tmp/fomo-c/tmpadv/data_observ";
+			ss << "/users/cpa/sgijsen/FoMo/observ/obs";
 			ss << setfill('0') << setw(3) << int((angles[i]*180./pi)+.5);
 			ss << "t";
 			ss << setfill('0') << setw(3) << t;

@@ -127,7 +127,9 @@ void writeemissioncube(const cube goftcube, const string filename, const Delauna
 
 void reademissioncube(cube &resultcube, const string emissionsave, Delaunay_triangulation_3 * DTpointer)
 {
-	// read emission datacube from file "emissionsave" when the reuse parameter is switched on
+	// Read emission datacube from file "emissionsave" when the reuse parameter is switched on
+	// Otherwise read in data cube (simulation snapshots) from directory specified in main function
+
 	int commrank;
 #ifdef HAVEMPI
         MPI_Comm_rank(MPI_COMM_WORLD,&commrank);

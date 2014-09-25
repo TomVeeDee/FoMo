@@ -167,7 +167,7 @@ void cube::fillcube()
 {
 	switch (qtype) {
 		case builtineq:
-			cout << "Setting up built-in equilibrium... " << flush;
+			cout << "Setting up built-in equilibrium... " << flush; //
 			builtingrid(eqx, eqy, eqz, grid);
 			for (int i=0; i<nvars; i++)
 			{
@@ -206,7 +206,7 @@ void cube::fillcube()
 			}
 			cout << "Done!" << endl << flush;
 			break;
-		case patricksausage:				// not sure what we have to do with this equilibrium here...
+		case patricksausage:
 			for (int i=0; i<ng; i++)
 				for (int j=2; j<5; j++)
 				{

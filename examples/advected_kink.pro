@@ -24,7 +24,7 @@ pro advected_kink
 ; -------------------------------------------------------------------------------------------------
 ; 
 ; 
-; Define equilibrium (SI units in Megameter (to be changed later!!!!))
+; Define equilibrium (SI units in Megameter)
 
    m=1. ;azimuthal wave number
    harmonic = 1 ; used in longitudinal wave number (standing waves)
@@ -32,7 +32,7 @@ pro advected_kink
    dimth = 20.   
    dimz = 20.
    dimt = 12./harmonic
-   rad = 1. ; loop raduis in Mm
+   rad = 1. ; loop radius in Mm
 
    norm = 1.e6 ; Conversion factor between SI and lengths in Mm
    mup = 1.25663706*1.e-6/norm ;magnetic permeability rescaled to Si_Mm
@@ -142,7 +142,7 @@ filename = '/users/cpa/sgijsen/FoMo/eigft/eigft'+string(0,format="(i3.3)")+'.dat
  OPENW, lun, filename, /GET_LUN
 ; First print general information about grid
   printf, lun, 3 ;number of dimensions
-  printf, lun, 8812+0 ;indicator of 'eqtype' in FoMo-C (any large integer will do; should be removed in future)
+  printf, lun, 8812+0 ;indicator of 'eqtype' in FoMo-C (any integer larger than 8 suffices)
   printf, lun, long(dimr*dimth*dimz) ;number of grid points
   printf, lun, 5 ;number of variables
 
