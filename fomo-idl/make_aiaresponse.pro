@@ -1,14 +1,13 @@
-pro make_aiaresponse, sngfilter=sngfilter, wvlmin=wvlmin, wvlmax=wvlmax, gotdir=gotdir,extname=extname
+pro make_aiaresponse, sngfilter=sngfilter, wvlmin=wvlmin, wvlmax=wvlmax, gotdir=gotdir, file_abund=file_abund
 
 if arg_present(sngfilter) lt 1 then begin
-   print,'make_aiaresponse, sngfilter=sngfilter, wvlmin=wvlmin, wvlmax=wvlmax, gotdir=gotdir'
+   print,'make_aiaresponse, sngfilter=sngfilter, wvlmin=wvlmin, wvlmax=wvlmax, gotdir=gotdir, file_abund=file_abund'
    return
 endif
 
 ; Generates G(T,n) tables (200 x 200 pts) for the AIA response functions. 
 ; It assumes the chianti.ioneq CHIANTI file for ionization equilibrium
-; values and coronal abundances (sun_coronal.abund package). The
-; latter can be changed in the routine interpol_emiss_data.pro
+; values. 
 
 ; INPUT:
 ; sngfilter = (string) 'all' if all filters except UV (4500, 1700, 1600) are to be generated
@@ -30,14 +29,29 @@ endif
 ; wvlmax = (float) Maximum of desired wavelength range for line transition in Angstroms
 ; gotdir = (string) directory path where to save the generated table
 ;          (don't forget '/' at end of path) 
-
+; file_abund = (string) 'coronal' or 'photospheric' depending on whether
+;             'sun_coronal.abund' or 'sun_photospheric.abund' CHIANTI packages,
+;             respectively, are to be used. 
 ; CALLS:
 ; aia_get_response, isothermal
 
-if ~keyword_set(extname) then extname = ''
 
-abund_file = concat_dir(concat_dir(!xuvtop,'abundance'),'sun_coronal.abund')
-nab = 'abco'
+if ~keyword_set(file_abund) then begin
+   abund_file = concat_dir(concat_dir(!xuvtop,'abundance'),'sun_coronal.abund')
+   print,'Assuming coronal abundances'
+   nab = 'abco'
+endif else begin
+   if file_abund eq 'coronal' then begin
+      abund_file = concat_dir(concat_dir(!xuvtop,'abundance'),'sun_coronal.abund')
+      print,'Assuming coronal abundances'
+      nab = 'abco'
+   endif
+   if file_abund eq 'photospheric' then begin
+      abund_file = concat_dir(concat_dir(!xuvtop,'abundance'),'sun_photospheric.abund')
+      print,'Assuming photospheric abundances' 
+      nab = 'abph'
+   endif
+endelse
 
 ioneq_name = concat_dir(concat_dir(!xuvtop,'ioneq'),'chianti.ioneq')
 
@@ -45,13 +59,11 @@ numt = 200
 temp = 10.d^(findgen(numt)/(numt-1)*4.+4.0)
 alogt = alog10(temp)
 
-n_e_min = 1.e6
-n_e_max = 1.e12
-;n_e_min = 1.e8
-;n_e_max = 1.e11
+n_e_min = 1.e8
+n_e_max = 1.e11
 
-;steplg = 0.0015
-steplg = 0.03
+;steplg = 0.001
+steplg = 0.015
 numn = alog10(n_e_max/n_e_min)/steplg
 
 n_e_lg = dindgen(numn+1)/numn*alog10(n_e_max/n_e_min)+alog10(n_e_min)
@@ -64,7 +76,7 @@ aia_resp = aia_get_response(/dn)
 if sngfilter eq 'uv' then aia_resp_uv = aia_get_response(/dn,/uv)
 
 if sngfilter eq 'all' or sngfilter eq '304' then begin
-   openw,unit1,gotdir+'goft_table_aia304_'+nab+extname+'.dat',/get_lun & w0_1 = 304. & ion_1 = '304'
+   openw,unit1,gotdir+'goft_table_aia304_'+nab+'.dat',/get_lun & w0_1 = 304. & ion_1 = '304'
    printf,unit1,ion_1
    printf,unit1,w0_1
    printf,unit1,watom
@@ -72,7 +84,7 @@ if sngfilter eq 'all' or sngfilter eq '304' then begin
    printf,unit1,alogt
 endif
 if sngfilter eq 'uv' or sngfilter eq '1600' then begin
-   openw,unit2,gotdir+'goft_table_aia1600_'+nab+extname+'.dat',/get_lun & w0_2 = 1600. & ion_2 = '1600'
+   openw,unit2,gotdir+'goft_table_aia1600_'+nab+'.dat',/get_lun & w0_2 = 1600. & ion_2 = '1600'
    printf,unit2,ion_2
    printf,unit2,w0_2
    printf,unit2,watom
@@ -80,7 +92,7 @@ if sngfilter eq 'uv' or sngfilter eq '1600' then begin
    printf,unit2,alogt
 endif
 if sngfilter eq 'uv' or sngfilter eq '1700' then begin
-   openw,unit3,gotdir+'goft_table_aia1700_'+nab+extname+'.dat',/get_lun & w0_3 = 1700. & ion_3 = '1700'
+   openw,unit3,gotdir+'goft_table_aia1700_'+nab+'.dat',/get_lun & w0_3 = 1700. & ion_3 = '1700'
    printf,unit3,ion_3
    printf,unit3,w0_3
    printf,unit3,watom
@@ -88,7 +100,7 @@ if sngfilter eq 'uv' or sngfilter eq '1700' then begin
    printf,unit3,alogt
 endif
 if sngfilter eq 'uv' or sngfilter eq '4500' then begin
-   openw,unit4,gotdir+'goft_table_aia4500_'+nab+extname+'.dat',/get_lun & w0_4 = 4500. & ion_4 = '4500'
+   openw,unit4,gotdir+'goft_table_aia4500_'+nab+'.dat',/get_lun & w0_4 = 4500. & ion_4 = '4500'
    printf,unit4,ion_4
    printf,unit4,w0_4
    printf,unit4,watom
@@ -96,7 +108,7 @@ if sngfilter eq 'uv' or sngfilter eq '4500' then begin
    printf,unit4,alogt
 endif
 if sngfilter eq 'all' or sngfilter eq '171' then begin 
-   openw,unit5,gotdir+'goft_table_aia171_'+nab+extname+'.dat',/get_lun & w0_5 = 171. & ion_5 = '171'
+   openw,unit5,gotdir+'goft_table_aia171_'+nab+'.dat',/get_lun & w0_5 = 171. & ion_5 = '171'
    printf,unit5,ion_5
    printf,unit5,w0_5
    printf,unit5,watom
@@ -104,7 +116,7 @@ if sngfilter eq 'all' or sngfilter eq '171' then begin
    printf,unit5,alogt
 endif
 if sngfilter eq 'all' or sngfilter eq '193' then begin
-   openw,unit6,gotdir+'goft_table_aia193_'+nab+extname+'.dat',/get_lun & w0_6 = 193. & ion_6 = '193'
+   openw,unit6,gotdir+'goft_table_aia193_'+nab+'.dat',/get_lun & w0_6 = 193. & ion_6 = '193'
    printf,unit6,ion_6
    printf,unit6,w0_6
    printf,unit6,watom
@@ -112,7 +124,7 @@ if sngfilter eq 'all' or sngfilter eq '193' then begin
    printf,unit6,alogt
 endif
 if sngfilter eq 'all' or sngfilter eq '211' then begin
-   openw,unit7,gotdir+'goft_table_aia211_'+nab+extname+'.dat',/get_lun & w0_7 = 211. & ion_7 = '211'
+   openw,unit7,gotdir+'goft_table_aia211_'+nab+'.dat',/get_lun & w0_7 = 211. & ion_7 = '211'
    printf,unit7,ion_7
    printf,unit7,w0_7
    printf,unit7,watom
@@ -120,7 +132,7 @@ if sngfilter eq 'all' or sngfilter eq '211' then begin
    printf,unit7,alogt
 endif
 if sngfilter eq 'all' or sngfilter eq '335' then begin
-   openw,unit8,gotdir+'goft_table_aia335_'+nab+extname+'.dat',/get_lun & w0_8 = 335. & ion_8 = '335'
+   openw,unit8,gotdir+'goft_table_aia335_'+nab+'.dat',/get_lun & w0_8 = 335. & ion_8 = '335'
    printf,unit8,ion_8
    printf,unit8,w0_8
    printf,unit8,watom
@@ -128,7 +140,7 @@ if sngfilter eq 'all' or sngfilter eq '335' then begin
    printf,unit8,alogt
 endif
 if sngfilter eq 'all' or sngfilter eq '094' then begin 
-   openw,unit9,gotdir+'goft_table_aia094_'+nab+extname+'.dat',/get_lun & w0_9 = 094. & ion_9 = '094'
+   openw,unit9,gotdir+'goft_table_aia094_'+nab+'.dat',/get_lun & w0_9 = 094. & ion_9 = '094'
    printf,unit9,ion_9
    printf,unit9,w0_9
    printf,unit9,watom
@@ -136,7 +148,7 @@ if sngfilter eq 'all' or sngfilter eq '094' then begin
    printf,unit9,alogt
 endif
 if sngfilter eq 'all' or sngfilter eq '131' then begin 
-   openw,unit10,gotdir+'goft_table_aia131_'+nab+extname+'.dat',/get_lun & w0_10 = 131. & ion_10 = '131'
+   openw,unit10,gotdir+'goft_table_aia131_'+nab+'.dat',/get_lun & w0_10 = 131. & ion_10 = '131'
    printf,unit10,ion_10
    printf,unit10,w0_10
    printf,unit10,watom

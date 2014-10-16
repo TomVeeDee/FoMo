@@ -94,7 +94,7 @@ if wayemi eq 5 then begin
    imaging = 1
    logt = alog10(tem)
 
-   interpol_emiss_data,ne_s,tem,ion=ion, w0=w0,emission_goft=emission_goft,filenm=filenm,file_abund=file_abund,ext_abund=ext_abund
+   interpol_emiss_data,ne_s,tem,ion=ion, w0=w0,emission_goft=emission_goft,filenm=filenm
 
    for i=0,nang-1 do begin
       mua = mua_d[i]
@@ -103,11 +103,8 @@ if wayemi eq 5 then begin
       if mua ne 0. and mua ne 90. then direction = 4
       gridlos, gridx=gridx, gridy=gridy, mua_d=mua, velx=velx, vely=vely, dx=dx, dy=dy, n_gridx, n_gridy, ngrid, dl=dl, losvel
 
-      if keyword_set(revvel) then begin
-         losvel = -losvel/1.e2
-      endif else begin 
-         losvel = losvel/1.e2
-      endelse
+      losvel = -losvel/1.e2
+
       integrateemission,emission=emission_goft,logt=logt,n_gridx=n_gridx,n_gridy=n_gridy,ngrid=ngrid,w0=w0,direction=direction,losvel=losvel,imaging=imaging,imsp=imsp
       dlos = (size(imsp))[1]
       inan = string(i+1,format="(i1)")
@@ -135,11 +132,7 @@ endif else begin
       if mua ne 0. and mua ne 90. then direction = 4
       gridlos, gridx=gridx, gridy=gridy, mua_d=mua, velx=velx, vely=vely, dx=dx, dy=dy, n_gridx, n_gridy, ngrid, dl=dl, losvel
 
-      if keyword_set(revvel) then begin
-         losvel = -losvel/1.e2
-      endif else begin 
-         losvel = losvel/1.e2
-      endelse
+      losvel = -losvel/1.e2
 
       integrateemission,emission=emission_goft,logt=logt,n_gridx=n_gridx,n_gridy=n_gridy,ngrid=ngrid,wave=wave,w0=w0,direction=direction,losvel=losvel,imaging=imaging,imsp=imsp,watom=watom,wayemi=wayemi,ne_s=ne_s
 
