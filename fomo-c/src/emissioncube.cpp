@@ -1,5 +1,6 @@
 #include "header.h"
 #include <fstream>
+#include <sstream>
 #include <cstdlib>
 #include <gsl/gsl_const_mksa.h>
 #include <boost/progress.hpp>
@@ -21,8 +22,13 @@ const double speedoflight=GSL_CONST_MKSA_SPEED_OF_LIGHT; // speed of light
 
 double abundfromchianti(const string abundfile, const string & ion)
 {
-	// read the abundfile and return the value that goes with the ion string
 	ifstream in(abundfile);
+	return abundfromchianti(in, ion);
+}
+
+double abundfromchianti(const istream in, const string & ion)
+{
+	// read the abundfile and return the value that goes with the ion string
 	if (!in) {
 		cout << "Error: no CHIANTI abundance file exists\n";
 		exit(EXIT_FAILURE);
@@ -291,8 +297,25 @@ cube emissionfromdatacube(cube datacube)
 	tphysvar fittedwidth=linefwhm(T,lambda0,atweight);
 
 // calculate the maximum of the emission profile at each grid point
-	double abund=abundfromchianti(abundfile, ion);
-	tphysvar fittedemission=abund/alphaconst*pow(10.,2.*logrho)*fittedgoft;
+// The emission in the CHIANTItables is calculated with the sun_coronal.abund file
+// There are 2 cases:
+// 	- we are doing spectroscopic calculations: the fittedemission should normalised with the alphaconst, and if a different abundance is used, we should renormalise to the new abundance
+// 	- we are doing intensity calculations (for e.g. AIA): the tables are already in the correct units, and the fittedemission needs to only be multiplied with 1. 
+	double normaliseconst=1.;
+	double abundratio=1.;
+	if (lambda_pixel>1)
+		// in this case, we are doing spectroscopic modelling
+	{
+		normaliseconst=1./alphaconst;
+		istringstream standardabundfile (chiantitables_sun_coronal_abund[]);
+		if (abundfile != string("/empty"))
+		{
+			double abundnew=abundfromchianti(abundfile, ion);
+			double abundold=abundfromchianti(standardabundfile,ion);
+			abundratio=abundnew/abundold;
+		}
+	}
+	tphysvar fittedemission=normaliseconst*abundratio*pow(10.,2.*logrho)*fittedgoft;
 	fittedemission=fittedemission/fittedwidth;
 
 // load the emission and width into the emission-cube variable	
