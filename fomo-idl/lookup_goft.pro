@@ -1,9 +1,9 @@
 
-pro lookup_goft, ion=ion, w0=w0, gotdir=gotdir,n_e_lg=n_e_lg, logt=logt, goft_mat=goft_mat, watom=watom, filenm=filenm,file_abund=file_abund
+pro lookup_goft, ion=ion, w0=w0, gotdir=gotdir,n_e_lg=n_e_lg, logt=logt, goft_mat=goft_mat, watom=watom, filenm=filenm
 
 if keyword_set(ion) eq 0 then begin
    print,'Check input directories'
-   print,'lookup_goft, ion=ion, w0=w0, gotdir=gotdir,n_e_lg=n_e_lg, logt=logt, goft_mat=goft_mat, watom=watom, filenm=filenm,file_abund=file_abund'
+   print,'lookup_goft, ion=ion, w0=w0, gotdir=gotdir,n_e_lg=n_e_lg, logt=logt, goft_mat=goft_mat, watom=watom, filenm=filenm'
    return
 endif
 
@@ -13,10 +13,6 @@ endif
 ; ion: (string) acronym of the ion or filter number in case of SDO/AIA filter
 ; w0: (float) wavelength of line center (not needed for SDO/AIA filter)
 ; gotdir: (string) directory path to where the .dat G(T,n) file is.
-; file_abund: (string) file for abundance abundance. 2 kinds are implemented:
-;            'photospheric' or 'coronal' corresponding, respectively, to the
-;            CHIANTI packages: sun_coronal.abund and
-;            sun_photospheric.abund
 ; filenm: (string) name helping defining the .dat file. Necessary for
 ; SDO/AIA filter: set filenm = 'aia'
 
@@ -26,14 +22,10 @@ endif
 ; goft_mat: G(T,n) function evaluated at (n_e, t)
 ; watom = get_atomic_weight(enum), where enum is the nuclear charge of element
 
-
 if keyword_set(w0) then w0nm = string(round(w0),format='(i4.4)')
-if keyword_set(file_abund) then begin
-   if file_abund eq 'coronal' then nab = '_abco'
-   if file_abund eq 'photospheric' then nab = '_abph'
-endif else begin
-   nab = '_abco'
-endelse
+
+; by default it looks for tables in which coronal abundances are included:
+nab = '_abco'
 
 if keyword_set(filenm) then filegot = 'goft_table_'+filenm+ion+nab+'.dat' else filegot = 'goft_table_'+ion+'_'+w0nm+nab+'.dat'
 

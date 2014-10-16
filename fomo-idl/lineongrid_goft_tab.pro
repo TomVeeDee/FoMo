@@ -1,12 +1,9 @@
-;pro lineongrid_goft_tab, rh_s=rh_s, te_s=te_s, ne_s=ne_s, gotdir=gotdir,wave=wave,nwave=nwave,ion=ion, w0=w0, emission_goft=emission_goft, goft=goft, logt=logt, wayemi=wayemi, watom=watom, conv=conv,file_abund=file_abund,vers=vers
+pro lineongrid_goft_tab, rh_s=rh_s, te_s=te_s, ne_s=ne_s, gotdir=gotdir,wave=wave,nwave=nwave,ion=ion, w0=w0, emission_goft=emission_goft, goft=goft, logt=logt, wayemi=wayemi, watom=watom, conv=conv,file_abund=file_abund,ext_abund=ext_abund,vers=vers
 
-pro lineongrid_goft_tab, rho, te, wave=wave,nwave=nwave,minwave=minwave,maxwave=maxwave,ion=ion, w0=w0, emission_goft=emission_goft, goft=goft, logt=logt, wayemi=wayemi, watom=watom, conv=conv,file_abund=file_abund,vers=vers
-
-
-;if arg_present(rh_s) lt 1 or arg_present(ne_s) lt 1 then begin
-;   print,'lineongrid_goft_tab, rh_s=rh_s, te_s=te_s, ne_s=ne_s, gotdir=gotdir,wave=wave,nwave=nwave,ion=ion, w0=w0, emission_goft=emission_goft, goft=goft, logt=logt, wayemi=wayemi, watom=watom, conv=conv,file_abund=file_abund,vers=vers'
-;   return
-;endif
+if arg_present(rh_s) lt 1 or arg_present(ne_s) lt 1 then begin
+   print,'lineongrid_goft_tab, rh_s=rh_s, te_s=te_s, ne_s=ne_s, gotdir=gotdir,wave=wave,nwave=nwave,ion=ion, w0=w0, emission_goft=emission_goft, goft=goft, logt=logt, wayemi=wayemi, watom=watom, conv=conv,file_abund=file_abund,ext_abund=ext_abund,vers=vers'
+   return
+endif
 
 ; Calculates the emission at each point of a given numerical box by
 ; reading tabulated G(T,n) values produced by function goft_table.pro
@@ -23,6 +20,9 @@ pro lineongrid_goft_tab, rho, te, wave=wave,nwave=nwave,minwave=minwave,maxwave=
 ; file_abund: (string) file for abundance abundance. 2 kinds are implemented:
 ;            'photospheric' or 'coronal' corresponding, respectively, to the
 ;            CHIANTI packages: sun_coronal.abund and sun_photospheric.abund
+;            By default the 'coronal' abundance package is set.
+;	     If other abundance is desired set file_abund = 'other' and provide 
+;	     the full path to the abundance file in the keyword 'ext_abund'.
 ; vers: (int) the CHIANTI version (6 or 7).
 ; wayemi: (int) for different ways of calculating the emissivity in the
 ;        routine lineongrid_goft_tab.pro. The default is wayemi = 4
@@ -64,10 +64,19 @@ if keyword_set(file_abund) then begin
       abund_name = concat_dir(concat_dir(!xuvtop,'abundance'),'sun_coronal.abund') ;!xuvtop+'/abundance/sun_coronal.abund'
       print,'Assuming coronal abundances'
    endif
+   if file_abund eq 'other' then begin
+      if ~keyword_set(ext_abund) then begin
+         print,'Please provide the name and full path of the abundance file in the keyword "ext_abund"'
+      endif else begin
+         abund_name = ext_abund
+      endelse
+   endif
 endif else begin
-   abund_name=concat_dir(concat_dir(!xuvtop,'abundance'),'sun_coronal.abund') ; !xuvtop+'/abundance/sun_coronal.abund'
-   print,'Assuming coronal abundances'
+   abund_name = concat_dir(concat_dir(!xuvtop,'abundance'),'sun_coronal.abund')
+   print,'Assuming coronal abundances (file:"sun_coronal.abund")'
 endelse
+
+abund_dflt = concat_dir(concat_dir(!xuvtop,'abundance'),'sun_coronal.abund')
 
 proton=1.67262158*10^(-27.)
 kboltz = 1.380658*10^(-23.)
@@ -135,7 +144,7 @@ n_e_sorted = n_e[ne_sort]
 Tlg_sorted = logT[ne_sort]
 
 ; Read tabulated G(ne,T) values for given number density (n_e_lg) and temperature (t_lg) arrays
-lookup_goft, ion=ion, w0=w0, gotdir=gotdir,n_e_lg=n_e_lg, logt=t_lg, goft_mat=goft_mat, watom= watom,file_abund=file_abund
+lookup_goft, ion=ion, w0=w0, gotdir=gotdir,n_e_lg=n_e_lg, logt=t_lg, goft_mat=goft_mat, watom= watom
 elements, w0=w0, ion=ion, logTm=logTm, enum=enum, inum=inum, ind=ind, vers=vers
 
 if wayemi ne 3 and wayemi ne 4 then begin
@@ -144,6 +153,8 @@ if wayemi ne 3 and wayemi ne 4 then begin
 endif else begin
    read_abund,abund_name,abund,abund_ref
    line_abunds = abund[enum-1]
+   read_abund,abund_dflt,ab_dflt,abund_ref_dflt
+   line_abunds_dflt = ab_dflt[enum-1]
 endelse
 
 goft=n_e*0.
@@ -207,7 +218,7 @@ if wayemi eq 3 then begin
       lc_ne = ([min(abs(n_e_lg-alog10(n_e_sorted[i]))),!c])[1]
       lc_te = ([min(abs(t_lg-tlg_sorted[i])),!c])[1]
       if tlg_sorted[i] lt min(t_lg) or tlg_sorted[i] gt max(t_lg) then goft[ne_sort[i]] = 0. else goft[ne_sort[i]] = interpol(goft_mat[lc_ne,*],t_lg,tlg_sorted[i])
-      emi[ne_sort[i]] = goft[ne_sort[i]]*n_e_sorted[i]^2*line_abunds
+      emi[ne_sort[i]] = goft[ne_sort[i]]*n_e_sorted[i]^2
       print,string(13b)+' % finished: ',float(i)*100./(n_elements(n_e)-1),format='(a,f4.0,$)'
    endfor
 
@@ -241,9 +252,11 @@ if wayemi eq 4 then begin
       lc_ne = ([min(abs(n_e_lg-alog10(n_e_sorted[i]))),!c])[1]
       lc_te = ([min(abs(t_lg-tlg_sorted[i])),!c])[1]
       if tlg_sorted[i] lt min(t_lg) or tlg_sorted[i] gt max(t_lg) then goft[ne_sort[i]] = 0. else goft[ne_sort[i]] = interpol(goft_mat[lc_ne,*],t_lg,tlg_sorted[i])
-      emission_goft[ne_sort[i]] = goft[ne_sort[i]]*n_e_sorted[i]^2*line_abunds
+      emission_goft[ne_sort[i]] = goft[ne_sort[i]]*n_e_sorted[i]^2
       print,string(13b)+' % finished: ',float(i)*100./(n_elements(n_e)-1),format='(a,f4.0,$)'
    endfor
 endif
-        
+
+emission_goft = emission_goft/line_abunds_dflt*line_abunds
+      
 end

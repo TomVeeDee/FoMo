@@ -1,13 +1,15 @@
 
 
-pro goft_table, w0=w0, ion=ion,gotdir=gotdir,vers=vers,file_abund=file_abund
+pro goft_table, w0=w0, ion=ion,gotdir=gotdir,vers=vers
 
-if arg_present(w0) lt 1 then begin
-   print,'goft_table, w0=w0, ion=ion,gotdir=gotdir,vers=vers,file_abund=file_abund'
+if keyword_set(w0) eq 0 or keyword_set(ion) eq 0 then begin
+   print,'goft_table, w0=w0, ion=ion,gotdir=gotdir,vers=vers'
    return
 endif
 
-; Generates a G(T,n) table (200 pts in temperature, 3000 points in density) for a given line transition
+; Generates a G(T,n) table (200 pts in temperature, 3000 points in density) for a given line transition.
+; A coronal abundance is included by default ('sun_coronal.abund'). Such abundance can be replaced
+; or eliminated in the routine lineongrid_goft_tab.pro
 
 ; INPUT:
 ; w0 = (float) line center wavelength of line transition in Angstroms
@@ -15,38 +17,17 @@ endif
 ; gotdir = (string) directory path where to save the generated table
 ;          (don't forget '/' at end of path) 
 ; vers = (int) Chianti version (6 or 7)
-; file_abund = (string) 'coronal' or 'photospheric' depending on whether
-;             'sun_coronal.abund' or 'sun_photospheric.abund' CHIANTI packages,
-;             respectively, are to be used. 
+
 ; CALLS:
 ; elements, get_atomic_weight, g_of_t
-
-if keyword_set(ion) eq 0 then begin
-   print,'goft_table, w0=w0, ion=ion,gotdir=gotdir,vers=vers,file_abund=file_abund'
-   return
-endif
 
 if ~keyword_set(vers) then begin
    vers = 7
    print,'Assuming Chianti version 7'
 endif
 
-if ~keyword_set(file_abund) then begin
-   abund_file = concat_dir(concat_dir(!xuvtop,'abundance'),'sun_coronal.abund')
-   print,'Assuming coronal abundances'
-   nab = 'abco'
-endif else begin
-   if file_abund eq 'coronal' then begin
-      abund_file = concat_dir(concat_dir(!xuvtop,'abundance'),'sun_coronal.abund')
-      print,'Assuming coronal abundances'
-      nab = 'abco'
-   endif
-   if file_abund eq 'photospheric' then begin
-      abund_file = concat_dir(concat_dir(!xuvtop,'abundance'),'sun_photospheric.abund')
-      print,'Assuming photospheric abundances' 
-      nab = 'abph'
-   endif
-endelse
+abund_file = concat_dir(concat_dir(!xuvtop,'abundance'),'sun_coronal.abund')
+nab = 'abco'
 
 ; Given wavelength center of line (w0) and ion of interest (ion)
 ; produces the G(T,n) table for that wavelength transition

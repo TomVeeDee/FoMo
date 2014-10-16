@@ -1,8 +1,8 @@
 
-pro synthemi,rho=rho,nem=nem,tem=tem,v1m=v1m,v2m=v2m,ion=ion,mua_d=mua_d,gridx=gridx,gridy=gridy,gridz=gridz,emission_goft=emission_goft,wave=wave,nwave=nwave,w0=w0,n_gridx_1=n_gridx_1,n_gridy_1=n_gridy_1,ngrid_1=ngrid_1,n_gridx_2=n_gridx_2,n_gridy_2=n_gridy_2,ngrid_2=ngrid_2,n_gridx_3=n_gridx_3,n_gridy_3=n_gridy_3,ngrid_3=ngrid_3,n_gridx_4=n_gridx_4,n_gridy_4=n_gridy_4,ngrid_4=ngrid_4,dl_1=dl_1,dl_2=dl_2,dl_3=dl_3,dl_4=dl_4,line_1=line_1,img_1=img_1,line_2=line_2,img_2=img_2,line_3=line_3,img_3=img_3,line_4=line_4,img_4=img_4,conv=conv, wayemi=wayemi,imgfront=imgfront,filenm=filenm,gotdir=gotdir,file_abund=file_abund,vers=vers
+pro synthemi,rho=rho,nem=nem,tem=tem,v1m=v1m,v2m=v2m,ion=ion,mua_d=mua_d,gridx=gridx,gridy=gridy,emission_goft=emission_goft,wave=wave,nwave=nwave,w0=w0,n_gridx_1=n_gridx_1,n_gridy_1=n_gridy_1,ngrid_1=ngrid_1,n_gridx_2=n_gridx_2,n_gridy_2=n_gridy_2,ngrid_2=ngrid_2,n_gridx_3=n_gridx_3,n_gridy_3=n_gridy_3,ngrid_3=ngrid_3,n_gridx_4=n_gridx_4,n_gridy_4=n_gridy_4,ngrid_4=ngrid_4,dl_1=dl_1,dl_2=dl_2,dl_3=dl_3,dl_4=dl_4,line_1=line_1,line_2=line_2,line_3=line_3,line_4=line_4,conv=conv,wayemi=wayemi,filenm=filenm,gotdir=gotdir,file_abund=file_abund,ext_abund=ext_abund,vers=vers
 
 if arg_present(rho) lt 1 or arg_present(nem) lt 1 then begin
-   print,'synthemi,rho=rho,nem=nem,tem=tem,v1m=v1m,v2m=v2m,ion=ion,mua_d=mua_d,gridx=gridx,gridy=gridy,gridz=gridz,emission_goft=emission_goft,wave=wave,nwave=nwave,w0=w0,n_gridx_1=n_gridx_1,n_gridy_1=n_gridy_1,ngrid_1=ngrid_1,n_gridx_2=n_gridx_2,n_gridy_2=n_gridy_2,ngrid_2=ngrid_2,n_gridx_3=n_gridx_3,n_gridy_3=n_gridy_3,ngrid_3=ngrid_3,n_gridx_4=n_gridx_4,n_gridy_4=n_gridy_4,ngrid_4=ngrid_4,dl_1=dl_1,dl_2=dl_2,dl_3=dl_3,dl_4=dl_4,line_1=line_1,img_1=img_1,line_2=line_2,img_2=img_2,line_3=line_3,img_3=img_3,line_4=line_4,img_4=img_4,conv=conv, wayemi=wayemi,imgfront=imgfront,filenm=filenm,gotdir=gotdir,file_abund=file_abund,vers=vers'
+   print,'synthemi,rho=rho,nem=nem,tem=tem,v1m=v1m,v2m=v2m,ion=ion,mua_d=mua_d,gridx=gridx,gridy=gridy,emission_goft=emission_goft,wave=wave,nwave=nwave,w0=w0,n_gridx_1=n_gridx_1,n_gridy_1=n_gridy_1,ngrid_1=ngrid_1,n_gridx_2=n_gridx_2,n_gridy_2=n_gridy_2,ngrid_2=ngrid_2,n_gridx_3=n_gridx_3,n_gridy_3=n_gridy_3,ngrid_3=ngrid_3,n_gridx_4=n_gridx_4,n_gridy_4=n_gridy_4,ngrid_4=ngrid_4,dl_1=dl_1,dl_2=dl_2,dl_3=dl_3,dl_4=dl_4,line_1=line_1,line_2=line_2,line_3=line_3,line_4=line_4,conv=conv,wayemi=wayemi,filenm=filenm,gotdir=gotdir,file_abund=file_abund,ext_abund=ext_abund,vers=vers'
    return
 endif
 
@@ -20,6 +20,9 @@ endif
 ; file_abund: (string) file for abundance abundance. 2 kinds are implemented:
 ;            'photospheric' or 'coronal' corresponding, respectively, to the
 ;            CHIANTI packages: sun_coronal.abund and sun_photospheric.abund
+;            By default the 'coronal' abundance package is set.
+;	     If other abundance is desired set file_abund = 'other' and provide 
+;	     the full path to the abundance file in the keyword 'ext_abund'.
 ; vers: (int) the CHIANTI version (6 or 7).
 ; wayemi: (int) for different ways of calculating the emissivity in the
 ;        routine lineongrid_goft_tab.pro. The default is wayemi =
@@ -34,10 +37,6 @@ endif
 ;         saving the emission_goft file in routine interpol_emiss_data.pro
 
 ; OUTPUT:
-; gridz & imgfront: (1d and 2D float arrays, resp.) grid along the z-axis. This is only relevant when the
-;        parameter 'width' defined below is greater than 0. By doing so you
-;        define a depth for your 2D plane, and the parameter 'imgfront' will
-;        therefore represent an intensity image of the 2D plane. 
 ; emission_goft: (2d float array) calculated emissivity values at each
 ;        point point of the 2D plane. 
 ; wave: (1d float array) the wavelength array for the line transition of interest
@@ -94,22 +93,22 @@ if wayemi eq 5 then begin
    ; SDO AIA filters:
    imaging = 1
    logt = alog10(tem)
-   if width gt 0. then begin
-      dimz = width/dx
-      gridz = findgen(dimz)*dx
-   endif else begin
-      dimz =1
-   endelse
-   interpol_emiss_data,ne_s,tem,ion=ion, w0=w0,emission_goft=emission_goft,filenm=filenm
-   imgfront = emission_goft*dimz
+
+   interpol_emiss_data,ne_s,tem,ion=ion, w0=w0,emission_goft=emission_goft,filenm=filenm,file_abund=file_abund,ext_abund=ext_abund
+
    for i=0,nang-1 do begin
       mua = mua_d[i]
       if mua eq 0. then direction = 2
       if mua eq 90. then direction = 1
       if mua ne 0. and mua ne 90. then direction = 4
       gridlos, gridx=gridx, gridy=gridy, mua_d=mua, velx=velx, vely=vely, dx=dx, dy=dy, n_gridx, n_gridy, ngrid, dl=dl, losvel
-      losvel = -losvel/1.e2
-      integrateemission,emission=emission_goft,logt=logt,n_gridx=n_gridx,n_gridy=n_gridy,ngrid=ngrid,w0=w0,direction=direction,losvel=losvel,imaging=imaging,imsp
+
+      if keyword_set(revvel) then begin
+         losvel = -losvel/1.e2
+      endif else begin 
+         losvel = losvel/1.e2
+      endelse
+      integrateemission,emission=emission_goft,logt=logt,n_gridx=n_gridx,n_gridy=n_gridy,ngrid=ngrid,w0=w0,direction=direction,losvel=losvel,imaging=imaging,imsp=imsp
       dlos = (size(imsp))[1]
       inan = string(i+1,format="(i1)")
       exe1 = 'line_'+inan+' = imsp'
@@ -126,16 +125,7 @@ if wayemi eq 5 then begin
    endfor
 endif else begin
 
-   lineongrid_goft_tab, rh_s=rh, te_s=te, ne_s=ne_s, gotdir=gotdir,wave=wave,nwave=nwave,ion=ion, w0=w0, emission_goft=emission_goft,goft=goft, logt=logt,wayemi=wayemi,watom=watom,conv=conv,file_abund=file_abund,vers=vers
-
-; Frontview:
-   if width gt 0. then begin
-      dimz = width/dx
-      gridz = findgen(dimz)*dx
-   endif else begin
-      dimz = 1
-   endelse
-   imgfront = emission_goft*dimz
+   lineongrid_goft_tab, rh_s=rh, te_s=te, ne_s=ne_s, gotdir=gotdir,wave=wave,nwave=nwave,ion=ion, w0=w0, emission_goft=emission_goft,goft=goft, logt=logt,wayemi=wayemi,watom=watom,conv=conv,file_abund=file_abund,ext_abund=ext_abund,vers=vers
 
 ; Sideview:
    for i=0,nang-1 do begin
@@ -144,9 +134,15 @@ endif else begin
       if mua eq 90. then direction = 1
       if mua ne 0. and mua ne 90. then direction = 4
       gridlos, gridx=gridx, gridy=gridy, mua_d=mua, velx=velx, vely=vely, dx=dx, dy=dy, n_gridx, n_gridy, ngrid, dl=dl, losvel
-      losvel = -losvel/1.e2
-      integrateemission,emission=emission_goft,logt=logt,n_gridx=n_gridx,n_gridy=n_gridy,ngrid=ngrid,wave=wave,w0=w0,direction=direction,losvel=losvel,imaging=imaging,imsp,watom=watom,wayemi=wayemi
-      
+
+      if keyword_set(revvel) then begin
+         losvel = -losvel/1.e2
+      endif else begin 
+         losvel = losvel/1.e2
+      endelse
+
+      integrateemission,emission=emission_goft,logt=logt,n_gridx=n_gridx,n_gridy=n_gridy,ngrid=ngrid,wave=wave,w0=w0,direction=direction,losvel=losvel,imaging=imaging,imsp=imsp,watom=watom,wayemi=wayemi,ne_s=ne_s
+
       dlos = (size(imsp))[1]
       inan = string(i+1,format="(i1)")
       exe1 = 'line_'+inan+' = imsp'
@@ -154,7 +150,6 @@ endif else begin
       exe3 = 'n_gridx_'+inan+'=n_gridx'
       exe4 = 'n_gridy_'+inan+'=n_gridy'
       exe5 = 'ngrid_'+inan+'=ngrid'
-
       void = execute(exe1)
       void = execute(exe2)
       void = execute(exe3)
