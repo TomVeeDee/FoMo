@@ -213,7 +213,8 @@ int main(int argc, char* argv[])
 #endif
 	}
 	} // ofstream s destroyed
-#ifdef HAVEMPEGstringstream ss;
+#ifdef HAVEMPEG
+	stringstream ss;
 	ss << "outputfile.t" << seqnum << ".l" << l << ".b" << b << ".png";
 	string graphic_out=ss.str();
 	if (commrank==0)

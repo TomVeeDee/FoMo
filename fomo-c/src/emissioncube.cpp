@@ -20,20 +20,13 @@ const double boltzmannconstant=GSL_CONST_MKSA_BOLTZMANN; // Boltzmann constant
 const double massproton=GSL_CONST_MKSA_MASS_PROTON; // hydrogen mass
 const double speedoflight=GSL_CONST_MKSA_SPEED_OF_LIGHT; // speed of light
 
-double abundfromchianti(const string abundfile, const string & ion)
-{
-	ifstream in(abundfile);
-	return abundfromchianti(in, ion);
-}
-
-double abundfromchianti(const istream in, const string & ion)
+double abundfromchianti(istream & in, const string & ion)
 {
 	// read the abundfile and return the value that goes with the ion string
 	if (!in) {
 		cout << "Error: no CHIANTI abundance file exists\n";
 		exit(EXIT_FAILURE);
 	}
-	cout << "Reading abundances from " << abundfile << "... " << flush;
 
 	int nelement;
 	double value,hvalue,ionvalue;
@@ -62,7 +55,6 @@ double abundfromchianti(const istream in, const string & ion)
 		cout << "Error: invalid CHIANTI abundance file\n";
 		exit(EXIT_FAILURE);
 	}
-	cout << "Done!" << endl << flush;
 
 	value = pow(10.,(ionvalue - hvalue));
 
@@ -307,10 +299,13 @@ cube emissionfromdatacube(cube datacube)
 		// in this case, we are doing spectroscopic modelling
 	{
 		normaliseconst=1./alphaconst;
-		istringstream standardabundfile (chiantitables_sun_coronal_abund[]);
 		if (abundfile != string("/empty"))
 		{
-			double abundnew=abundfromchianti(abundfile, ion);
+			ifstream abundfilestream (abundfile);
+			cout << "Reading abundances from " << abundfile << "... " << flush;
+			double abundnew=abundfromchianti(abundfilestream, ion);
+			cout << "Done!" << endl << flush;
+			istringstream standardabundfile (______chiantitables_sun_coronal_abund_string);
 			double abundold=abundfromchianti(standardabundfile,ion);
 			abundratio=abundnew/abundold;
 		}

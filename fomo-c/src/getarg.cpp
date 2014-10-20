@@ -20,7 +20,7 @@ void printusage(const char* programname){
 	printf("  --help        Print this message\n\n");
 	printf("CHIANTI parameters:\n");
 	printf("  --goftfile    Filename containing the table with the G(T) written by CHIANTI\n");
-	printf("  --abundfile   Filename containing the table with the abundances\n\n");
+	printf("  --abundfile   Filename containing the table with the abundances (standard sun_coronal.abund is used)\n\n");
 	printf("Equilibrium parameters:\n");
 	printf("  --length      Length (in Mm)\n");
 	printf("  --width       Width (in Mm)\n");

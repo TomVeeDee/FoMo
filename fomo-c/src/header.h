@@ -2,6 +2,7 @@
 #include <iostream>
 #include <complex>
 #include <vector>
+#include <string>
 
 #ifdef HAVEMPI
 #include <mpi.h>
@@ -128,4 +129,4 @@ extern string emissionsave;
 extern double readgoftfromchianti(const string);
 
 // included from xdd -i sun_coronal.abund >> sun_coronal.cpp
-const unsigned char ______chiantitables_sun_coronal_abund[];
+extern const string ______chiantitables_sun_coronal_abund_string;
