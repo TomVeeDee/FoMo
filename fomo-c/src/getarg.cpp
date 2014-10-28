@@ -11,6 +11,11 @@ double l=M_PI/6., b=M_PI/3.;
 string chiantifile="chiantitables/goft_table_fe_12_0194.dat";
 string abundfile="/empty";
 string emissionsave="fomo-c.emissionsave";
+// added by D.Y. 28 Oct 2014
+string infileini="infileini";
+string outfileini="outfileini";
+int tstart=0, tend=0,tstep=1;
+
 
 void printusage(const char* programname){
 // print the usage of the program
@@ -33,6 +38,11 @@ void printusage(const char* programname){
 	printf("Orientation parameters:\n");
 	printf("  --l           Longitude of the symmetry centre of the loop (in radians)\n");
 	printf("  --b           Lattitude of the symmetry centre of the loop (in radians)\n\n");
+        printf("  --infileini    input data cube initials\n\n");
+        printf("  --outfileini   output data cube initials\n\n");
+        printf("  --tstart   the first frame to process, default=0\n\n");
+        printf("  --tend     the final frame to process, default=1\n\n");
+        printf("  --tstep     the time steps to process input files, default=1\n\n");
 	printf("Output parameters:\n");
 #ifdef HAVEPNG
 	printf("  --png		Enable writing of png's\n");
@@ -48,27 +58,33 @@ void getarg(int argc, char* argv[])
 {
 // Get arguments and set parameters
 // If reuse is different from 0, everything else is unused
-	char* optstr="C:A:L:w:t:c:a:B:i:l:q:GMy:rs:?";
+//	char* optstr="C:A:L:w:t:c:a:B:i:l:q:GMy:rs:f:u:T:E:P:?";
+ char const *optstr="C:A:L:w:t:c:a:B:i:l:q:GMy:rs:f:u:T:E:P:?";// D.Y. 28 oct 2014
 	struct option longopts[]={
 // name, require argument, flag, value
-		{"goftfile",1,0,'C'},
-		{"abundfile",1,0,'A'},
-		{"length",1,0,'L'},
-		{"width",1,0,'w'},
-		{"thickness",1,0,'t'},
-		{"contrast",1,0,'c'},
-		{"alpha",1,0,'a'},
-		{"magfield",1,0,'B'},
-		{"rhoint",1,0,'i'},
-		{"l",1,0,'l'},
-		{"b",1,0,'q'},
+		{"goftfile",     required_argument,0,'C'},
+		{"abundfile",    required_argument,0,'A'},
+		{"length",       required_argument,0,'L'},
+		{"width",        required_argument,0,'w'},
+		{"thickness",    required_argument,0,'t'},
+		{"contrast",     required_argument,0,'c'},
+		{"alpha",        required_argument,0,'a'},
+		{"magfield",     required_argument,0,'B'},
+		{"rhoint",       required_argument,0,'i'},
+		{"l",            required_argument,0,'l'},
+		{"b",            required_argument,0,'q'},
 // mark the q above, not an evident abbreviation
-		{"png",0,0,'G'},
-		{"mpeg",0,0,'M'},
-		{"array",0,0,'y'},
-		{"reuse",0,0,'r'},
-		{"emissionsave",1,0,'s'},
-		{"help",0,0,'h'},
+		{"png",          no_argument,      0,'G'},
+		{"mpeg",         no_argument,      0,'M'},
+		{"array",        no_argument,      0,'y'},
+		{"reuse",        no_argument,      0,'r'},
+		{"emissionsave", required_argument,0,'s'},
+                {"infileini",    required_argument,   0,'f'}, // D.Y. 28 Oct 2014
+                {"outfileini",   required_argument,  0,'u'}, // D.Y. 28 Oct 2014
+                {"tstart",       required_argument,  0,'T'},
+                {"tend",         required_argument,  0,'E'},
+                {"tstep",        required_argument,  0,'P'}, 
+		{"help",         no_argument,      0,'h'},
 		{NULL,0,NULL,0}
 		};
 	int longindex = 0;
@@ -139,6 +155,21 @@ void getarg(int argc, char* argv[])
 			case 's':
 				emissionsave = optarg;
 				break;
+                        case 'f':
+                                infileini = optarg;
+                                break;
+                        case 'u':
+                                outfileini = optarg;
+                                 break;
+                        case 'T':
+                                 tstart = atoi(optarg);
+                                  break;
+                        case 'E':
+                                 tend = atoi(optarg);
+                                  break;
+                        case 'P':
+                                  tstep = atoi(optarg);
+                                  break;
 			case 'h':
 				printusage(argv[0]);
 				exit(EXIT_SUCCESS);
