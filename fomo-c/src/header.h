@@ -126,6 +126,9 @@ extern Delaunay_triangulation_3 triangulationfromdatacube(cube);
 extern string chiantifile;
 extern string abundfile;
 extern string emissionsave;
+extern string infileini; //added by DY 28 oct 2014
+extern string outfileini;//added by DY 28 oct 2014
+extern int tstart,tend,tstep; //added by DY 28 oct 2014
 extern double readgoftfromchianti(const string);
 
 // included from xdd -i sun_coronal.abund >> sun_coronal.cpp
