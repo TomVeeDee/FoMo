@@ -43,29 +43,29 @@ int main(int argc, char* argv[])
 	globalmax = 0.; globalmin = 0.;
 
 	// Create G(T) interpolated cube or artificial images (depending on --reuse option) 
-	const int nframes=12; //Number of time steps = number of simulation snapshots
+        //const int nframes=tend-tstart+1; //Number of time steps = number of simulation snapshots
 	double pi=4*atan(1.);
-	vector<double> angles={pi/2.,pi/3.,pi/6.}; // Rotation angles around y-axis
+	vector<double> angles={pi/2.,pi*2./3.,pi/3.,pi/6.}; // Rotation angles around y-axis
 	int nangles=angles.size();
 	int ng = eqx*eqy*eqz;
 	int nvars = 5; // \rho, T, vx, vy, vz
 
 	double lambda0=readgoftfromchianti(chiantifile);
 	if (lambda0 > 500.) lambda_width=.6;
-
 	stringstream ss;
 	Delaunay_triangulation_3 DT;
-	for (int t=0; t<nframes; t++)
+	for (int t=tstart; t<=tend; t=t+tstep)
 	{
 		cout << endl << "Doing timestep " << t << endl << flush;
-		ss << "/users/cpa/sgijsen/FoMo/eigft/eigft";
-		ss << setfill('0') << setw(3) << t;
+	//	ss << "/users/cpa/dyuan/fomodata/stslow";
+	        ss << infileini; // argument input
+         	ss << setfill('0') << setw(3) << t;
 		ss << ".dat";
-		string filename=ss.str();
-		ss.str("");
+		string filename=ss.str(); // input file
+		ss.str("");// set to null
 		ss << emissionsave;
 		ss << setfill('0') << setw(3) << t;
-		string snapsave=ss.str();
+		string snapsave=ss.str();// save file
 		ss.str("");
 		cube goftcube(1,1,1);
 		if (reuse!=1)
@@ -133,7 +133,8 @@ int main(int argc, char* argv[])
 			fillccd(observ,results,0,x_pixel-1,0,y_pixel-1);
 			// write out observ cube
 			ss.str("");
-			ss << "/users/cpa/sgijsen/FoMo/observ/obs";
+			// ss << "/users/cpa/dyuan/fomodata/testemislos";
+                        ss << outfileini; // output file initials
 			ss << setfill('0') << setw(3) << int((angles[i]*180./pi)+.5);
 			ss << "t";
 			ss << setfill('0') << setw(3) << t;
