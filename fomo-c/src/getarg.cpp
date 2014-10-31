@@ -155,7 +155,8 @@ void getarg(int argc, char* argv[])
 			case 's':
 				emissionsave = optarg;
 				break;
-                        case 'f':
+                        // added by DY 31 Oct 2014
+                        case 'f':    
                                 infileini = optarg;
                                 break;
                         case 'u':
@@ -163,7 +164,8 @@ void getarg(int argc, char* argv[])
                                  break;
                         case 'T':
                                  tstart = atoi(optarg);
-                                  break;
+                                 if (tend == 0) {tend=tstart;}  
+                                 break;
                         case 'E':
                                  tend = atoi(optarg);
                                   break;
