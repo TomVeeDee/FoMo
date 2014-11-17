@@ -210,14 +210,14 @@ void cube::fillcube()
 			for (int i=0; i<ng; i++)
 				for (int j=2; j<5; j++)
 				{
-					vars[j][i]*=1e5;
+					vars[j][i]*=1e6;
 				}
 			break;
 		case stiefkink:
 			for (int i=0; i<ng; i++)
 				for (int j=2; j<5; j++)
 				{
-					vars[j][i]*=1e5;
+					vars[j][i]*=1e6;
 				}
 			break;
 		case empty:

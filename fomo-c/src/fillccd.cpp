@@ -9,12 +9,12 @@
 #include <CGAL/interpolation_functions.h>
 
 
-const int y_pixel = 200;
-const int x_pixel = 200;
+const int y_pixel = 45;
+const int x_pixel = 300;
 const int z_aspect=2; // determines the aspect ratio between the z direction and the other directions
 const int z_pixel=x_pixel*z_aspect; // take a factor aspect to make 3D pixel a cube
 const int lambda_pixel = 60;
-double lambda_width = 0.14;
+double lambda_width =0.3; // 0.14;
 // if lambda0 is larger than 500, then lambda_width=0.3
 
 const double speedoflight=GSL_CONST_MKSA_SPEED_OF_LIGHT; // speed of light

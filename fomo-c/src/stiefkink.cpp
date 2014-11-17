@@ -35,17 +35,13 @@ int main(int argc, char* argv[])
 	int workheight = y_pixel;
 	if (commsize>1)	workheight = 1;
 	int maxsize = x_pixel*workheight*lambda_pixel;
-	double *results;
-	// Results is a one dimensional array with all data from rectangle [x1,x2]*[y1,y2]
-	// borders included!!!
-	results = (double *)malloc(maxsize*sizeof(double));
 	double globalmax, globalmin;
 	globalmax = 0.; globalmin = 0.;
 
 	// Create G(T) interpolated cube or artificial images (depending on --reuse option) 
         //const int nframes=tend-tstart+1; //Number of time steps = number of simulation snapshots
-	double pi=4*atan(1.);
-	vector<double> angles={pi/2.,pi*2./3.,pi/3.,pi/6.}; // Rotation angles around y-axis
+	// double pi=4*atan(1.);
+	vector<double> angles={M_PI/6.}; // Rotation angles around y-axis
 	int nangles=angles.size();
 	int ng = eqx*eqy*eqz;
 	int nvars = 5; // \rho, T, vx, vy, vz
@@ -122,7 +118,9 @@ int main(int argc, char* argv[])
 // Here ends distinction between constant and time-varying grid
 
 			if (commrank==0) cout << "Done!" << endl << flush;
-		
+	             double *results;
+                     results = (double *)malloc(maxsize*sizeof(double));//only used in reuse option
+	
 		for (int i=0;i<nangles;i++)
 		{
 			l=0;
@@ -135,7 +133,7 @@ int main(int argc, char* argv[])
 			ss.str("");
 			// ss << "/users/cpa/dyuan/fomodata/testemislos";
                         ss << outfileini; // output file initials
-			ss << setfill('0') << setw(3) << int((angles[i]*180./pi)+.5);
+			ss << setfill('0') << setw(3) << int((angles[i]*180./M_PI)+.5);
 			ss << "t";
 			ss << setfill('0') << setw(3) << t;
 			string outfile = ss.str();
@@ -146,39 +144,39 @@ int main(int argc, char* argv[])
 
 		// Experiment: try to add png images as in the example of the torus.
 
-			double **image;
-			image = (double **)malloc(y_pixel*sizeof(double *));
-        		for (int row = 0; row < y_pixel; row++)
-		        {
-                		image[row] = (double *)malloc(x_pixel*sizeof(double));
-		// initialize image to black
-				for (int j=0; j<x_pixel; j++)
-						{
-					image[row][j]=0;
-		        }
-						}
-			tgrid grid=observ.readgrid();
-			tphysvar intens=observ.readvar(0);
-			int row, column;
-			for (int k=0; k<x_pixel*y_pixel*lambda_pixel; k++)
-			{
-				row=int(grid[1][k]);
-				column=int(grid[0][k]);
-				image[row][column]+=intens[k];
-			}
-			if ((x_pixel>=42)&&(y_pixel>=42)) writetime(image,t);
-			int i,j;
-			double max = findmax(image,&i,&j);
-			double min = findmin(image,&i,&j);
-			if (max>globalmax) globalmax=max;
-			if (min<globalmin) globalmin=min;
-#ifdef HAVEPNG
-			if (png) {
-			  cout << "Writing png file... " << flush;
-			  writepng(image,t);
-			  cout << "Done!" << endl << flush;
-			}
-#endif
+//			double **image;
+//			image = (double **)malloc(y_pixel*sizeof(double *));
+//       		for (int row = 0; row < y_pixel; row++)
+//		        {
+//                		image[row] = (double *)malloc(x_pixel*sizeof(double));
+//		// initialize image to black
+//				for (int j=0; j<x_pixel; j++)
+//						{
+//					image[row][j]=0;
+//		        }
+//						}
+//			tgrid grid=observ.readgrid();
+//			tphysvar intens=observ.readvar(0);
+//			int row, column;
+//			for (int k=0; k<x_pixel*y_pixel*lambda_pixel; k++)
+//			{
+//				row=int(grid[1][k]);
+//				column=int(grid[0][k]);
+//				image[row][column]+=intens[k];
+//			}
+//			if ((x_pixel>=42)&&(y_pixel>=42)) writetime(image,t);
+//			int i,j;
+//			double max = findmax(image,&i,&j);
+//			double min = findmin(image,&i,&j);
+//			if (max>globalmax) globalmax=max;
+//			if (min<globalmin) globalmin=min;
+//#ifdef HAVEPNG
+//			if (png) {
+//			  cout << "Writing png file... " << flush;
+//			  writepng(image,t);
+//			  cout << "Done!" << endl << flush;
+//			}
+//#endif
 		}		// end angles
 		}		// end reuse=1
 	}			// end t
