@@ -250,7 +250,7 @@ cube readgoftfromchianti(const string chiantifile, string & ion, double & lambda
 tphysvar linefwhm(const tphysvar T, const double lambda0, const double atweight)
 {
 	// uses the absolute temperature! i.e. not log(T), but T
-	tphysvar w=2*sqrt(2*log(2))*sqrt(boltzmannconstant/massproton/atweight)*lambda0/speedoflight*sqrt(T);
+	tphysvar w=2*sqrt(2*log(2))*sqrt(2*boltzmannconstant/massproton/atweight)*lambda0/speedoflight*sqrt(T);
 	return w;
 }
 
