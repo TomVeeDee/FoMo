@@ -249,9 +249,10 @@ cube readgoftfromchianti(const string chiantifile, string & ion, double & lambda
 
 tphysvar linefwhm(const tphysvar T, const double lambda0, const double atweight)
 {
-	// uses the absolute temperature! i.e. not log(T), but T
-	tphysvar w=2*sqrt(2*log(2))*sqrt(2*boltzmannconstant/massproton/atweight)*lambda0/speedoflight*sqrt(T);
-	return w;
+// uses the absolute temperature! i.e. not log(T), but T
+// for spectroscopic study return, line width
+tphysvar w=2*sqrt(2*log(2))*sqrt(2*boltzmannconstant/massproton/atweight)*lambda0/speedoflight*sqrt(T);
+ 	return w;
 }
 
 cube emissionfromdatacube(cube datacube)
@@ -276,17 +277,18 @@ cube emissionfromdatacube(cube datacube)
 	tphysvar logrho = log10(datacube.readvar(0));
 	tphysvar T = datacube.readvar(1);
 	tphysvar logT = log10(T);
-	writearray(logT,"empty");
+	// writearray(logT,"empty");
 	
 	string ion="";
 	double lambda0=.0;
 	double atweight=1;
 	cube gofttab=readgoftfromchianti(chiantifile,ion,lambda0,atweight);
 
+
 // fit the G(T) function to the data points
 	tphysvar fittedgoft=goft(logT,logrho,gofttab);
 // calculate the line width at each data point
-	tphysvar fittedwidth=linefwhm(T,lambda0,atweight);
+    	tphysvar fittedwidth=linefwhm(T,lambda0,atweight);
 
 // calculate the maximum of the emission profile at each grid point
 // The emission in the CHIANTItables is calculated with the sun_coronal.abund file
@@ -295,9 +297,10 @@ cube emissionfromdatacube(cube datacube)
 // 	- we are doing intensity calculations (for e.g. AIA): the tables are already in the correct units, and the fittedemission needs to only be multiplied with 1. 
 	double normaliseconst=1.;
 	double abundratio=1.;
-	if (lambda_pixel>1)
-		// in this case, we are doing spectroscopic modelling
+	if (lambda_pixel>1) // for spectroscopic study
 	{
+               cout << "This code is configured to do spectroscopic modelling" << endl;        
+               // tphysvar fittedwidth=linefwhm(T,lambda0,atweight);
 		normaliseconst=1./alphaconst;
 		if (abundfile != string("/empty"))
 		{
@@ -310,6 +313,17 @@ cube emissionfromdatacube(cube datacube)
 			abundratio=abundnew/abundold;
 		}
 	}
+        if (lambda_pixel==1) // for imaging study 
+        { 
+          fittedwidth=T/T;// =1.0
+        }
+
+// Spectral modelling: ne^2 [cm^-3] * G(ne,Te) [erg cm^3 s^1] = emis [erg cm^-3 s^-1] 
+// for integration *[cm] [D.Y 12 Nov 2014]
+// AIA modelling: Temperature response function K(ne,Te)[cm^5 DN S^-1]*ne[cm^-3]=emis [DN cm^-1 s^-1]; 
+// for integration *[cm] [D.Y 12 Nov 20
+//        cout << "normaliseconst" <<normaliseconst << endl;
+//        cout << "abundratio"<<abundratio<<endl;
 	tphysvar fittedemission=normaliseconst*abundratio*pow(10.,2.*logrho)*fittedgoft;
 	fittedemission=fittedemission/fittedwidth;
 

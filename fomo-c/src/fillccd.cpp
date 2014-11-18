@@ -12,11 +12,12 @@
 const int y_pixel = 45;
 const int x_pixel = 300;
 const int z_aspect=2; // determines the aspect ratio between the z direction and the other directions
-const int z_pixel=x_pixel*z_aspect; // take a factor aspect to make 3D pixel a cube
-const int lambda_pixel = 60;
-double lambda_width =0.3; // 0.14;
+//const int z_pixel=x_pixel*z_aspect; // take a factor aspect to make 3D pixel a cube [old input]
+const int z_pixel=x_pixel*z_aspect; // Loop cross-section in the y-z plane in my case [DY 14 Nov2014]
+const int lambda_pixel=1; //100; //
+double lambda_width =1.0; // 0.14,0.3  
 // if lambda0 is larger than 500, then lambda_width=0.3
-
+// lambda0 > 1000, at least 1.0 is needed 
 const double speedoflight=GSL_CONST_MKSA_SPEED_OF_LIGHT; // speed of light
 
 double findmax(double * const * const ccd, int * i, int * j)
@@ -212,9 +213,9 @@ void mpi_calculatemypart(double* results, const int x1, const int x2, const int 
 	// Define the unit vector along the line-of-sight
 	vector<double> unit = {sin(b)*cos(l), -sin(b)*sin(l), cos(b)};
 	// Read the physical variables
-	tphysvar peakvec=goftcube.readvar(0);
-	tphysvar fwhmvec=goftcube.readvar(1);
-	tphysvar vx=goftcube.readvar(2);
+	tphysvar peakvec=goftcube.readvar(0);//Peak intensity 
+	tphysvar fwhmvec=goftcube.readvar(1);// line width, =1 for AIA imaging
+	tphysvar vx=goftcube.readvar(2); // velocity [Mm*1e5], 1e5 is suspected to be 1e6, see fillccd.cpp [DY 14 Nov 2014] 
 	tphysvar vy=goftcube.readvar(3);
 	tphysvar vz=goftcube.readvar(4);
 	double losvelval;
@@ -227,13 +228,13 @@ void mpi_calculatemypart(double* results, const int x1, const int x2, const int 
 	for (int i=0; i<ng; i++)
 	{
 		for (int j=0; j<3; j++)	gridpoint[j]=grid[j][i];
-		xacc[i]=gridpoint[0]*cos(b)*cos(l)-gridpoint[1]*cos(b)*sin(l)-gridpoint[2]*sin(b);
+		xacc[i]=gridpoint[0]*cos(b)*cos(l)-gridpoint[1]*cos(b)*sin(l)-gridpoint[2]*sin(b);// rotated grid
 		yacc[i]=gridpoint[0]*sin(l)+gridpoint[1]*cos(l);
 		zacc[i]=gridpoint[0]*sin(b)*cos(l)-gridpoint[1]*sin(b)*sin(l)+gridpoint[2]*cos(b);
-		temporarygridpoint=Point(grid[0][i],grid[1][i],grid[2][i]);
+		temporarygridpoint=Point(grid[0][i],grid[1][i],grid[2][i]); //position vector
 		// also create the map function_values here
-		vector<double> velvec = {vx[i], vy[i], vz[i]};
-		losvelval = inner_product(unit.begin(),unit.end(),velvec.begin(),0.0);
+		vector<double> velvec = {vx[i], vy[i], vz[i]};// velocity vector
+		losvelval = inner_product(unit.begin(),unit.end(),velvec.begin(),0.0);//velocity along line of sight for position [i]/[ng]
 		losvelmap[temporarygridpoint]=Coord_type(losvelval);
 		peakmap[temporarygridpoint]=Coord_type(peakvec[i]);
 		fwhmmap[temporarygridpoint]=Coord_type(fwhmvec[i]);
@@ -250,13 +251,13 @@ void mpi_calculatemypart(double* results, const int x1, const int x2, const int 
 /*	Value_access peak=Value_access(peakmap);
 	Value_access fwhm=Value_access(fwhmmap);
 	Value_access losvel=Value_access(losvelmap);*/
-	xacc.clear();
+	xacc.clear(); // release the memory
 	yacc.clear();
 	zacc.clear();
 	if (commrank==0) cout << "Done!" << endl;
 
-	double lambda0=readgoftfromchianti(chiantifile);
-	
+	double lambda0=readgoftfromchianti(chiantifile);// lambda0=AIA bandpass for AIA imaging
+       	
 	if (commrank==0) cout << "Building frame: " << flush;
 	double x,y,z,intpolpeak,intpolfwhm,intpollosvel,lambdaval,tempintens;
 	int li,lj,ind;
@@ -299,15 +300,23 @@ void mpi_calculatemypart(double* results, const int x1, const int x2, const int 
 			intpolpeak=peakmap[nearest];
 			intpolfwhm=fwhmmap[nearest];
 			intpollosvel=losvelmap[nearest];
-			for (int l=0; l<lambda_pixel; l++)
-			{
-			// lambda is made around lambda0, with a width of lambda_width 
-				lambdaval=double(l)/(lambda_pixel-1)*lambda_width-lambda_width/2.;
+                        if (lambda_pixel>1)// spectroscopic study
+                         {
+			    for (int il=0; il<lambda_pixel; il++) // changed index from global variable l into il [D.Y. 17 Nov 2014]
+		         	{
+		        	// lambda is made around lambda0, with a width of lambda_width 
+				lambdaval=double(il)/(lambda_pixel-1)*lambda_width-lambda_width/2.;
 				tempintens=intpolpeak*exp(-pow(lambdaval-intpollosvel/speedoflight*lambda0,2)/pow(intpolfwhm,2)*4.*log(2.));
-				ind=((i-y1)*(x2-x1+1)+j-x1)*lambda_pixel+l;
-				
-				results[ind]+=tempintens;
-			}
+				ind=((i-y1)*(x2-x1+1)+j-x1)*lambda_pixel+il;// 
+				results[ind]+=tempintens;// loop over z and lambda [D.Y 17 Nov 2014]
+			       }
+                         }
+                        if (lambda_pixel==1) // AIA imaging study. Algorithm not verified [DY 14 Nov 2014]
+                        {
+                          tempintens=intpolpeak;
+                          ind=((i-y1)*(x2-x1+1)+j-x1)*lambda_pixel; 
+                          results[ind]+=tempintens; // loop over z [D.Y 17 Nov 2014]
+                        }
 		}
 		
 
@@ -328,11 +337,13 @@ void fillccd(cube observ, const double *results, const int x1, const int x2, con
 #endif
 	for (int i=y1; i<y2+1; i++)
 		for (int j=x1; j<x2+1; j++)
-			for (int l=0; l<lambda_pixel; l++)
-			{
-				int ind=((i-y1)*(x2-x1+1)+j-x1)*lambda_pixel+l;
-				double lambdaval=double(l)/(lambda_pixel-1)*lambda_width-lambda_width/2.+lambda0;
-				grid[0][ind]=j;
+			for (int il=0; il<lambda_pixel; il++) // changed index from global variable l into il [D.Y. 17 Nov 2014]
+			{      
+				int ind=((i-y1)*(x2-x1+1)+j-x1)*lambda_pixel+il;
+                                double lambdaval;
+			     if (lambda_pixel>1) lambdaval=double(il)/(lambda_pixel-1)*lambda_width-lambda_width/2.+lambda0;
+                             if (lambda_pixel==1) lambdaval=lambda0; // if statment added by [D.Y. 17 Nov 2014]
+                      		grid[0][ind]=j;
 				grid[1][ind]=i;
 				grid[2][ind]=lambdaval;
 				intens[ind]=results[ind];

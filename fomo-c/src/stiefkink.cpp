@@ -32,22 +32,26 @@ int main(int argc, char* argv[])
 	writefile();
 
 	// Variables used for parallellisation using mpi (as per 26/09/14 not yet implemented)
-	int workheight = y_pixel;
-	if (commsize>1)	workheight = 1;
-	int maxsize = x_pixel*workheight*lambda_pixel;
+//        int workheight = y_pixel;
+//        if (commsize>1) workheight = 1;
+//        int maxsize = x_pixel*workheight*lambda_pixel;
+//        double *results;
+//        results = (double *)malloc(maxsize*sizeof(double));//only used in reuse option
+
 	double globalmax, globalmin;
 	globalmax = 0.; globalmin = 0.;
-
 	// Create G(T) interpolated cube or artificial images (depending on --reuse option) 
         //const int nframes=tend-tstart+1; //Number of time steps = number of simulation snapshots
 	// double pi=4*atan(1.);
-	vector<double> angles={M_PI/6.}; // Rotation angles around y-axis
+	vector<double> angles={M_PI/6.}; // M_PI/2.,M_PI/3.,M_PI/4. Rotation angles around y-axis
 	int nangles=angles.size();
 	int ng = eqx*eqy*eqz;
 	int nvars = 5; // \rho, T, vx, vy, vz
 
-	double lambda0=readgoftfromchianti(chiantifile);
-	if (lambda0 > 500.) lambda_width=.6;
+        if (lambda_pixel==1) cout << "This code is configure to do imaging modelling!" << endl;
+        if (lambda_pixel>1) cout << "This code is configure to do spectral modelling!" << endl;
+//	double lambda0=readgoftfromchianti(chiantifile);
+//	if (lambda0 > 500.) lambda_width=.6;
 	stringstream ss;
 	Delaunay_triangulation_3 DT;
 	for (int t=tstart; t<=tend; t=t+tstep)
@@ -102,9 +106,9 @@ int main(int argc, char* argv[])
 //				}
 //			}
 		}
-		else
+		else // reuse part 
 		{
-			if (commrank==0) cout << "Reading in data from previous run in file " << snapsave << "... " << flush;
+			if (commrank==0) cout << "Reuse emission data " << snapsave << "... " << flush;
 //			if (t == 0) 
 //			{
 				reademissioncube(goftcube, snapsave, &DT);
@@ -117,9 +121,12 @@ int main(int argc, char* argv[])
 
 // Here ends distinction between constant and time-varying grid
 
-			if (commrank==0) cout << "Done!" << endl << flush;
-	             double *results;
-                     results = (double *)malloc(maxsize*sizeof(double));//only used in reuse option
+		if (commrank==0) cout << "Done!" << endl << flush;
+                int workheight = y_pixel;
+               if (commsize>1) workheight = 1;
+                int maxsize = x_pixel*workheight*lambda_pixel;
+                double *results;
+                results = (double *)malloc(maxsize*sizeof(double));//only used in reuse option
 	
 		for (int i=0;i<nangles;i++)
 		{
@@ -138,11 +145,11 @@ int main(int argc, char* argv[])
 			ss << setfill('0') << setw(3) << t;
 			string outfile = ss.str();
 			ss.str("");
-			cout << "Writing out computed emission to " << outfile << "... " << flush;
+			cout << "Writing out integratted emission into " << outfile << "... " << flush;
 			writeemissioncube(observ,outfile);
 			cout << "Done!" << endl << flush;
 
-		// Experiment: try to add png images as in the example of the torus.
+// Experiment: try to add png images as in the example of the torus.
 
 //			double **image;
 //			image = (double **)malloc(y_pixel*sizeof(double *));
