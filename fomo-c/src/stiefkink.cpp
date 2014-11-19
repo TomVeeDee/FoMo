@@ -37,6 +37,7 @@ int main(int argc, char* argv[])
 //        int maxsize = x_pixel*workheight*lambda_pixel;
 //        double *results;
 //        results = (double *)malloc(maxsize*sizeof(double));//only used in reuse option
+        
 
 	double globalmax, globalmin;
 	globalmax = 0.; globalmin = 0.;
@@ -50,14 +51,15 @@ int main(int argc, char* argv[])
 
         if (lambda_pixel==1) cout << "This code is configure to do imaging modelling!" << endl;
         if (lambda_pixel>1) cout << "This code is configure to do spectral modelling!" << endl;
-//	double lambda0=readgoftfromchianti(chiantifile);
-//	if (lambda0 > 500.) lambda_width=.6;
 	stringstream ss;
 	Delaunay_triangulation_3 DT;
+       // if not dynamicDT the triangulation can be done only once, however, it is saved for every snapshot for restart!
+        bool dynamicDT=false;
+        bool doDT=true;
+        bool readDT=true;
 	for (int t=tstart; t<=tend; t=t+tstep)
 	{
 		cout << endl << "Doing timestep " << t << endl << flush;
-	//	ss << "/users/cpa/dyuan/fomodata/stslow";
 	        ss << infileini; // argument input
          	ss << setfill('0') << setw(3) << t;
 		ss << ".dat";
@@ -68,6 +70,11 @@ int main(int argc, char* argv[])
 		string snapsave=ss.str();// save file
 		ss.str("");
 		cube goftcube(1,1,1);
+                if (t==tstart)
+                  {
+                  doDT=true;
+                  readDT=true;
+                   }
 		if (reuse!=1)
 		{
 
@@ -82,41 +89,33 @@ int main(int argc, char* argv[])
 			datacube.fillcube();
 			goftcube=emissionfromdatacube(datacube);
 
-//		In this part the emission data cubes are written to a file, they can be restored to view the emission from different angles with respect to the loop axis. For this purpose the triangulation of the original data are stored together with the emission.
+//In this part the emission data cubes are written to a file, they can be restored to view the emission from different angles with respect to the loop axis. For this purpose the triangulation of the original data are stored together with the emission.
 // The uncommented lines below assume an irregular grid that changes with time. Uncomment the following lines for grids that are constant for each time step (this saves time; same triangulation at each time step).
-//			{
+                      //steady grid and first time run
+                      if(dynamicDT || doDT) // only do DT for dynamic grid or first time
+                         { doDT=false;// never repeat
+                            DT=triangulationfromdatacube(datacube);// only use the grid info
+                         }
+		      if (emissionsave.compare("none")!=0)
+		 	{
+		     	if (commrank==0) cout << "Writing data for reuse in file " << snapsave << "... " << flush;
+			writeemissioncube(goftcube,snapsave,&DT);
+			if (commrank==0) cout << "Done!" << endl << flush;
+			}
 
-				DT=triangulationfromdatacube(datacube);
-				if (emissionsave.compare("none")!=0)
-				{
-					if (commrank==0) cout << "Writing data for reuse in file " << snapsave << "... " << flush;
-					writeemissioncube(goftcube,snapsave,&DT);
-					if (commrank==0) cout << "Done!" << endl << flush;
-				}
 
-
-//			}
-//			else	// 
-//			{
-//				if (emissionsave.compare("none")!=0)
-//				{
-//					if (commrank==0) cout << "Writing data for reuse in file " << snapsave << "... " << flush;
-//					writeemissioncube(goftcube,snapsave);
-//					if (commrank==0) cout << "Done!" << endl << flush;
-//				}
-//			}
 		}
 		else // reuse part 
 		{
 			if (commrank==0) cout << "Reuse emission data " << snapsave << "... " << flush;
-//			if (t == 0) 
-//			{
+			if (dynamicDT || readDT) // dynamic grid or first time read [DY 19 Nov 2014]
+			{       readDT=false; // never repeat for steady grid 
 				reademissioncube(goftcube, snapsave, &DT);
-//			}
-//			else
-//			{
-//				reademissioncube(goftcube, snapsave);
-//			}
+			}
+			else // not dynamic grid and not first time read
+			{
+				reademissioncube(goftcube, snapsave);
+			}
 
 
 // Here ends distinction between constant and time-varying grid

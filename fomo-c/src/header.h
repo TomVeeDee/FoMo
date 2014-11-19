@@ -7,6 +7,15 @@
 #ifdef HAVEMPI
 #include <mpi.h>
 #endif
+#define XSIZE 300 // output snapshot size [D.Y 12 Nov 2014]
+#define YSIZE 45  // setup is the same as in fillccd.cpp [D.Y 12 Nov 2014]
+//#define LONGLAMBDA // lambda0 gt 500, set lambdawidth=0.3
+//#define FORAIA // used for aia imaging calculation  [D.Y 12 Nov 2014]
+//#ifdef FORAIA
+//  #undef LONGLAMBDA 
+//#endif
+
+
 
 //CGAL
 #include <CGAL/Exact_predicates_inexact_constructions_kernel.h>
@@ -91,13 +100,14 @@ extern void writemovie(char*, const double, const int);
 extern void writearray(double * const * const, const int);
 extern void writearray(tphysvar const &, string);
 
-//external functions in fillccd.cpp
+// external functions in fillccd.cpp
 extern const int x_pixel;
 extern const int y_pixel;
 // z_pixel is not really a constant of the telescope, it can be adjusted to obtain a sufficient resolution
 extern const int z_pixel;
 extern const int lambda_pixel;
 extern double lambda_width;
+
 extern double findmax(double * const * const, int *, int *);
 extern double findmin(double * const * const, int *, int *);
 extern int MPE_Decomp1d(int , int , int, int *, int*);

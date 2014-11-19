@@ -279,7 +279,7 @@ cube emissionfromdatacube(cube datacube)
 	tphysvar logT = log10(T);
 	// writearray(logT,"empty");
 	
-	string ion="";
+	string ion="";// better to be aia for AIA tables this will be checked for correct table [DY]
 	double lambda0=.0;
 	double atweight=1;
 	cube gofttab=readgoftfromchianti(chiantifile,ion,lambda0,atweight);
@@ -314,7 +314,14 @@ cube emissionfromdatacube(cube datacube)
 		}
 	}
         if (lambda_pixel==1) // for imaging study 
-        { 
+        {
+        
+        if (atoi(ion.c_str())!=int(lambda0+0.5)) 
+          {
+           cout << "GOFT table is not correct!" << endl; 
+           exit(EXIT_FAILURE);
+         }
+ 
           fittedwidth=T/T;// =1.0
         }
 

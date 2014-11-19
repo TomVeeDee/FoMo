@@ -1,4 +1,4 @@
-pro readgoftcube,emissionsave,data
+function readgoftcube,emissionsave,data
 
 ; reads the data in emissionsave files, not the triangulation
 
@@ -10,5 +10,5 @@ readf,lun,data
 
 close,lun
 free_lun,lun
-
+return,data
 end

@@ -14,7 +14,7 @@ const int x_pixel = 300;
 const int z_aspect=2; // determines the aspect ratio between the z direction and the other directions
 //const int z_pixel=x_pixel*z_aspect; // take a factor aspect to make 3D pixel a cube [old input]
 const int z_pixel=x_pixel*z_aspect; // Loop cross-section in the y-z plane in my case [DY 14 Nov2014]
-const int lambda_pixel=1; //100; //
+const int lambda_pixel=1;// 100; //
 double lambda_width =1.0; // 0.14,0.3  
 // if lambda0 is larger than 500, then lambda_width=0.3
 // lambda0 > 1000, at least 1.0 is needed 
