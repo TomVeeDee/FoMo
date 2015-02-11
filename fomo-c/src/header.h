@@ -3,7 +3,6 @@
 #include <complex>
 #include <vector>
 #include <string>
-
 #ifdef HAVEMPI
 #include <mpi.h>
 #endif
@@ -80,10 +79,11 @@ extern tphysvar sqrt(tphysvar const&);
 extern void getarg(int, char* array[]);
 
 // external functions in io.cpp
-extern void getfile();
-extern void writefile();
+//extern void getfile();
+//extern void writefile();
 extern void writeparameters(ostream&, char);
 extern void reademissioncube(cube&, const string, Delaunay_triangulation_3* = NULL);
+extern void reademissioncube_byt(cube&, const string, Delaunay_triangulation_3* = NULL);
 extern void writeemissioncube(const cube, const string, const Delaunay_triangulation_3 * = NULL);
 
 //external functions in equilibrium.cpp
@@ -106,6 +106,7 @@ extern const int y_pixel;
 // z_pixel is not really a constant of the telescope, it can be adjusted to obtain a sufficient resolution
 extern const int z_pixel;
 extern const int lambda_pixel;
+extern const double lambda0;
 extern double lambda_width;
 
 extern double findmax(double * const * const, int *, int *);

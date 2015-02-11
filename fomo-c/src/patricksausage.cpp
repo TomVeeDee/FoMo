@@ -16,7 +16,7 @@ int main(int argc, char* argv[])
 	commsize = 1;
 	getarg(argc,argv);
 	writeparameters(cout,'v');
-	writefile();
+//	writefile();
 
 	// here starts mpi
 	int workheight = y_pixel;

@@ -150,7 +150,7 @@ void getarg(int argc, char* argv[])
 			case 'r':
 				reuse = 1;
 				printf("Warning: reusing old parameters\n");
-				getfile();
+				//getfile(); deprecated by DY 11 Feb 2015
 				break;
 			case 's':
 				emissionsave = optarg;

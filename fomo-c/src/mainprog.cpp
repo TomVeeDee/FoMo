@@ -23,7 +23,7 @@ int main(int argc, char* argv[])
 #endif
 	getarg(argc,argv);
 	writeparameters(cout,'v');
-	writefile();
+//	writefile(); commented by DY. 11 Feb 2015
 
 #ifdef HAVEMPI
 	MPI_Barrier(MPI_COMM_WORLD);

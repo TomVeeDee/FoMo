@@ -7,7 +7,7 @@
 #include <iomanip>
 #include <cstdlib>
 #include <cmath>
-
+#include <time.h> /*clock_t, clock, CLOCKS_PER_SEC*/
 /* Example of main routine to generate synthetic observations from irregularly gridded input data.
 This program is adapted to process data written into a text file as follows:
 --------------------------------------------------------------------------------
@@ -25,11 +25,11 @@ int main(int argc, char* argv[])
 
 // Initialize global paramters, get arguments and set physical parameters
 	int commrank,commsize; // For parallellisation
-
+        clock_t t0;
 	commrank = 0;
 	commsize = 1;
 	getarg(argc,argv);  // Read in arguments from call to main function. For an overview of different input parameters, run program with --help argument.
-	writefile();
+//	writefile();
 
 	// Variables used for parallellisation using mpi (as per 26/09/14 not yet implemented)
 //        int workheight = y_pixel;
@@ -49,8 +49,8 @@ int main(int argc, char* argv[])
 	int ng = eqx*eqy*eqz;
 	int nvars = 5; // \rho, T, vx, vy, vz
 
-        if (lambda_pixel==1) cout << "This code is configure to do imaging modelling!" << endl;
-        if (lambda_pixel>1) cout << "This code is configure to do spectral modelling!" << endl;
+        if (lambda_pixel==1) cout << "This code is configured to do imaging modelling!" << endl;
+        if (lambda_pixel>1) cout << "This code is configured to do spectral modelling!" << endl;
 	stringstream ss;
 	Delaunay_triangulation_3 DT;
        // if not dynamicDT the triangulation can be done only once, however, it is saved for every snapshot for restart!
@@ -82,40 +82,48 @@ int main(int argc, char* argv[])
 			cube datacube(nvars,ng);
 			EqType qtype=stiefkink;
 			datacube.settype(qtype);
-				if (commrank == 0) cout << "Reading in snapshot " << filename << "... " << flush;
-				reademissioncube(datacube, filename, &DT);
-				if (commrank == 0) cout << "Done!" << endl << flush;
-
+                        t0=clock();
+            		if (commrank == 0) cout << "Reading in snapshot " << filename << "... " << flush;
+			reademissioncube(datacube, filename, &DT);
+			if (commrank == 0) cout << "Done!" << endl << flush;
+                        cout<<"Reading time used "<<(float(clock()-t0)/CLOCKS_PER_SEC)<<"[cpu second]"<<endl;
+                        t0=clock();
 			datacube.fillcube();
 			goftcube=emissionfromdatacube(datacube);
-
-//In this part the emission data cubes are written to a file, they can be restored to view the emission from different angles with respect to the loop axis. For this purpose the triangulation of the original data are stored together with the emission.
-// The uncommented lines below assume an irregular grid that changes with time. Uncomment the following lines for grids that are constant for each time step (this saves time; same triangulation at each time step).
+                        cout<<"Emission calculation used "<<(float(clock()-t0)/CLOCKS_PER_SEC)<<"[cpu second]"<<endl;
                       //steady grid and first time run
                       if(dynamicDT || doDT) // only do DT for dynamic grid or first time
                          { doDT=false;// never repeat
+                            t0=clock();
                             DT=triangulationfromdatacube(datacube);// only use the grid info
+                            cout<<"Triangulation used "<<(float(clock()-t0)/CLOCKS_PER_SEC)<<"[cpu second]"<<endl;
                          }
 		      if (emissionsave.compare("none")!=0)
 		 	{
 		     	if (commrank==0) cout << "Writing data for reuse in file " << snapsave << "... " << flush;
-			writeemissioncube(goftcube,snapsave,&DT);
+                        t0=clock();
+			writeemissioncube(goftcube,snapsave,&DT);                   
 			if (commrank==0) cout << "Done!" << endl << flush;
+                        cout<<"Writing data used "<<(float(clock()-t0)/CLOCKS_PER_SEC)<<"[cpu second]"<<endl;
 			}
 
 
 		}
 		else // reuse part 
-		{
+		{       t0=clock();
 			if (commrank==0) cout << "Reuse emission data " << snapsave << "... " << flush;
 			if (dynamicDT || readDT) // dynamic grid or first time read [DY 19 Nov 2014]
 			{       readDT=false; // never repeat for steady grid 
 				reademissioncube(goftcube, snapsave, &DT);
+                                cout<<"Reading data and DT used "<<(float(clock()-t0)/CLOCKS_PER_SEC)<<"[cpu second]"<<endl;
+
 			}
 			else // not dynamic grid and not first time read
 			{
 				reademissioncube(goftcube, snapsave);
+                               cout<<"Reading data without DT used "<<(float(clock()-t0)/CLOCKS_PER_SEC)<<"[cpu second]"<<endl;
 			}
+
 
 
 // Here ends distinction between constant and time-varying grid
@@ -128,13 +136,14 @@ int main(int argc, char* argv[])
                 results = (double *)malloc(maxsize*sizeof(double));//only used in reuse option
 	
 		for (int i=0;i<nangles;i++)
-		{
+		{       t0=clock();
 			l=0;
 			b=angles[i];
 			for (int j=0; j<maxsize; j++) results[j]=0;
 			mpi_calculatemypart(results,0,x_pixel-1,0,y_pixel-1,t,goftcube,&DT);
 			cube observ(1,x_pixel*y_pixel*lambda_pixel);
 			fillccd(observ,results,0,x_pixel-1,0,y_pixel-1);
+                        cout<<"Integration used "<<(float(clock()-t0)/CLOCKS_PER_SEC)<<"[cpu second]"<<endl;
 			// write out observ cube
 			ss.str("");
 			// ss << "/users/cpa/dyuan/fomodata/testemislos";
@@ -144,9 +153,11 @@ int main(int argc, char* argv[])
 			ss << setfill('0') << setw(3) << t;
 			string outfile = ss.str();
 			ss.str("");
+                        t0=clock();
 			cout << "Writing out integratted emission into " << outfile << "... " << flush;
 			writeemissioncube(observ,outfile);
 			cout << "Done!" << endl << flush;
+                        cout<<"Writing emission data used "<<(float(clock()-t0)/CLOCKS_PER_SEC)<<"[cpu second]"<<endl;
 
 // Experiment: try to add png images as in the example of the torus.
 

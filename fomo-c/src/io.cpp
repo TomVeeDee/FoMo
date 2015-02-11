@@ -4,7 +4,7 @@
 
 string configfile="fomo-c.conf";
 
-void getfile()
+/*void getfile()
 {
 	ifstream in(configfile);
 	if (!in) {
@@ -22,7 +22,7 @@ void getfile()
 	   >> b;
 	   
 }
-
+*/
 void writeparameters(ostream& s, char v = '0')
 {
 	int commrank;
@@ -60,7 +60,7 @@ void writeparameters(ostream& s, char v = '0')
 			break;
 	}
 }
-
+/*
 void writefile()
 {
 	int commrank;
@@ -74,7 +74,7 @@ void writefile()
 		ofstream out(configfile);
 		writeparameters(out);
 	}
-}
+} */
 
 void writeemissioncube(const cube goftcube, const string filename, const Delaunay_triangulation_3 *DTpointer)
 {
@@ -191,3 +191,73 @@ void reademissioncube(cube &resultcube, const string emissionsave, Delaunay_tria
 		in.close();
 	}
 }
+/*
+void reademissioncube_byt(cube &resultcube, const string emissionsave, Delaunay_triangulation_3 * DTpointer)
+{
+ // read binary data added by D.Y 10 Feb 2015
+	int commrank;
+#ifdef HAVEMPI
+        MPI_Comm_rank(MPI_COMM_WORLD,&commrank);
+#else
+	commrank = 0;
+#endif
+	if (commrank==0)
+	{
+                int dim, nvars, intqtype;
+                long int ng;
+		EqType resulttype=resultcube.readtype();
+
+		ifstream infile(emissionsave,ios_base::binary | ios_base::in);
+		if (infile.is_open())
+		{
+                        infile.read(&dim,sizeof(dim));
+                        infile.read(&intqtype,sizeof(intqtype));
+                        infile.read(&ng,sizeof(ng));
+                        infile.read(&nvars,sizeof(nvars));
+                        float array[dim+nvars][ng];
+                        infile.read(&array,sizeof(array));
+			cube goftcube(nvars,ng,dim);
+			if ((EqType(intqtype) <= empty) && (resulttype == empty))
+			{
+				goftcube.settype(EqType(intqtype));
+			}
+			else
+			{
+				goftcube.settype(resulttype);
+			}
+			tgrid grid= new tcoord[dim];
+			vector<tphysvar> allvar;
+			allvar.resize(nvars);
+			for (int i=0; i<dim; i++)
+			{
+				grid[i].resize(ng);
+			}
+			for (int i=0; i<nvars; i++)
+			{
+				allvar[i].resize(ng);
+			}
+                     
+			for (int j=0; j<ng; j++)
+	        	{
+				for (int i=0; i<dim; i++) grid[i][j]=array[i][j];
+				for (int i=0; i<nvars; i++) allvar[i][j]==array[dim+i][j];
+			}
+                        
+			goftcube.setgrid(grid);
+			for (int i=0; i<nvars; i++)
+			{
+				goftcube.setvar(i,allvar[i]);
+			}
+			resultcube=goftcube;
+
+			if (!infile.eof() && (DTpointer!=NULL)) 
+			{
+				infile >> *DTpointer;
+				// Check is this is a valid Delaunay triangulation
+				// assert(DTpointer->is_valid());
+			}
+		}
+		else cout << "Unable to read " << emissionsave << endl;
+		infile.close();
+	}
+}*/
