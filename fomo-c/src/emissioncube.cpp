@@ -317,7 +317,7 @@ cube emissionfromdatacube(cube datacube)
         {
         
         if (atoi(ion.c_str())!=int(lambda0+0.5)) 
-          {
+          {// check if it is AIA GOFT table
            cout << "GOFT table is not correct!" << endl; 
            exit(EXIT_FAILURE);
          }

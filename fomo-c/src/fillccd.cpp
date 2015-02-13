@@ -1,21 +1,22 @@
 #include "header.h"
-#include <cmath>
+//#include <cmath>
 #include <cstdlib>
-#include <numeric>
-#include <gsl/gsl_const_mksa.h>
+//#include <numeric>
+//#include <gsl/gsl_const_mksa.h>
 #include <boost/progress.hpp>
 
 // CGAL
 #include <CGAL/interpolation_functions.h>
 
 
-const int y_pixel = 23;
-const int x_pixel = 75;
-const int z_aspect=1; // determines the aspect ratio between the z direction and the other directions
+//Delaunay_triangulation_3 DT_global;
+//const int y_pixel = 23;
+//const int x_pixel = 75;
+//const int z_aspect=1; // determines the aspect ratio between the z direction and the other directions
 //const int z_pixel=x_pixel*z_aspect; // take a factor aspect to make 3D pixel a cube [old input]
-const int z_pixel=x_pixel*z_aspect; // Loop cross-section in the y-z plane in my case [DY 14 Nov2014]
-const int lambda_pixel=30; // 
-double lambda_width =1.0; // 0.14,0.3  
+//const int z_pixel=x_pixel*z_aspect; // Loop cross-section in the y-z plane in my case [DY 14 Nov2014]
+//const int lambda_pixel=30; // 
+//double lambda_width =1.0; // 0.14,0.3  
 // if lambda0 is larger than 500, then lambda_width=0.3
 // lambda0 > 1000, at least 1.0 is needed 
 const double speedoflight=GSL_CONST_MKSA_SPEED_OF_LIGHT; // speed of light
@@ -177,6 +178,39 @@ Delaunay_triangulation_3 triangulationfromdatacube(cube goftcube)
 	if (commrank==0) cout << "Done!" << endl << flush;
 	return DT;
 }
+void triangulationfromdatacube_pt(cube goftcube)
+{
+	typedef K::Point_3                                    Point;
+	int commrank;
+#ifdef HAVEMPI
+	MPI_Comm_rank(MPI_COMM_WORLD,&commrank);
+#else
+	commrank = 0;
+#endif
+	tgrid grid = goftcube.readgrid();
+	int ng=goftcube.readngrid();
+	vector<Point> delaunaygrid;
+	delaunaygrid.resize(ng);
+
+	for (int i=0; i<ng; i++)
+	{
+		delaunaygrid[i]=Point(grid[0][i],grid[1][i],grid[2][i]);
+	}
+
+	// compute the Delaunay triangulation
+	if (commrank==0) cout << "Doing Delaunay triangulation for interpolation onto rays... " << flush;
+	//Delaunay_triangulation_3 DT;
+	// The triangulation should go quicker if it is sorted
+	// CGAL::spatial_sort(delaunaygrid.begin(),delaunaygrid.end());
+	// but I don't know how this affects the values in the maps.
+	// Apparently, this is already done internally.
+	DT_global.insert(delaunaygrid.begin(),delaunaygrid.end());
+        assert(DT_global.is_valid());
+        assert(DT_global.dimension()==3);
+	if (commrank==0) cout << "Done!" << endl << flush;
+	
+}
+
 
 void mpi_calculatemypart(double* results, const int x1, const int x2, const int y1, const int y2, const double t, cube goftcube, Delaunay_triangulation_3* DTpointer)
 {
@@ -215,7 +249,7 @@ void mpi_calculatemypart(double* results, const int x1, const int x2, const int 
 	// Read the physical variables
 	tphysvar peakvec=goftcube.readvar(0);//Peak intensity 
 	tphysvar fwhmvec=goftcube.readvar(1);// line width, =1 for AIA imaging
-	tphysvar vx=goftcube.readvar(2); // velocity [Mm*1e5], 1e5 is suspected to be 1e6, see fillccd.cpp [DY 14 Nov 2014] 
+	tphysvar vx=goftcube.readvar(2);  
 	tphysvar vy=goftcube.readvar(3);
 	tphysvar vz=goftcube.readvar(4);
 	double losvelval;

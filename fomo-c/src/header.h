@@ -6,20 +6,19 @@
 #ifdef HAVEMPI
 #include <mpi.h>
 #endif
-#define XSIZE 300 // output snapshot size [D.Y 12 Nov 2014]
-#define YSIZE 45  // setup is the same as in fillccd.cpp [D.Y 12 Nov 2014]
-//#define LONGLAMBDA // lambda0 gt 500, set lambdawidth=0.3
-//#define FORAIA // used for aia imaging calculation  [D.Y 12 Nov 2014]
-//#ifdef FORAIA
-//  #undef LONGLAMBDA 
-//#endif
-
+// new add
+#include <cmath>
+//#include <cstdlib>
+#include <numeric>
+#include <gsl/gsl_const_mksa.h>
+//#include <boost/progress.hpp>
 
 
 //CGAL
 #include <CGAL/Exact_predicates_inexact_constructions_kernel.h>
 #include <CGAL/Delaunay_triangulation_3.h>
-
+// new add
+#include <CGAL/interpolation_functions.h>
 
 using namespace std;
 
@@ -81,24 +80,24 @@ extern void getarg(int, char* array[]);
 // external functions in io.cpp
 //extern void getfile();
 //extern void writefile();
-extern void writeparameters(ostream&, char);
+//extern void writeparameters(ostream&, char);
 extern void reademissioncube(cube&, const string, Delaunay_triangulation_3* = NULL);
 extern void reademissioncube_byt(cube&, const string, Delaunay_triangulation_3* = NULL);
 extern void writeemissioncube(const cube, const string, const Delaunay_triangulation_3 * = NULL);
-
+extern void writeemissioncube_pt(const cube, const string);
 //external functions in equilibrium.cpp
-extern double density(const double, const double, const double);
-extern double temperature(const double, const double, const double);
+//extern double density(const double, const double, const double);
+//extern double temperature(const double, const double, const double);
 
 //external functions in writepng.cpp
-extern int writepng(double * const * const image, const int);
+//extern int writepng(double * const * const image, const int);
 
 //external functions in writemovie.cpp
-extern void writemovie(char*, const double, const int);
+//extern void writemovie(char*, const double, const int);
 
 //external functions in writearray.cpp
-extern void writearray(double * const * const, const int);
-extern void writearray(tphysvar const &, string);
+//extern void writearray(double * const * const, const int);
+//extern void writearray(tphysvar const &, string);
 
 // external functions in fillccd.cpp
 extern const int x_pixel;
@@ -117,7 +116,7 @@ extern void mpi_getcoords(int &, int &, int &, int &);
 extern void mpi_calculatemypart(double*, const int, const int, const int, const int, const double, cube, Delaunay_triangulation_3*);
 
 //external functions in writetime.cpp
-extern void writetime(double * const * const, const int);
+//extern void writetime(double * const * const, const int);
 
 // Global variables from mainprog.cpp
 // reuse controls whether to compute a new problem or just to reuse the old outputfiles
@@ -125,7 +124,7 @@ extern int reuse, png, mpeg, warray;
 // physical parameters of the problem
 extern double length, width, magfield, rhoint, contrast, thickness, alpha;
 extern double l, b;
-
+extern Delaunay_triangulation_3 DT_global;
 // external functions in equilibrium.cpp
 extern const int eqx, eqy, eqz;
 extern cube equilibrium();
@@ -134,6 +133,7 @@ extern void builtingrid(const int, const int, const int, tgrid);
 // external functions from emissioncube.cpp
 extern cube emissionfromdatacube(cube);
 extern Delaunay_triangulation_3 triangulationfromdatacube(cube);
+extern void triangulationfromdatacube_pt(cube);
 extern string chiantifile;
 extern string abundfile;
 extern string emissionsave;

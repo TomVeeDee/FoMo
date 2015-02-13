@@ -165,8 +165,8 @@ tphysvar cube::readvar(const int nvar) const
 
 void cube::fillcube()
 {
-	switch (qtype) {
-		case builtineq:
+	switch (qtype) { // builtineq is disabled [ DY 11 Feb 2015]
+     /*	case builtineq:
 			cout << "Setting up built-in equilibrium... " << flush; //
 			builtingrid(eqx, eqy, eqz, grid);
 			for (int i=0; i<nvars; i++)
@@ -206,6 +206,7 @@ void cube::fillcube()
 			}
 			cout << "Done!" << endl << flush;
 			break;
+                 */   
 		case patricksausage:
 			for (int i=0; i<ng; i++)
 				for (int j=2; j<5; j++)

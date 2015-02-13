@@ -23,6 +23,7 @@ string configfile="fomo-c.conf";
 	   
 }
 */
+/*
 void writeparameters(ostream& s, char v = '0')
 {
 	int commrank;
@@ -59,7 +60,9 @@ void writeparameters(ostream& s, char v = '0')
 			cout << "Warning: incorrect use of writeparameters";
 			break;
 	}
-}
+} 
+*/
+
 /*
 void writefile()
 {
@@ -119,6 +122,56 @@ void writeemissioncube(const cube goftcube, const string filename, const Delauna
 				out << endl;
 			}
 			if (DTpointer!=NULL) out << *DTpointer;
+		}
+		else cout << "Unable to write to " << filename << endl;
+		out.close();
+	}
+}
+
+
+void writeemissioncube_pt(const cube goftcube, const string filename)
+{
+	// write out goftcube to file "filename"
+	int commrank;
+	string space=" ";
+#ifdef HAVEMPI
+        MPI_Comm_rank(MPI_COMM_WORLD,&commrank);
+#else
+	commrank = 0;
+#endif
+	if (commrank==0)
+	{
+		ofstream out(filename,ios::binary|ios::ate);
+		if (out.is_open())
+		{
+			int nvars = goftcube.readnvars();
+			int dim = goftcube.readdim();
+			int intqtype=int(goftcube.readtype());
+			int ng = goftcube.readngrid();
+			out << dim << endl;
+			out << intqtype << endl;
+			out << ng << endl;
+			out << nvars << endl;
+			tgrid grid=goftcube.readgrid();
+			vector<tphysvar> allvar;
+			allvar.resize(nvars);
+			for (int i=0; i<nvars; i++)
+			{
+				allvar[i]=goftcube.readvar(i);
+			}
+			for (int j=0; j<ng; j++)
+			{
+				for (int i=0; i<dim; i++)
+				{ 
+					out << grid[i][j] << space;
+				}
+				for (int i=0; i<nvars; i++)
+				{
+					out << allvar[i][j] << space;
+				}
+				out << endl;
+			}
+		        out << DT_global;
 		}
 		else cout << "Unable to write to " << filename << endl;
 		out.close();
