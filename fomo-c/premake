@@ -5,5 +5,5 @@ aclocal -I m4/
 autoconf 
 autoheader 
 automake --add-missing 
-CXXFLAGS="-O2 -g -Wall -march=core2 -std=c++0x -fopenmp" ./configure --without-mpeg
+CXXFLAGS="-O2 -g -Wall -march=core2 -fopenmp" ./configure --without-mpeg
 
