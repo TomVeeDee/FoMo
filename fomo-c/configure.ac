@@ -18,8 +18,7 @@ AC_PROG_CXX($CXXCOMP)
 AC_PROG_CXXCPP([cpp])
 AC_LANG(C++)
 AC_LANG_CPLUSPLUS
-# only c++-0x is necessary, but the macro for c++-11 is much better
-AX_CXX_COMPILE_STDCXX_11(,mandatory)
+AX_CXX_COMPILE_STDCXX_0X
 AX_BOOST_BASE([1.36])
 AC_CHECK_HEADER(boost/progress.hpp,[],[AC_MSG_ERROR(Boost header not found)])
 PKG_PROG_PKG_CONFIG
