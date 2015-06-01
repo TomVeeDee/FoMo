@@ -1,4 +1,9 @@
-bin_PROGRAMS = yuan # main patrick
+lib_LTLIBRARIES = libFoMo.la
+libFoMo_la_LDFLAGS = -shared -avoid-version
+libFoMo_la_SOURCES=FoMo.h ../config.h fomo-object.cpp fomo-simulationpoint.cpp fomo-cube.cpp
+# libFoMo_la_SOURCES=FoMo.h ../config.h fomo-simulationpoint.cpp
+
+bin_PROGRAMS = yuan example # main patrick
 # personalize your own main program here with a name and name_SOURCES,
 # Remove or modified the name_SOURCES where needed 
 # DY 11 Feb 2015
@@ -6,4 +11,5 @@ bin_PROGRAMS = yuan # main patrick
 #patrick_SOURCES = header.h ../config.h patricksausage.cpp getarg.cpp io.cpp equilibrium.cpp writepng.cpp fillccd.cpp writetime.cpp writemovie.cpp writearray.cpp readframe.cpp emissioncube.cpp sun_coronal.cpp
 #stiefkink_SOURCES = header.h ../config.h stiefkink.cpp getarg.cpp io.cpp equilibrium.cpp writepng.cpp fillccd.cpp writetime.cpp writemovie.cpp writearray.cpp readframe.cpp emissioncube.cpp sun_coronal.cpp
 yuan_SOURCES =header.h ../config.h yuan.cpp getarg.cpp io.cpp fillccd.cpp readframe.cpp emissioncube.cpp sun_coronal.cpp
-
+LDADD = -L. -lFoMo
+example_SOURCES=FoMo.h example.cpp 
