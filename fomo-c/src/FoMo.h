@@ -1,70 +1,55 @@
 #include <vector>
 #include <string>
+#include <cassert>
 
 namespace FoMo
 {
 	typedef std::vector<double> tcoord;
-	typedef tcoord * tgrid;
+	typedef std::vector<tcoord> tgrid;
 	typedef std::vector<double> tphysvar;
-	typedef tphysvar * tvars;
+	typedef std::vector<tphysvar> tvars;
 	
-	class SimulationPoint
+	class DataCube 
 	{
 	protected:
-		int dim;
-		std::vector<double> position;
-		// ordered vector of physical properties (rho, T, vx, vy, vz)
-		std::vector<double> physicalvariables;
-	public:
-		SimulationPoint(const int = 3);
-		~SimulationPoint();
-		void setdimension(const int);
-		int dimension();
-		// maybe better to use std::array<T,dim> coords as argument, instead of overloading. This could also be used as internal representation.
-		void setposition(const double x);
-		void setposition(const double x, const double y);
-		void setposition(const double x, const double y, const double z);
-		void readposition(double x, double y, double z) const;
-		void setvars(const double rho, const double T, const double vx, const double vy, const double vz);
-		void readvars(double rho, double T, double vx, double vy, double vz) const;
-	};
-	
-	class cube 
-	{
-	protected:
-		int dim;
-		int ng;
-		int nvars;
+		unsigned int dim;
+		unsigned int nvars;
+		unsigned int ng;
 		FoMo::tgrid grid;
 		FoMo::tvars vars;
+		void setgrid(tgrid ingrid);
+		void setvar(const unsigned int, const tphysvar);
 	public:
-		cube(const int invars, const int ingrid, const int = 3);
-		~cube();
+		DataCube(const int = 3);
+		~DataCube();
 		int readdim() const;
 		int readngrid() const;
 		int readnvars() const;
-		void setgrid(tgrid ingrid);
 		tgrid readgrid() const;
-		void setvar(const int, const tphysvar);
-		tphysvar readvar(const int) const;
+		tphysvar readvar(const unsigned int) const;
+		void setdim(const int indim);
+		void setdata(tgrid ingrid, tvars indata);
+		void push_back(std::vector<double> coordinate, std::vector<double> variables);
 	};
+	
+	// included for backwards compatibility
+	typedef DataCube cube;
 
 	class FoMoObject
 	{
 	protected:
-		FoMo::cube simulation;
-		FoMo::cube rendering;
 		std::string rendermethod;
+		FoMo::DataCube rendering;
 	public:
 		FoMoObject();
 		~FoMoObject();
-		void setvar();
-		void setgrid();
-		void push_back(FoMo::SimulationPoint simulationpoint);
-		void setrendermethod(const std::string rendermethod);
+		FoMo::DataCube datacube;
+		void setrendermethod(const std::string inrendermethod);
 		std::string readrendermethod();
-		void render(const double l, const double b);
-		FoMo::cube readrendering();
+		void render(const double = 0, const double = 0); // l and b are arguments
+		void render(const std::vector<double> lvec, const std::vector<double> bvec);
+		FoMo::DataCube readrendering();
 	};
 	
+	FoMo::DataCube RenderWithCGAL(FoMo::DataCube datacube, const std::vector<double> lvec, const std::vector<double> bvec);
 }
