@@ -6,5 +6,5 @@ aclocal -I m4/
 autoconf 
 autoheader 
 automake --add-missing 
-CXXFLAGS="-O2 -g -Wall -march=core2 -fopenmp" ./configure 
+CXXFLAGS="-O2 -g -Wall -march=core2 -fopenmp" ./configure --prefix=`pwd`/../ --libdir=`pwd`/../ --includedir=`pwd`/../ --bindir=`pwd`/../
 
