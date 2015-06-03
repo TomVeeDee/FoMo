@@ -1,4 +1,4 @@
-bin_PROGRAMS = example 
+noinst_PROGRAMS = example 
 LDADD = -L$(top_builddir)/src/.libs/ -lFoMo
 AM_CPPFLAGS = -I$(top_srcdir)/src
 #example_DEPENDENCIES=libFoMo.la
