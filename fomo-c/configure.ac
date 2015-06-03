@@ -4,6 +4,10 @@ AM_INIT_AUTOMAKE(1.9)
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_HEADERS(config.h)
 AC_PROG_CXX
+AC_ENABLE_SHARED
+AC_DISABLE_STATIC
+LT_INIT
+AC_PROG_LIBTOOL(libtool)
 # check if mpi is wanted
 AC_ARG_WITH(mpi,
 [AC_HELP_STRING([--with-mpi],[build MPI version of POLLUX])],
@@ -27,50 +31,12 @@ if test "a$mpi" = "ayes" ; then
    AC_CHECK_HEADER(mpi.h, [AC_DEFINE([HAVEMPI],"1",[Is MPI used?])],AC_MSG_ERROR([MPI header not found]))
    AC_SEARCH_LIBS(MPI_Init,[],[],AC_MSG_ERROR([MPI libraries not found]))
 fi
-# check if png is wanted
-AC_ARG_WITH([png],
-  [AS_HELP_STRING([--with-png],
-    [support png files @<:@default=yes@:>@])],
-  [png=$withval],
-  [png=yes])
-AS_CASE(["$png"],
-  [yes], [PKG_CHECK_MODULES([libpng], [libpng], [HAVE_LIBPNG=1])],
-  [no], [HAVE_LIBPNG=0],
-  [PKG_CHECK_MODULES([libpng], [libpng], [HAVE_LIBPNG=1], [HAVE_LIBPNG=0])])
-# use this line to conditionally include code
-#AM_CONDITIONAL([USE_LIBPNG], [test "$png" != no -a "$HAVE_LIBPNG" -eq 1])
-AS_IF([test "$png" = yes -a "$HAVE_LIBPNG" -eq 1], [AC_DEFINE([HAVEPNG], [1], [Define if using libpng.])
-CXXFLAGS+=" $libpng_CFLAGS"
-LDFLAGS+=" $libpng_LIBS"
-])
-
-# check if mpeg is wanted
-AC_ARG_WITH([mpeg],
-  [AS_HELP_STRING([--with-mpeg],
-    [support mpeg files @<:@default=yes@:>@])],
-  [mpeg=$withval],
-  [mpeg=yes])
-AS_CASE(["$mpeg"],
-  [yes], [PKG_CHECK_MODULES([libavcodec], [libavcodec], [HAVE_LIBAVCODEC=1])],
-  [no], [HAVE_LIBAVCODEC=0],
-  [PKG_CHECK_MODULES([libavcodec], [libavcodec], [HAVE_LIBAVCODEC=1], [HAVE_LIBAVCODEC=0])])
-# use this line to conditionally include code
-#AM_CONDITIONAL([USE_LIBAVCODEC], [test "$mpeg" != no -a "$HAVE_LIBAVCODEC" -eq 1])
-AS_IF([test "$mpeg" = yes -a "$HAVE_LIBAVCODEC" -eq 1], [AC_DEFINE([HAVEMPEG], [1], [Define if using ffmpeg.])
-CXXFLAGS+=" $libavcodec_CFLAGS"
-LDFLAGS+=" $libavcodec_LIBS"
-])
-
-#if test "a$mpeg" = "ayes" ; then
-#   AC_CHECK_HEADER(avcodec.h, [],AC_MSG_ERROR([MPEG header not found]))
-#   AC_SEARCH_LIBS(avcodec_init,[avcodec],[],AC_MSG_ERROR([MPEG libraries not found]))
-#fi
 
 AC_CHECK_HEADER([gsl/gsl_const_mksa.h],[],AC_MSG_ERROR([GSL physical constants not found]))
 AC_CHECK_HEADER([CGAL/Delaunay_triangulation_2.h],[],AC_MSG_ERROR([CGAL Delaunay headers not found]))
 #AC_SEARCH_LIBS(a_function_what?,[CGAL],[],AC_MSG_ERROR([CGAL libraries not found]))
 LDFLAGS+="-lCGAL -lgmp"
-CXXFLAGS+="-frounding-math"
+CXXFLAGS+=" -frounding-math"
 
 # write the Makefiles
-AC_OUTPUT(Makefile src/Makefile)
+AC_OUTPUT(Makefile src/Makefile example/Makefile)

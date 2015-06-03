@@ -1,9 +1,10 @@
 #!/bin/bash
 # this will replace the pre-make scripts in one go
 # created by DY 11 Feb 2015
+libtoolize
 aclocal -I m4/ 
 autoconf 
 autoheader 
 automake --add-missing 
-CXXFLAGS="-O2 -g -Wall -march=core2 -fopenmp" ./configure --without-mpeg
+CXXFLAGS="-O2 -g -Wall -march=core2 -fopenmp" ./configure 
 

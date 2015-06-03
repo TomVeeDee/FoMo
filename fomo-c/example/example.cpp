@@ -1,4 +1,5 @@
 #include "FoMo.h"
+#include <cstdlib>
 #include <iostream>
 #include <fstream>
 
@@ -43,5 +44,12 @@ int main(int argc, char* argv[])
 		}
 	}
 	
+	vector<double> rho=Object.datacube.readvar(0);
+	
+	cout << rho[0];
+	
 	// data is in structure, now start the rendering
+	Object.setchiantifile("/home/tom/data/idl/FoMo/chiantitables/goft_table_fe_12_0194small_abco.dat");
+	Object.setrendermethod("CGAL");
+	Object.render();
 }

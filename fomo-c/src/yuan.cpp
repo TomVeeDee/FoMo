@@ -54,7 +54,7 @@ int main(int argc, char* argv[])
 	// Create G(T) interpolated cube or artificial images (depending on --reuse option) 
         //const int nframes=tend-tstart+1; //Number of time steps = number of simulation snapshots
 	// double pi=4*atan(1.);
-	vector<double> angles={M_PI/6.}; // M_PI/2.,M_PI/3.,M_PI/4. Rotation angles around y-axis
+	std::vector<double> angles={M_PI/6.}; // M_PI/2.,M_PI/3.,M_PI/4. Rotation angles around y-axis
 	int nangles=angles.size();
 	int ng =1;// eqx*eqy*eqz; test set by DY 11 Feb 2015
 	int nvars = 5; // \rho, T, vx, vy, vz
