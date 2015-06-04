@@ -34,7 +34,7 @@ namespace FoMo
 		tgrid readgrid() const;
 		tphysvar readvar(const unsigned int) const;
 		void setdim(const int indim);
-		void setdata(tgrid ingrid, tvars indata);
+		void setdata(tgrid& ingrid, tvars& indata);
 		void push_back(std::vector<double> coordinate, std::vector<double> variables);
 	};
 	// included for backwards compatibility
@@ -81,8 +81,8 @@ namespace FoMo
 		FoMoObservationType observationtype;
 	public:
 		RenderCube(GoftCube goftcube);
-		void setresolution(const int nx, const int ny, const int nz, const int nlambda, const double lambdawidth);
-		void readresolution(int nx, int ny, int nz, int nlambda, double lambdawidth);
+		void setresolution(const int & nx, const int & ny, const int & nz, const int & nlambda, const double & lambdawidth);
+		void readresolution(int & nx, int & ny, int & nz, int & nlambda, double & lambdawidth);
 		void setangles(const double l, const double b);
 		void readangles(const double l, const double b);
 		void setrendermethod(const std::string inrendermethod);
@@ -97,8 +97,8 @@ namespace FoMo
 		FoMo::DataCube datacube;
 	protected:
 		FoMo::GoftCube goftcube;
-		FoMo::RenderCube rendering;
 	public:
+		FoMo::RenderCube rendering;
 		FoMoObject(const int =3);
 		~FoMoObject();
 		void render(const double = 0, const double = 0); // l and b are arguments

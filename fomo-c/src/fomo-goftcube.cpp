@@ -7,7 +7,7 @@ FoMo::GoftCube::GoftCube(const int indim)
 	ng=0;
 	nvars=0;
 	chiantifile="../chiantitables/goft_table_fe_12_0194small_abco.dat";
-	abundfile="../chiantitables/sun_coronal.abund";
+	abundfile="/empty";
 //	ion="fe_12";
 	lambda0=193.509;
 }
@@ -19,7 +19,7 @@ FoMo::GoftCube::GoftCube(FoMo::DataCube incube)
 	grid=incube.readgrid();
 	nvars=0;
 	chiantifile="../chiantitables/goft_table_fe_12_0194small_abco.dat";
-	abundfile="../chiantitables/sun_coronal.abund";
+	abundfile="/empty";
 //	ion="fe_12";
 	lambda0=193.509;
 }

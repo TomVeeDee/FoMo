@@ -143,7 +143,7 @@ FoMo::RenderCube CGALinterpolation(FoMo::GoftCube goftcube, Delaunay_triangulati
 	newgrid.push_back(xvec);
 	newgrid.push_back(yvec);
 	if (lambda_pixel > 1) newgrid.push_back(lambdavec);
-	FoMo::tphysvar intens(0,x_pixel*y_pixel*lambda_pixel);
+	FoMo::tphysvar intens(x_pixel*y_pixel*lambda_pixel,0);
 	
 #ifdef _OPENMP
 // it seems as if the first two options below are equivalent and the fastest for this loop
@@ -191,6 +191,9 @@ FoMo::RenderCube CGALinterpolation(FoMo::GoftCube goftcube, Delaunay_triangulati
 					newgrid[0][ind]=x;
 					newgrid[1][ind]=y;
 					newgrid[2][ind]=lambdaval;
+					#ifdef _OPENMP
+					#pragma omp atomic
+					#endif
 					intens[ind]+=tempintens;// loop over z and lambda [D.Y 17 Nov 2014]
 					
 				}
@@ -202,12 +205,18 @@ FoMo::RenderCube CGALinterpolation(FoMo::GoftCube goftcube, Delaunay_triangulati
 				ind=(i*x_pixel+j); 
 				newgrid[0][ind]=x;
 				newgrid[1][ind]=y;
+				#ifdef _OPENMP
+				#pragma omp atomic
+				#endif
 				intens[ind]+=tempintens; // loop over z [D.Y 17 Nov 2014]
 			}
 		}
 		
 		
 		// print progress
+		/*#ifdef _OPENMP
+		#pragma omp atomic
+		#endif*/
 		if (k == 0) ++show_progress;
 	}
 	if (commrank==0) std::cout << " Done! " << std::endl << std::flush;
@@ -216,6 +225,7 @@ FoMo::RenderCube CGALinterpolation(FoMo::GoftCube goftcube, Delaunay_triangulati
 	FoMo::tvars newdata;
 	newdata.push_back(intens);
 	rendercube.setdata(newgrid,newdata);
+	rendercube.setresolution(x_pixel,y_pixel,z_pixel,lambda_pixel,lambda_width);
 	return rendercube;
 }
 
@@ -225,7 +235,6 @@ namespace FoMo
 	const int x_pixel, const int y_pixel, const int z_pixel, const int lambda_pixel, const double lambda_width,
 	std::vector<double> lvec, std::vector<double> bvec)
 	{
-		// std::cout << chiantifile << std::flush;
 		FoMo::GoftCube goftcube=FoMo::emissionfromdatacube(datacube, chiantifile, abundfile, observationtype);
 //		goftcube.setchiantifile(chiantifile);
 //		goftcube.setabundfile(abundfile);

@@ -178,7 +178,7 @@ FoMo::tphysvar goft(const FoMo::tphysvar logT, const FoMo::tphysvar logrho, cons
 		Coord_type res =  CGAL::linear_interpolation(coords.begin(), coords.end(),
                                                norm,
                                                Value_access(function_values));	
-		g[i]=res; 
+		g[i]=res;
 
 // let's not do nearest neighbour
 // it is much faster than the linear interpolation
@@ -190,6 +190,9 @@ FoMo::tphysvar goft(const FoMo::tphysvar logT, const FoMo::tphysvar logrho, cons
 		g[i]=funcval.first;*/
 	
 		// This introduces a race condition between threads, but since it's only a counter, it doesn't really matter.
+		/*#ifdef _OPENMP
+		#pragma omp atomic
+		#endif*/
 		if ((i-mpimin)%10 == 0) ++show_progress;
 	}
 	std::cout << " Done!" << std::endl << std::flush;
@@ -300,9 +303,9 @@ FoMo::GoftCube FoMo::emissionfromdatacube(FoMo::DataCube datacube, std::string c
 	// take the last 3 from datacube
 	//std::cout << nvars << datacube.vars[0][0] << std::flush;
 	
-	FoMo::DataCube emission;
+	FoMo::GoftCube emission;
 	
-	FoMo::tphysvar logrho(1,100);// = FoMo::log10(datacube.readvar(0));
+	FoMo::tphysvar logrho = FoMo::log10(datacube.readvar(0));
 	FoMo::tphysvar T = datacube.readvar(1);
 	FoMo::tphysvar logT = FoMo::log10(T);
 	
@@ -326,7 +329,7 @@ FoMo::GoftCube FoMo::emissionfromdatacube(FoMo::DataCube datacube, std::string c
 	double abundratio=1.;
 	if (observationtype == Spectroscopic) // for spectroscopic study
 	{
-		std::cout << "This code is configured to do spectroscopic modelling" << std::endl;        
+		std::cout << "This code is configured to do spectroscopic modelling." << std::endl;        
 		// FoMo::tphysvar fittedwidth=linefwhm(T,lambda0,atweight);
 		normaliseconst=1./alphaconst;
 		if (abundfile != std::string("/empty"))
@@ -366,7 +369,7 @@ FoMo::GoftCube FoMo::emissionfromdatacube(FoMo::DataCube datacube, std::string c
 	FoMo::tvars exporteddata;
 	exporteddata.push_back(fittedemission);
 	exporteddata.push_back(fittedwidth);
-
+	
 	// copy velocity vectors
 	for (int i=2; i<nvars; i++)
 	{
@@ -374,6 +377,9 @@ FoMo::GoftCube FoMo::emissionfromdatacube(FoMo::DataCube datacube, std::string c
 			exporteddata.push_back(velcomp);
 	};
 	emission.setdata(grid,exporteddata);
+	emission.setchiantifile(chiantifile);
+	emission.setabundfile(abundfile);
+	emission.setlambda0(lambda0);
 
 	return emission;
 };

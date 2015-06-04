@@ -45,15 +45,14 @@ FoMo::tgrid FoMo::DataCube::readgrid() const
 
 void FoMo::DataCube::setvar(const unsigned int nvar, const FoMo::tphysvar var)
 {
-	assert(nvar < nvars);
-	vars.reserve(nvars);
-	vars[nvar]=var;
+	assert(nvar < vars.size());
+	vars.at(nvar)=var;
 }
 
 FoMo::tphysvar FoMo::DataCube::readvar(const unsigned int nvar) const
 {
 	assert(nvar < nvars);
-	FoMo::tphysvar var=vars[nvar];
+	FoMo::tphysvar var=vars.at(nvar);
 	return var;
 }
 
@@ -96,7 +95,7 @@ void FoMo::DataCube::push_back(std::vector<double> coordinate, std::vector<doubl
 	}
 }
 
-void FoMo::DataCube::setdata(tgrid ingrid, tvars indata)
+void FoMo::DataCube::setdata(tgrid& ingrid, tvars& indata)
 {
 	/* This routine sets the data of the DataCube from a simulation 
 	 * (which could have been read in, for example)
@@ -129,6 +128,7 @@ void FoMo::DataCube::setdata(tgrid ingrid, tvars indata)
 	{
 		// set nvars
 		nvars=indata.size();
+		vars.resize(nvars,tphysvar(ng,0));
 		for (unsigned int i=0; i<nvars; i++)
 		{
 			assert(indata[i].size() == ng);

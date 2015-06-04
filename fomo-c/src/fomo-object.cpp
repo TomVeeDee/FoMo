@@ -51,6 +51,11 @@ void FoMo::FoMoObject::setrenderingdata(tgrid ingrid, tvars invars)
 	rendering.setdata(ingrid,invars);
 }
 
+FoMo::RenderCube FoMo::FoMoObject::readrendering()
+{
+	return rendering;
+}
+
 enum FoMoRenderValue
 {
 	RenderMethodNotDefined,
@@ -81,8 +86,7 @@ void FoMo::FoMoObject::render(const std::vector<double> lvec, const std::vector<
 	{
 		// add other rendermethods here
 		case CGAL:
-			std::cout << "Using CGAL for rendering." << this;
-			//tmprender=FoMo::RenderWithCGAL(datacube,lvec,bvec);
+			std::cout << "Using CGAL for rendering." << std::endl << std::flush;
 			tmprender=FoMo::RenderWithCGAL(this->datacube,this->rendering.readchiantifile(),this->rendering.readabundfile(),this->rendering.readobservationtype(), 
 			x_pixel, y_pixel, z_pixel, lambda_pixel, lambda_width,
 			lvec,bvec);

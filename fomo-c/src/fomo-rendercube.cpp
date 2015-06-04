@@ -17,7 +17,7 @@ FoMo::RenderCube::RenderCube(FoMo::GoftCube goftcube)
 	observationtype=Spectroscopic;
 }
 
-void FoMo::RenderCube::readresolution(int nx, int ny, int nz, int nlambda, double lambdawidth)
+void FoMo::RenderCube::readresolution(int & nx, int & ny, int & nz, int & nlambda, double & lambdawidth)
 {
 	nx=x_pixel;
 	ny=y_pixel;
@@ -26,7 +26,7 @@ void FoMo::RenderCube::readresolution(int nx, int ny, int nz, int nlambda, doubl
 	lambdawidth=lambda_width;
 }
 
-void FoMo::RenderCube::setresolution(const int nx, const int ny, const int nz, const int nlambda, const double lambdawidth)
+void FoMo::RenderCube::setresolution(const int & nx, const int & ny, const int & nz, const int & nlambda, const double & lambdawidth)
 {
 	x_pixel=nx;
 	y_pixel=ny;
