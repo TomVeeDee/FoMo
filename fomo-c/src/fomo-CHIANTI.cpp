@@ -204,7 +204,7 @@ double FoMo::readgoftfromchianti(const std::string chiantifile)
 {
 	std::ifstream in(chiantifile);
 	if (!in) {
-		std::cerr << "Error: no CHIANTI G(T) file exists\n";
+		std::cerr << "Error: no CHIANTI G(T) file exists: " << chiantifile << "\n";
 		exit(EXIT_FAILURE);
 	}
 
@@ -224,7 +224,7 @@ FoMo::DataCube FoMo::readgoftfromchianti(const std::string chiantifile, std::str
 {
 	std::ifstream in(chiantifile);
 	if (!in) {
-		std::cerr << "Error: no CHIANTI G(T) file exists\n";
+		std::cerr << "Error: no CHIANTI G(T) file exists: " << chiantifile << "\n";
 		exit(EXIT_FAILURE);
 	}
 
