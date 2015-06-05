@@ -1,8 +1,8 @@
 #include "../config.h"
 #include "FoMo.h"
-//#include <cmath>
+#include <sstream>
+#include <iomanip>
 #include <cstdlib>
-//#include <numeric>
 #include <gsl/gsl_const_mksa.h>
 #include <boost/progress.hpp>
 
@@ -15,6 +15,7 @@ typedef CGAL::Exact_predicates_inexact_constructions_kernel K;
 typedef CGAL::Delaunay_triangulation_3<K, CGAL::Fast_location> Delaunay_triangulation_3;
 
 const double speedoflight=GSL_CONST_MKSA_SPEED_OF_LIGHT; // speed of light
+const double pi=M_PI; //pi
 
 Delaunay_triangulation_3 triangulationfromdatacube(FoMo::DataCube goftcube)
 {
@@ -127,7 +128,7 @@ FoMo::RenderCube CGALinterpolation(FoMo::GoftCube goftcube, Delaunay_triangulati
 	if (commrank==0) std::cout << "Done!" << std::endl;
 
 	std::string chiantifile=goftcube.readchiantifile();
-	double lambda0=FoMo::readgoftfromchianti(chiantifile);// lambda0=AIA bandpass for AIA imaging
+	double lambda0=goftcube.readlambda0();// lambda0=AIA bandpass for AIA imaging
        	
 	if (commrank==0) std::cout << "Building frame: " << std::flush;
 	double x,y,z,intpolpeak,intpolfwhm,intpollosvel,lambdaval,tempintens;
@@ -233,7 +234,7 @@ namespace FoMo
 {
 	FoMo::RenderCube RenderWithCGAL(FoMo::DataCube datacube, std::string chiantifile, std::string abundfile, FoMoObservationType observationtype, 
 	const int x_pixel, const int y_pixel, const int z_pixel, const int lambda_pixel, const double lambda_width,
-	std::vector<double> lvec, std::vector<double> bvec)
+	std::vector<double> lvec, std::vector<double> bvec, std::string outfile)
 	{
 		FoMo::GoftCube goftcube=FoMo::emissionfromdatacube(datacube, chiantifile, abundfile, observationtype);
 //		goftcube.setchiantifile(chiantifile);
@@ -246,6 +247,14 @@ namespace FoMo
 				rendercube=CGALinterpolation(goftcube,&DT,*lit,*bit, x_pixel, y_pixel, z_pixel, lambda_pixel, lambda_width);
 				rendercube.setangles(*lit,*bit);
 				rendercube.setobservationtype(observationtype);
+				std::stringstream ss;
+				ss << outfile;
+				ss << "l";
+				ss << std::setfill('0') << std::setw(3) << *lit/pi*180.;
+				ss << "b";
+				ss << std::setfill('0') << std::setw(3) << *bit/pi*180.;
+				rendercube.writegoftcube(ss.str());
+				ss.str("");
 			}
 		return rendercube;
 	}

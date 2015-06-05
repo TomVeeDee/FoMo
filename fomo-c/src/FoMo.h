@@ -58,6 +58,11 @@ namespace FoMo
 		double readlambda0();
 		void setlambda0(const double lambda0);
 //		std::string readion();
+		// keep the legacy ability to write Delaunay_triangulation
+//		void writegoftcube(const std::string, const Delaunay_triangulation_3 *);
+//		void readgoftcube(const std::string, Delaunay_triangulation_3*);
+		void writegoftcube(const std::string);
+		void readgoftcube(const std::string);
 	};
 	
 	enum FoMoObservationType
@@ -76,7 +81,7 @@ namespace FoMo
 		int y_pixel;
 		int z_pixel;
 		int lambda_pixel;
-		int lambda_width;
+		double lambda_width;
 		std::string rendermethod;
 		FoMoObservationType observationtype;
 	public:
@@ -97,6 +102,7 @@ namespace FoMo
 		FoMo::DataCube datacube;
 	protected:
 		FoMo::GoftCube goftcube;
+		std::string outfile;
 	public:
 		FoMo::RenderCube rendering;
 		FoMoObject(const int =3);
@@ -111,13 +117,15 @@ namespace FoMo
 		void setabundfile(const std::string inabund);
 		std::string readchiantifile();
 		std::string readabundfile();
+		void setoutfile(const std::string outfile);
 	};
 	
 	double readgoftfromchianti(const std::string chiantifile);
 	DataCube readgoftfromchianti(const std::string chiantifile, std::string & ion, double & lambda0, double & atweight);
 	GoftCube emissionfromdatacube(DataCube, std::string, std::string, const FoMoObservationType);
 	
+	
 	FoMo::RenderCube RenderWithCGAL(FoMo::DataCube datacube, std::string chiantifile, std::string abundfile, FoMoObservationType observationtype, 
 	const int x_pixel, const int y_pixel, const int z_pixel, const int lambda_pixel, const double lambda_width,
-	std::vector<double> lvec, std::vector<double> bvec);
+	std::vector<double> lvec, std::vector<double> bvec, const std::string outfile);
 }

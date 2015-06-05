@@ -66,4 +66,5 @@ int main(int argc, char* argv[])
 	cout << "and " << nlambda << " pixels in the wavelength." << endl;
 	cout << "It was done using the rendermethod " << rendercube.readrendermethod() << endl;
 	cout << "with a resolution of " << nz << " along the line-of-sight." << endl;
+	rendercube.writegoftcube("fomo-output.txt");
 }

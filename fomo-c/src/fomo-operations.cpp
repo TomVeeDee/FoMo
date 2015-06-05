@@ -22,13 +22,13 @@ FoMo::tphysvar FoMo::pow(const double base, FoMo::tphysvar const & in)
 FoMo::tphysvar FoMo::operator/(FoMo::tphysvar const & a, FoMo::tphysvar const & b)
 {
 	FoMo::tphysvar out;
-	int s=a.size();
+	unsigned int s=a.size();
 	assert(b.size() == s);
 	out.resize(s);
 #ifdef _OPENMP
 #pragma omp parallel for
 #endif
-	for (int i=0; i<s; i++)
+	for (unsigned int i=0; i<s; i++)
 	{
 		out[i]=a[i]/b[i];
 	}
@@ -39,13 +39,13 @@ FoMo::tphysvar FoMo::operator/(FoMo::tphysvar const & a, FoMo::tphysvar const & 
 FoMo::tphysvar FoMo::operator*(FoMo::tphysvar const & a, FoMo::tphysvar const & b)
 {
 	FoMo::tphysvar out;
-	int s=a.size();
+	unsigned int s=a.size();
 	assert(b.size() == s);
 	out.resize(s);
 #ifdef _OPENMP
 #pragma omp parallel for
 #endif
-	for (int i=0; i<s; i++)
+	for (unsigned int i=0; i<s; i++)
 	{
 		out[i]=a[i]*b[i];
 	}

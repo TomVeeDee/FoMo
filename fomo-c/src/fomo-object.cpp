@@ -56,6 +56,11 @@ FoMo::RenderCube FoMo::FoMoObject::readrendering()
 	return rendering;
 }
 
+void FoMo::FoMoObject::setoutfile(const std::string instring)
+{
+	outfile=instring;
+}
+
 enum FoMoRenderValue
 {
 	RenderMethodNotDefined,
@@ -89,7 +94,7 @@ void FoMo::FoMoObject::render(const std::vector<double> lvec, const std::vector<
 			std::cout << "Using CGAL for rendering." << std::endl << std::flush;
 			tmprender=FoMo::RenderWithCGAL(this->datacube,this->rendering.readchiantifile(),this->rendering.readabundfile(),this->rendering.readobservationtype(), 
 			x_pixel, y_pixel, z_pixel, lambda_pixel, lambda_width,
-			lvec,bvec);
+			lvec,bvec,this->outfile);
 			break;
 		case LastVirtualRenderMethod: // this should not be reached, since it is excluded from the map
 		default:
