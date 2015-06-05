@@ -53,5 +53,16 @@ void FoMo::RenderCube::setobservationtype(FoMo::FoMoObservationType obtype)
 FoMo::FoMoObservationType FoMo::RenderCube::readobservationtype()
 {
 	return observationtype;
+}
 
+void FoMo::RenderCube::setangles(const double lin, const double bin)
+{
+	l=lin;
+	b=bin;
+}
+
+void FoMo::RenderCube::readangles(double & lout, double & bout)
+{
+	lout=l;
+	bout=b;
 }

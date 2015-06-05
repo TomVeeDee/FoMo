@@ -81,10 +81,10 @@ namespace FoMo
 		FoMoObservationType observationtype;
 	public:
 		RenderCube(GoftCube goftcube);
-		void setresolution(const int & nx, const int & ny, const int & nz, const int & nlambda, const double & lambdawidth);
-		void readresolution(int & nx, int & ny, int & nz, int & nlambda, double & lambdawidth);
+		void setresolution(const int & x_pixel, const int & y_pixel, const int & z_pixel, const int & lambda_pixel, const double & lambda_width);
+		void readresolution(int & x_pixel, int & y_pixel, int & z_pixel, int & lambda_pixel, double & lambda_width);
 		void setangles(const double l, const double b);
-		void readangles(const double l, const double b);
+		void readangles(double & l, double & b);
 		void setrendermethod(const std::string inrendermethod);
 		std::string readrendermethod();
 		void setobservationtype(FoMoObservationType);
