@@ -2,6 +2,7 @@
 #include "FoMo.h"
 #include <cmath>
 #include <cassert>
+#include <iostream>
 
 FoMo::tphysvar FoMo::pow(const double base, FoMo::tphysvar const & in)
 {
@@ -63,7 +64,15 @@ FoMo::tphysvar FoMo::log10(FoMo::tphysvar const & in)
 #endif
 	for (int i=0; i<s; i++)
 	{
-		out[i]=std::log10(in[i]);
+		if (in[i] <= 0)
+		{
+			std::cerr << "Warning: some densities were <= 0 at position " << i << std::endl;
+			out[i]=0;
+		}
+		else
+		{
+			out[i]=std::log10(in[i]);
+		}
 	}
 	return out;
 }

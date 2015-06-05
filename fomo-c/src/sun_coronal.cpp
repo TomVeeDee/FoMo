@@ -1,4 +1,3 @@
-#include "header.h"
 #include <string>
 
 const char ______chiantitables_sun_coronal_abund[] = {

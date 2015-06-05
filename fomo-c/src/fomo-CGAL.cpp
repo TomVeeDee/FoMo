@@ -227,6 +227,14 @@ FoMo::RenderCube CGALinterpolation(FoMo::GoftCube goftcube, Delaunay_triangulati
 	newdata.push_back(intens);
 	rendercube.setdata(newgrid,newdata);
 	rendercube.setresolution(x_pixel,y_pixel,z_pixel,lambda_pixel,lambda_width);
+	if (lambda_pixel == 1)
+	{
+		rendercube.setobservationtype(FoMo::Imaging);
+	}
+	else
+	{
+		rendercube.setobservationtype(FoMo::Spectroscopic);
+	}
 	return rendercube;
 }
 
@@ -246,7 +254,6 @@ namespace FoMo
 			{
 				rendercube=CGALinterpolation(goftcube,&DT,*lit,*bit, x_pixel, y_pixel, z_pixel, lambda_pixel, lambda_width);
 				rendercube.setangles(*lit,*bit);
-				rendercube.setobservationtype(observationtype);
 				std::stringstream ss;
 				ss << outfile;
 				ss << "l";
