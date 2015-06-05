@@ -1,6 +1,7 @@
 #include "../config.h"
 #include "FoMo.h"
 #include <cmath>
+#include <cassert>
 
 FoMo::tphysvar FoMo::pow(const double base, FoMo::tphysvar const & in)
 {
@@ -22,6 +23,7 @@ FoMo::tphysvar FoMo::operator/(FoMo::tphysvar const & a, FoMo::tphysvar const & 
 {
 	FoMo::tphysvar out;
 	int s=a.size();
+	assert(b.size() == s);
 	out.resize(s);
 #ifdef _OPENMP
 #pragma omp parallel for
@@ -38,6 +40,7 @@ FoMo::tphysvar FoMo::operator*(FoMo::tphysvar const & a, FoMo::tphysvar const & 
 {
 	FoMo::tphysvar out;
 	int s=a.size();
+	assert(b.size() == s);
 	out.resize(s);
 #ifdef _OPENMP
 #pragma omp parallel for

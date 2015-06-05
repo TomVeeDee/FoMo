@@ -244,6 +244,8 @@ namespace FoMo
 			for (std::vector<double>::iterator bit=bvec.begin(); bit!=bvec.end(); ++bit)
 			{
 				rendercube=CGALinterpolation(goftcube,&DT,*lit,*bit, x_pixel, y_pixel, z_pixel, lambda_pixel, lambda_width);
+				rendercube.setangles(*lit,*bit);
+				rendercube.setobservationtype(observationtype);
 			}
 		return rendercube;
 	}
