@@ -1,4 +1,4 @@
-AC_INIT(visual,0.99)
+AC_INIT(FoMo,3.0)
 AC_PREREQ(2.59)
 AM_INIT_AUTOMAKE(1.9)
 AC_CONFIG_MACRO_DIR([m4])
@@ -37,6 +37,21 @@ AC_CHECK_HEADER([CGAL/Delaunay_triangulation_2.h],[],AC_MSG_ERROR([CGAL Delaunay
 #AC_SEARCH_LIBS(a_function_what?,[CGAL],[],AC_MSG_ERROR([CGAL libraries not found]))
 LDFLAGS+="-lCGAL -lgmp"
 CXXFLAGS+=" -frounding-math"
+
+AC_ARG_WITH([tbb],
+	    [AS_HELP_STRING([--with-tbb],
+			    [link with Intel Thread Building Block (TBB) for parallelisation @<:@default=yes@:>@])],
+	    [tbb=$withval],
+	    [tbb=yes])
+AS_CASE(["$tbb"],
+	[yes], [PKG_CHECK_MODULES([tbb], [tbb], [HAVE_TBB=1])],
+	[no], [HAVE_TBB=0],
+	[PKG_CHECK_MODULES([tbb], [tbb], [HAVE_TBB=1], [HAVE_TBB=0])])
+AS_IF([test "$tbb" = yes -a "$HAVE_TBB" -eq 1], [PKG_CHECK_MODULES([tbbmalloc], [tbbmalloc], [HAVE_TBB=1], [HAVE_TBB=0])])
+AS_IF([test "$tbb" = yes -a "$HAVE_TBB" -eq 1], [AC_DEFINE([CGAL_LINKED_WITH_TBB], [1], [Define if using TBB.])
+CXXFLAGS+=" $tbb_CFLAGS $tbbmalloc_CFLAGS"
+LDFLAGS+=" $tbb_LIBS $tbbmalloc_LIBS"
+])
 
 # write the Makefiles
 AC_OUTPUT(Makefile src/Makefile example/Makefile)

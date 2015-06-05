@@ -12,7 +12,15 @@
 #include <CGAL/interpolation_functions.h>
 
 typedef CGAL::Exact_predicates_inexact_constructions_kernel K;
+#ifdef CGAL_LINKED_WITH_TBB
+typedef CGAL::Triangulation_data_structure_3< 
+    CGAL::Triangulation_vertex_base_3<K>, 
+    CGAL::Triangulation_cell_base_3<K>, 
+    CGAL::Parallel_tag>                                       Tds;
+typedef CGAL::Delaunay_triangulation_3<K, Tds>		    Delaunay_triangulation_3;
+#else
 typedef CGAL::Delaunay_triangulation_3<K, CGAL::Fast_location> Delaunay_triangulation_3;
+#endif
 
 const double speedoflight=GSL_CONST_MKSA_SPEED_OF_LIGHT; // speed of light
 const double pi=M_PI; //pi
@@ -43,7 +51,18 @@ Delaunay_triangulation_3 triangulationfromdatacube(FoMo::DataCube goftcube)
 	// CGAL::spatial_sort(delaunaygrid.begin(),delaunaygrid.end());
 	// but I don't know how this affects the values in the maps.
 	// Apparently, this is already done internally.
+#ifdef CGAL_LINKED_WITH_TBB
+	double minz=*(min_element(grid[2].begin(),grid[2].end()));
+	double maxz=*(max_element(grid[2].begin(),grid[2].end()));
+	double minx=*(min_element(grid[0].begin(),grid[0].end()));
+	double maxx=*(max_element(grid[0].begin(),grid[0].end()));
+	double miny=*(min_element(grid[1].begin(),grid[1].end()));
+	double maxy=*(max_element(grid[1].begin(),grid[1].end()));
+	Delaunay_triangulation_3::Lock_data_structure locking_ds(CGAL::Bbox_3(minx, miny, minz, maxx, maxy, maxz), 50);
 	DT.insert(delaunaygrid.begin(),delaunaygrid.end());
+#else	
+	DT.insert(delaunaygrid.begin(),delaunaygrid.end());
+#endif
 	if (commrank==0) std::cout << "Done!" << std::endl << std::flush;
 	return DT;
 }
