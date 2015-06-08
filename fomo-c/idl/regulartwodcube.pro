@@ -1,4 +1,4 @@
-pro regular2Dcube,data,xvec,yvec,emiss
+pro regulartwodcube,data,xvec,yvec,emiss
 
 ; data is the return product of readgoftcube.pro
 ; it is a 2D array, with 3 columns and N rows
