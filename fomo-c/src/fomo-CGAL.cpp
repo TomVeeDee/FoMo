@@ -17,9 +17,12 @@ typedef CGAL::Triangulation_data_structure_3<
     CGAL::Triangulation_vertex_base_3<K>, 
     CGAL::Triangulation_cell_base_3<K>, 
     CGAL::Parallel_tag>                                       Tds;
+// no fast_location if openmp is used :(
+//typedef CGAL::Delaunay_triangulation_3<K, Tds, CGAL::Fast_location>		    Delaunay_triangulation_3;
 typedef CGAL::Delaunay_triangulation_3<K, Tds>		    Delaunay_triangulation_3;
 #else
-typedef CGAL::Delaunay_triangulation_3<K, CGAL::Fast_location> Delaunay_triangulation_3;
+// typedef CGAL::Delaunay_triangulation_3<K, CGAL::Fast_location> Delaunay_triangulation_3;
+typedef CGAL::Delaunay_triangulation_3<K> Delaunay_triangulation_3;
 #endif
 
 const double speedoflight=GSL_CONST_MKSA_SPEED_OF_LIGHT; // speed of light
@@ -155,6 +158,8 @@ FoMo::RenderCube CGALinterpolation(FoMo::GoftCube goftcube, Delaunay_triangulati
 	Point p,nearest;
 	Delaunay_triangulation_3::Vertex_handle v;
 	Delaunay_triangulation_3::Locate_type lt;
+	Delaunay_triangulation_3::Cell_handle c_old,c_new;
+	bool could_lock_zone=false;
 	boost::progress_display show_progress(x_pixel*y_pixel);
 	
 	//initialize grids
@@ -166,30 +171,46 @@ FoMo::RenderCube CGALinterpolation(FoMo::GoftCube goftcube, Delaunay_triangulati
 	FoMo::tphysvar intens(x_pixel*y_pixel*lambda_pixel,0);
 	
 #ifdef _OPENMP
-// it seems as if the first two options below are equivalent and the fastest for this loop
-#pragma omp parallel for schedule(dynamic) collapse(2) private (x,y,z,p,lt,li,lj,v,nearest,intpolpeak,intpolfwhm,intpollosvel,lambdaval,tempintens,ind)
-//#pragma omp parallel for schedule(dynamic,1) collapse(2)
-//#pragma omp parallel for schedule(static,1) collapse(2)
-//#pragma omp parallel for schedule(dynamic,(y2-y1+1)*(x2-x1+1)/100) collapse(2)
-//#pragma omp parallel for schedule(guided,1) collapse(2)
+#pragma omp parallel for schedule(dynamic) collapse(2) private (x,y,z,p,lt,li,lj,v,nearest,intpolpeak,intpolfwhm,intpollosvel,lambdaval,tempintens,ind,could_lock_zone,c_old,c_new)
 #endif
 	for (int i=0; i<y_pixel; i++)
 		for (int j=0; j<x_pixel; j++)
+		{
+			#ifdef _OPENMP
+			#pragma omp task
+			#endif
 			for (int k=0; k<z_pixel; k++) // scanning through ccd
-	{
-		x = double(j)/x_pixel*(maxx-minx)+minx;
-		y = double(i)/y_pixel*(maxy-miny)+miny;
-		z = double(k)/z_pixel*(maxz-minz)+minz;
+			{
+				x = double(j)/x_pixel*(maxx-minx)+minx;
+				y = double(i)/y_pixel*(maxy-miny)+miny;
+				z = double(k)/z_pixel*(maxz-minz)+minz;
 		// calculate the interpolation in the original frame of reference
 		// i.e. derotate the point using angles -l and -b
-		p={x*cos(b)*cos(l)+y*sin(l)+z*sin(b)*cos(l),-x*cos(b)*sin(l)+y*cos(l)-z*sin(b)*sin(l),-x*sin(b)+z*cos(b)};
-		DTpointer->locate(p, lt, li, lj);
-
+				p={x*cos(b)*cos(l)+y*sin(l)+z*sin(b)*cos(l),-x*cos(b)*sin(l)+y*cos(l)-z*sin(b)*sin(l),-x*sin(b)+z*cos(b)};
+				
+				#if CGAL_VERSION_NR >= CGAL_VERSION_NUMBER(4,4,0) 
+				// This is the proper way of doing a parallel location, in order to avoid collisions
+				// Should we release the locks somehow?
+				while (!could_lock_zone) 
+				{
+					c_new=DTpointer->locate(p, lt, li, lj, c_old, &could_lock_zone);
+				}
+				c_old=c_new;
+				could_lock_zone=false;
+				#else
+				c_new=DTpointer->locate(p, lt, li, lj, c_old);
+				c_old=c_new;
+				// DTpointer->locate(p,lt,li,lj);
+				#endif
+				
 		// Only look for the nearest point and interpolate, if the point p is inside the convex hull.
-		if (lt!=Delaunay_triangulation_3::OUTSIDE_CONVEX_HULL)
-		{
-			v=DTpointer->nearest_vertex(p);
-			nearest=v->point();
+				if (lt!=Delaunay_triangulation_3::OUTSIDE_CONVEX_HULL)
+				{
+					#ifdef _OPENMP
+					#pragma omp critical
+					#endif
+					v=DTpointer->nearest_vertex(p);
+					nearest=v->point();
 /* This is how it is done in the CGAL examples		
  			pair<Coord_type,bool> tmppeak=peak(nearest);
 			pair<Coord_type,bool> tmpfwhm=fwhm(nearest);
@@ -197,48 +218,39 @@ FoMo::RenderCube CGALinterpolation(FoMo::GoftCube goftcube, Delaunay_triangulati
 			intpolpeak=tmppeak.first;
 			intpolfwhm=tmpfwhm.first;
 			intpollosvel=tmplosvel.first;*/
-			intpolpeak=peakmap[nearest];
-			intpolfwhm=fwhmmap[nearest];
-			intpollosvel=losvelmap[nearest];
-			if (lambda_pixel>1)// spectroscopic study
-			{
-				for (int il=0; il<lambda_pixel; il++) // changed index from global variable l into il [D.Y. 17 Nov 2014]
-				{
+					intpolpeak=peakmap[nearest];
+					intpolfwhm=fwhmmap[nearest];
+					intpollosvel=losvelmap[nearest];
+					if (lambda_pixel>1)// spectroscopic study
+					{
+						for (int il=0; il<lambda_pixel; il++) // changed index from global variable l into il [D.Y. 17 Nov 2014]
+						{
 				// lambda is made around lambda0, with a width of lambda_width 
-					lambdaval=double(il)/(lambda_pixel-1)*lambda_width-lambda_width/2.;
-					tempintens=intpolpeak*exp(-pow(lambdaval-intpollosvel/speedoflight*lambda0,2)/pow(intpolfwhm,2)*4.*log(2.));
-					ind=(i*(x_pixel)+j)*lambda_pixel+il;// 
-					newgrid[0][ind]=x;
-					newgrid[1][ind]=y;
-					newgrid[2][ind]=lambdaval;
-					#ifdef _OPENMP
-					#pragma omp atomic
-					#endif
-					intens[ind]+=tempintens;// loop over z and lambda [D.Y 17 Nov 2014]
-					
-				}
-			}
+							lambdaval=double(il)/(lambda_pixel-1)*lambda_width-lambda_width/2.;
+							tempintens=intpolpeak*exp(-pow(lambdaval-intpollosvel/speedoflight*lambda0,2)/pow(intpolfwhm,2)*4.*log(2.));
+							ind=(i*(x_pixel)+j)*lambda_pixel+il;// 
+							newgrid[0][ind]=x;
+							newgrid[1][ind]=y;
+							newgrid[2][ind]=lambdaval;
+							// this is critical, but with tasks, the ind is unique for each task, and no collision should occur
+							intens[ind]+=tempintens;// loop over z and lambda [D.Y 17 Nov 2014]
+						}
+					}
 			
-			if (lambda_pixel==1) // AIA imaging study. Algorithm not verified [DY 14 Nov 2014]
-			{
-				tempintens=intpolpeak;
-				ind=(i*x_pixel+j); 
-				newgrid[0][ind]=x;
-				newgrid[1][ind]=y;
-				#ifdef _OPENMP
-				#pragma omp atomic
-				#endif
-				intens[ind]+=tempintens; // loop over z [D.Y 17 Nov 2014]
+					if (lambda_pixel==1) // AIA imaging study. Algorithm not verified [DY 14 Nov 2014]
+					{
+						tempintens=intpolpeak;
+						ind=(i*x_pixel+j); 
+						newgrid[0][ind]=x;
+						newgrid[1][ind]=y;
+						intens[ind]+=tempintens; // loop over z [D.Y 17 Nov 2014]
+					}
+				}
+		
 			}
-		}
-		
-		
 		// print progress
-		/*#ifdef _OPENMP
-		#pragma omp atomic
-		#endif*/
-		if (k == 0) ++show_progress;
-	}
+				++show_progress;
+		}
 	if (commrank==0) std::cout << " Done! " << std::endl << std::flush;
 	
 	FoMo::RenderCube rendercube(goftcube);
