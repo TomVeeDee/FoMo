@@ -1,5 +1,6 @@
 #include "../config.h"
 #include "FoMo.h"
+#include "FoMo-internal.h"
 
 FoMo::RenderCube::RenderCube(FoMo::GoftCube goftcube)
 {

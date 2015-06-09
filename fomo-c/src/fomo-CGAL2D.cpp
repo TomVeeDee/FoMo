@@ -1,5 +1,6 @@
 #include "../config.h"
 #include "FoMo.h"
+#include "FoMo-internal.h"
 #include <sstream>
 #include <iomanip>
 #include <cstdlib>
@@ -154,8 +155,8 @@ FoMo::RenderCube CGAL2D(FoMo::GoftCube goftcube, const double l, const int x_pix
 			#endif
 			for (int i=0; i<y_pixel; i++) // scanning through ccd
 			{
-				x = double(j)/x_pixel*(maxx-minx)+minx;
-				y = double(i)/y_pixel*(maxy-miny)+miny;
+				x = double(j)/(x_pixel-1)*(maxx-minx)+minx;
+				y = double(i)/(y_pixel-1)*(maxy-miny)+miny;
 		// calculate the interpolation in the original frame of reference
 		// i.e. derotate the point using angles -l and -b
 				p={x*cos(l)+y*sin(l),-x*sin(l)+y*cos(l)};
@@ -209,6 +210,8 @@ FoMo::RenderCube CGAL2D(FoMo::GoftCube goftcube, const double l, const int x_pix
 	
 	FoMo::RenderCube rendercube(goftcube);
 	FoMo::tvars newdata;
+	double pathlength=(maxy-miny)/(y_pixel-1);
+	// intens*=pathlength*1e5; // assume that the coordinates are given in km, and convert to cm
 	newdata.push_back(intens);
 	rendercube.setdata(newgrid,newdata);
 	rendercube.setresolution(x_pixel,y_pixel,1,lambda_pixel,lambda_width);

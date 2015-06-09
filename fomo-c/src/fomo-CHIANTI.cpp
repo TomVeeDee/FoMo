@@ -1,5 +1,6 @@
 #include "../config.h"
 #include "FoMo.h"
+#include "FoMo-internal.h"
 #include <fstream>
 #include <sstream>
 #include <iostream>

@@ -20,7 +20,7 @@ int main(int argc, char* argv[])
 	FoMo::FoMoObject Object;
 	
 	// Open the file in the argument as fstream
-	// File contains lines with x, y, z, rho (cm^-3), T (K), vx, vy, vz (m/s)
+	// File contains lines with x, y, z (km), rho (cm^-3), T (K), vx, vy, vz (m/s)
 	ifstream filetoread(argv[1]);
 	
 	if (filetoread.is_open())

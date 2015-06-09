@@ -1,4 +1,5 @@
 #include "FoMo.h"
+#include "FoMo-internal.h"
 #include <fstream>
 #include <iostream>
 #include <cstdlib>

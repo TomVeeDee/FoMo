@@ -1,5 +1,6 @@
 #include "../config.h"
 #include "FoMo.h"
+#include "FoMo-internal.h"
 #include <sstream>
 #include <iomanip>
 #include <cstdlib>
@@ -181,9 +182,9 @@ FoMo::RenderCube CGALinterpolation(FoMo::GoftCube goftcube, Delaunay_triangulati
 			#endif
 			for (int k=0; k<z_pixel; k++) // scanning through ccd
 			{
-				x = double(j)/x_pixel*(maxx-minx)+minx;
-				y = double(i)/y_pixel*(maxy-miny)+miny;
-				z = double(k)/z_pixel*(maxz-minz)+minz;
+				x = double(j)/(x_pixel-1)*(maxx-minx)+minx;
+				y = double(i)/(y_pixel-1)*(maxy-miny)+miny;
+				z = double(k)/(z_pixel-1)*(maxz-minz)+minz;
 		// calculate the interpolation in the original frame of reference
 		// i.e. derotate the point using angles -l and -b
 				p={x*cos(b)*cos(l)+y*sin(l)+z*sin(b)*cos(l),-x*cos(b)*sin(l)+y*cos(l)-z*sin(b)*sin(l),-x*sin(b)+z*cos(b)};
@@ -221,7 +222,7 @@ FoMo::RenderCube CGALinterpolation(FoMo::GoftCube goftcube, Delaunay_triangulati
 					{
 						for (int il=0; il<lambda_pixel; il++) // changed index from global variable l into il [D.Y. 17 Nov 2014]
 						{
-				// lambda is made around lambda0, with a width of lambda_width 
+							// lambda is made around lambda0, with a width of lambda_width 
 							lambdaval=double(il)/(lambda_pixel-1)*lambda_width-lambda_width/2.;
 							tempintens=intpolpeak*exp(-pow(lambdaval-intpollosvel/speedoflight*lambda0,2)/pow(intpolfwhm,2)*4.*log(2.));
 							ind=(i*(x_pixel)+j)*lambda_pixel+il;// 
@@ -250,6 +251,8 @@ FoMo::RenderCube CGALinterpolation(FoMo::GoftCube goftcube, Delaunay_triangulati
 	
 	FoMo::RenderCube rendercube(goftcube);
 	FoMo::tvars newdata;
+	double pathlength=(maxz-minz)/(z_pixel-1);
+	// intens*=pathlength*1e5; // assume that the coordinates are given in km, and convert to cm
 	newdata.push_back(intens);
 	rendercube.setdata(newgrid,newdata);
 	rendercube.setresolution(x_pixel,y_pixel,z_pixel,lambda_pixel,lambda_width);

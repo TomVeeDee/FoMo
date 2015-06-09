@@ -1,5 +1,6 @@
 #include "../config.h"
 #include "FoMo.h"
+#include "FoMo-internal.h"
 
 FoMo::GoftCube::GoftCube(const int indim)
 {
