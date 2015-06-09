@@ -65,6 +65,7 @@ enum FoMoRenderValue
 {
 	RenderMethodNotDefined,
 	CGAL,
+	CGAL2D,
 	// add more methods between these
 	LastVirtualRenderMethod
 };
@@ -72,6 +73,7 @@ enum FoMoRenderValue
 static const std::map<std::string, FoMoRenderValue>::value_type RenderMapEntries[]=
 {
 	std::map<std::string, FoMoRenderValue>::value_type("CGAL",CGAL),
+	std::map<std::string, FoMoRenderValue>::value_type("CGAL2D",CGAL2D),
 	std::map<std::string, FoMoRenderValue>::value_type("ThisIsNotARealRenderMethod",LastVirtualRenderMethod)
 };
 
@@ -90,6 +92,12 @@ void FoMo::FoMoObject::render(const std::vector<double> lvec, const std::vector<
 	switch (RenderMap[rendering.readrendermethod()])
 	{
 		// add other rendermethods here
+		case CGAL2D:
+			std::cout << "Using CGAL-2D for rendering." << std::endl << std::flush;
+			if (bvec.size()>0) std::cout << "Warning: the bvec-values are not used in this 2D routine." << std::endl << std::flush;
+			tmprender=FoMo::RenderWithCGAL2D(this->datacube,this->rendering.readchiantifile(),this->rendering.readabundfile(),this->rendering.readobservationtype(),
+			x_pixel, y_pixel, lambda_pixel, lambda_width, lvec, this->outfile);
+			break;
 		case CGAL:
 			std::cout << "Using CGAL for rendering." << std::endl << std::flush;
 			tmprender=FoMo::RenderWithCGAL(this->datacube,this->rendering.readchiantifile(),this->rendering.readabundfile(),this->rendering.readobservationtype(), 
