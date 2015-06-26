@@ -1,0 +1,14 @@
+/**
+\mainpage This is the extensive help page for FoMo
+
+\section Implementation
+
+Here we will list some implementation details
+
+\section Example application
+
+Here we will explain the code in example.cpp
+
+\snippet example/example.cpp Initialize FoMo
+
+*/

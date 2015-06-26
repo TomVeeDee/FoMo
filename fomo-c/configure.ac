@@ -1,4 +1,4 @@
-AC_INIT(FoMo,3.1)
+AC_INIT(FoMo,3.1,tom.vandoorsselaere@wis.kuleuven.be)
 AC_PREREQ(2.59)
 AM_INIT_AUTOMAKE(1.9)
 AC_CONFIG_MACRO_DIR([m4])
@@ -23,6 +23,18 @@ AC_PROG_CXXCPP([cpp])
 AC_LANG(C++)
 AC_LANG_CPLUSPLUS
 AX_CXX_COMPILE_STDCXX_0X
+AC_HEADER_STDC
+AC_CHECK_HEADERS([string])
+AC_CHECK_HEADERS([iostream])
+AC_CHECK_HEADERS([vector])
+AC_CHECK_HEADERS([sstream])
+AC_CHECK_HEADERS([fstream])
+AC_CHECK_HEADERS([cmath])
+AC_CHECK_HEADERS([cstdlib])
+AC_CHECK_HEADERS([iomanip])
+AC_CHECK_HEADERS([map])
+AC_CHECK_HEADERS([cassert])
+
 AX_BOOST_BASE([1.36])
 AC_CHECK_HEADER(boost/progress.hpp,[],[AC_MSG_ERROR(Boost header not found)])
 PKG_PROG_PKG_CONFIG
@@ -52,6 +64,12 @@ AS_IF([test "$tbb" = yes -a "$HAVE_TBB" -eq 1], [AC_DEFINE([CGAL_LINKED_WITH_TBB
 CXXFLAGS+=" $tbb_CFLAGS $tbbmalloc_CFLAGS"
 LDFLAGS+=" $tbb_LIBS $tbbmalloc_LIBS"
 ])
+
+# generate documentation by doxygen
+DX_HTML_FEATURE(ON)
+DX_MAN_FEATURE(ON)
+DX_PDF_FEATURE(ON)
+DX_INIT_DOXYGEN($PACKAGE_NAME,fomo-doxygen.cfg,doc)
 
 # write the Makefiles
 AC_OUTPUT(Makefile src/Makefile example/Makefile)
