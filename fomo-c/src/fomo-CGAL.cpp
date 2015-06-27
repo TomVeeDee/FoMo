@@ -276,6 +276,10 @@ namespace FoMo
 		FoMo::GoftCube goftcube=FoMo::emissionfromdatacube(datacube, chiantifile, abundfile, observationtype);
 //		goftcube.setchiantifile(chiantifile);
 //		goftcube.setabundfile(abundfile);
+		/* A good speedup would be to calculate the triangulation per ray.
+		 * It would be good to select only the points around the ray, make the triangulation of that.
+		 * The number of points would be drastically reduced, and the triangulation would be greatly sped up.
+		 */
 		Delaunay_triangulation_3 DT=triangulationfromdatacube(goftcube);
 		FoMo::RenderCube rendercube(goftcube);
 		for (std::vector<double>::iterator lit=lvec.begin(); lit!=lvec.end(); ++lit)

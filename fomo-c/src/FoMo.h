@@ -42,6 +42,8 @@ namespace FoMo
 		tgrid readgrid() const;
 		tphysvar readvar(const unsigned int) const;
 		void setdim(const int indim);
+		void setnvars(const int innvars);
+		void setngrid(const int inngrid);
 		void setdata(tgrid& ingrid, tvars& indata);
 		void push_back(std::vector<double> coordinate, std::vector<double> variables);
 	};

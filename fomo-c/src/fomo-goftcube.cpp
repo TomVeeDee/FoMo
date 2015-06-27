@@ -46,31 +46,65 @@ FoMo::GoftCube::GoftCube(FoMo::DataCube incube)
 	lambda0=193.509;
 }
 
+/**
+ * @brief This displays the currently set abundance file.
+ * 
+ * In case it has not been set before by setabundfile(), then the default value of "/empty" is 
+ * returned. In this case, the built-in sun_coronal.abund is being used.
+ * @return It returns the path and filename to the abundance file.
+ */
 std::string FoMo::GoftCube::readabundfile()
 {
 	return abundfile;
 }
 
+/**
+ * @brief This returns the chiantifile in use.
+ * 
+ * In case the chiantifile has not been set with setchiantifile(), the default value
+ * "../chiantitables/goft_table_fe_12_0194small_abco.dat" will be returned.
+ * @return The path to the chiantifile being used.
+ */
 std::string FoMo::GoftCube::readchiantifile()
 {
 	return chiantifile;
 }
 
+/**
+ * @brief Use this routine to set the abundance file.
+ * @param inabund A string containing the path and filename of a valid abundance file 
+ * in CHIANTI format.
+ */
 void FoMo::GoftCube::setabundfile(const std::string inabund)
 {
 	abundfile=inabund;
 }
 
+/**
+ * @brief This routine sets the chiantifile.
+ * @param inchianti A string containing the path and filename of a valid chiantifile. These 
+ * are the tabulated G(T) values to be found in the FoMo repository under chiantitables.
+ */
 void FoMo::GoftCube::setchiantifile(const std::string inchianti)
 {
 	chiantifile=inchianti;
 }
 
+/**
+ * @brief With this member, the wavelength \f$\lambda_0\f$ is set.
+ * @param lambda A double value of the wavelength (in \f$\AA{}\f$).
+ */
 void FoMo::GoftCube::setlambda0(const double lambda)
 {
 	lambda0=lambda;
 }
 
+/**
+ * @brief This reads the currently set wavelength.
+ * 
+ * If the wavelength has not been set, the default value of 193.509 is returned.
+ * @return The return value is the wavelength in \f$\AA{}\f$.
+ */
 double FoMo::GoftCube::readlambda0()
 {
 	return lambda0;
