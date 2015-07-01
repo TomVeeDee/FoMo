@@ -30,6 +30,7 @@ FoMo::FoMoObject::~FoMoObject()
  * 
  * Use this method to set the rendermethod. At the moment (version 3.1), there 
  * are two rendermethods: "CGAL" and "CGAL2D".
+ * It should be read before the render() is called, because that used the information here.
  * @param inrendermethod The function takes a string as an argument, which is 
  * then internally connected to a rendermethod.
  */
@@ -150,6 +151,8 @@ FoMo::FoMoObservationType FoMo::FoMoObject::readobservationtype()
 
 /**
  * @brief This sets the resolution of the rendering.
+ * 
+ * It should be done before render() is called, because the resolution is read in that routine.
  * @param x_pixel This is the resolution of the x-direction of the rendercube.
  * @param y_pixel This is the resolution in the y-direction of the rendercube.
  * @param z_pixel This specifies how many points there are along the LOS. It should 
@@ -211,6 +214,9 @@ void FoMo::FoMoObject::setoutfile(const std::string instring)
 	outfile=instring;
 }
 
+/** 
+ * I think it would be great if we could document these in the manual. I'm not sure how to do  that.
+ */
 enum FoMoRenderValue
 {
 	RenderMethodNotDefined,
@@ -245,15 +251,16 @@ static std::map<std::string, FoMoRenderValue> RenderMap{ &RenderMapEntries[0], &
   * The routine sets the FoMoObservationType to Spectroscopic if the number of
   * wavelength pixels (lambda_pixel) is larger than 1, otherwise it is Imaging. \n
    The routine writes out all the renderings done (i.e. each combination of lvec and bvec) to a file 
- * outfile (set with setoutfile()) appended with "l"+l+"b"+b (where l and b are the viewing angles in 
+ * outfile (set with setoutfile()) appended with "l"+l+"b"+b (where l and b are the viewing angles 
+ * converted into 
  * degrees). When the routine returns, the last rendering is stored (with viewing angles lvec.back() 
  * and bvec.back()).\n
  * If the render is done with CHIANTI, the called rendermethods convert the \f$\rho\f$ 
  * and T in the FoMoObject.datacube to emissivity 
  * (proportional to \f$\rho^2G(\rho,T)\f$) using the chiantifile (set with setchiantifile()) and abundfile
  * (set with setabundfile()). 
- * @param lvec This is vector of l-angles which need to be considered by the rendering.
- * @param bvec This is vector of b-angles which need to be considered by the rendering.
+ * @param lvec This is vector of l-angles which need to be considered by the rendering. The values should be in radians.
+ * @param bvec This is vector of b-angles which need to be considered by the rendering. The values should be in radians.
  */
 void FoMo::FoMoObject::render(const std::vector<double> lvec, const std::vector<double> bvec)
 {

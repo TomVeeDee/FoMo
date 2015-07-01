@@ -1,0 +1,36 @@
+/**
+\mainpage This is the extensive help page for FoMo
+
+\section Implementation
+
+Here we will list some implementation details
+
+\section Example application
+
+Here we will explain the code in example/example.cpp. It illustrates the most straightforward way to 
+use the FoMo library. 
+
+First we need to create the FoMo::FoMoObject, this is the basic object for rendering numerical data.
+
+\snippet example/example.cpp Initialize FoMo
+
+After this, we can start reading in the data. The program in example/example.cpp takes as argument 
+the name of a file. This file should contain on each line 3 coordinates (x, y, z, all in megameter Mm),
+and 5 variables (n (in cm^-3), T (in Kelvin), vx, vy, vz (in m/s)).
+
+\snippet example/example.cpp Read in data
+
+Now we can set the options for the rendering of the DataCube. 
+
+\snippet example/example.cpp Set rendering options
+
+After this, rendering is as easy as
+
+\snippet example/example.cpp Render
+
+After the rendering, the data will have been written to fomo-example-out.l000b000. One could also explicitly
+access the rendering and write out some details about it, or write out to an alternative file fomo-output.txt
+
+\snippet example/example.cpp Details
+
+*/

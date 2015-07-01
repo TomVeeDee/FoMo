@@ -2,12 +2,32 @@
 #include <string>
 #ifndef FOMO_H
 #define FOMO_H 
+/**
+ * @file 
+ * This file contains the specifications for the FoMo code, which should 
+ * be included in codes linking against FoMo.
+ */
 
+/**
+ * This is the namespace that the FoMo code and objects live in.
+ */
 namespace FoMo
 {
+	/**
+	 * The type tcoord is defined as a vector of doubles. It has length DataCube.ng.
+	 */
 	typedef std::vector<double> tcoord;
+	/**
+	 * The type tgrid is the type of a grid. It is a vector of ::tcoord. It has length DataCube.dim.
+	 */
 	typedef std::vector<tcoord> tgrid;
+	/**
+	 * The type tphysvar stores the physical variables in the datapoints in a ::tcoord. It has length DataCube.ng.
+	 */
 	typedef std::vector<double> tphysvar;
+	/**
+	 * The type tvars is a vector of ::tphysvar. It has length DataCube.nvars.
+	 */
 	typedef std::vector<tphysvar> tvars;
 	
 	tphysvar pow(const double, tphysvar const&);
@@ -26,8 +46,11 @@ namespace FoMo
 	class DataCube 
 	{
 	protected:
+		/** This is the dimension of the DataCube. */
 		unsigned int dim;
+		/** This is the number of variables stored in the DataCube. */
 		unsigned int nvars;
+		/** This is the number of grid points in the DataCube. */
 		unsigned int ng;
 		FoMo::tgrid grid;
 		FoMo::tvars vars;
@@ -47,12 +70,6 @@ namespace FoMo
 		void setdata(tgrid& ingrid, tvars& indata);
 		void push_back(std::vector<double> coordinate, std::vector<double> variables);
 	};
-	
-	// included for backwards compatibility
-	/**
-	 \deprecated The typedef cube = DataCube is included for backwards compatibility.
-	*/
-	typedef DataCube cube;
 	
 	/**
 	 * @brief GoftCube contains the processed data, ready for rendering.
@@ -85,11 +102,16 @@ namespace FoMo
 		void readgoftcube(const std::string);
 	};
 	
+	/**
+	 * This enum allows the selection of the type of forward modelling that needs to be done. 
+	 * Careful though, the value of this in the RenderCube is set by FoMoObject.render(), based on the resolution
+	 * in the \f$\lambda\f$ direction (set with FoMoObject.setresolution()).
+	*/
 	enum FoMoObservationType
 	{
-		ObservationTypeNotDefined,
-		Spectroscopic,
-		Imaging
+		ObservationTypeNotDefined, /*!< This value should not be used: for coding purposes only!*/
+		Spectroscopic, /*!< In this case, spectroscopic information is generated.*/
+		Imaging /*!< In this case, only imaging information is obtained (e.g. using AIA filters).*/
 	};
 	
 	/**
