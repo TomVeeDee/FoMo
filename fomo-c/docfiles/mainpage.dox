@@ -5,7 +5,9 @@
 
 Here we will list some implementation details
 
-\section Example application
+\section Installation
+
+\section Example
 
 Here we will explain the code in example/example.cpp. It illustrates the most straightforward way to 
 use the FoMo library.\n\n 
@@ -36,7 +38,7 @@ After this, rendering is as easy as
 
 \snippet example/example.cpp Render
 
-After the rendering, the data will have been written to fomo-example-out.l000b000. One could also explicitly
+After the rendering, the data will have been written to fomo-example-out.l090b090. One could also explicitly
 access the rendering and write out some details about it, or write out to an alternative file fomo-output.txt
 
 \snippet example/example.cpp Details

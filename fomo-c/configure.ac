@@ -70,7 +70,7 @@ DX_DOXYGEN_FEATURE(ON)
 DX_HTML_FEATURE(ON)
 DX_MAN_FEATURE(ON)
 DX_PDF_FEATURE(ON)
-DX_INIT_DOXYGEN($PACKAGE_NAME,fomo-doxygen.cfg,doc)
+DX_INIT_DOXYGEN($PACKAGE_NAME,docfiles/fomo-doxygen.cfg,doc)
 
 # write the Makefiles
 AC_OUTPUT(Makefile src/Makefile example/Makefile)
