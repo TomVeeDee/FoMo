@@ -179,6 +179,11 @@ FoMo::RenderCube CGAL2D(FoMo::GoftCube goftcube, const double l, const int x_pix
 					intpolpeak=peakmap[nearest];
 					intpolfwhm=fwhmmap[nearest];
 					intpollosvel=losvelmap[nearest];
+				}
+				else
+				{
+					intpolpeak=0;
+				}
 					if (lambda_pixel>1)// spectroscopic study
 					{
 						for (int il=0; il<lambda_pixel; il++) // changed index from global variable l into il [D.Y. 17 Nov 2014]
@@ -188,7 +193,7 @@ FoMo::RenderCube CGAL2D(FoMo::GoftCube goftcube, const double l, const int x_pix
 							tempintens=intpolpeak*exp(-pow(lambdaval-intpollosvel/speedoflight*lambda0,2)/pow(intpolfwhm,2)*4.*log(2.));
 							ind=j*lambda_pixel+il;// 
 							newgrid[0][ind]=x;
-							newgrid[2][ind]=lambdaval;
+							newgrid[2][ind]=lambdaval+lambda0;
 							// this is critical, but with tasks, the ind is unique for each task, and no collision should occur
 							intens[ind]+=tempintens;// loop over z and lambda [D.Y 17 Nov 2014]
 						}
@@ -201,7 +206,6 @@ FoMo::RenderCube CGAL2D(FoMo::GoftCube goftcube, const double l, const int x_pix
 						newgrid[0][ind]=x;
 						intens[ind]+=tempintens; // loop over z [D.Y 17 Nov 2014]
 					}
-				}
 				// print progress
 				++show_progress;
 			}
@@ -211,7 +215,7 @@ FoMo::RenderCube CGAL2D(FoMo::GoftCube goftcube, const double l, const int x_pix
 	FoMo::RenderCube rendercube(goftcube);
 	FoMo::tvars newdata;
 	double pathlength=(maxy-miny)/(y_pixel-1);
-	// intens*=pathlength*1e5; // assume that the coordinates are given in km, and convert to cm
+	intens=FoMo::operator*(pathlength*1e8,intens); // assume that the coordinates are given in Mm, and convert to cm
 	newdata.push_back(intens);
 	rendercube.setdata(newgrid,newdata);
 	rendercube.setresolution(x_pixel,y_pixel,1,lambda_pixel,lambda_width);

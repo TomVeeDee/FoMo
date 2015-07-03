@@ -66,6 +66,7 @@ LDFLAGS+=" $tbb_LIBS $tbbmalloc_LIBS"
 ])
 
 # generate documentation by doxygen
+DX_DOXYGEN_FEATURE(ON)
 DX_HTML_FEATURE(ON)
 DX_MAN_FEATURE(ON)
 DX_PDF_FEATURE(ON)

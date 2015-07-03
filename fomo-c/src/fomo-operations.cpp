@@ -38,6 +38,11 @@ FoMo::tphysvar FoMo::operator/(FoMo::tphysvar const & a, FoMo::tphysvar const & 
 	return out;
 }
 
+template<typename T> FoMo::tphysvar FoMo::operator*=(FoMo::tphysvar const & a, T b)
+{
+	return a*b;
+}
+
 FoMo::tphysvar FoMo::operator*(FoMo::tphysvar const & a, FoMo::tphysvar const & b)
 {
 	FoMo::tphysvar out;

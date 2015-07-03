@@ -33,6 +33,7 @@ namespace FoMo
 	tphysvar pow(const double, tphysvar const&);
 	tphysvar operator/(tphysvar const&, tphysvar const&);
 	tphysvar operator*(tphysvar const&, tphysvar const&);
+	tphysvar operator*=(tphysvar const&, tphysvar const&);
 	tphysvar log10(tphysvar const&);
 	tphysvar operator*(double const &, tphysvar const &);
 	tphysvar sqrt(tphysvar const&);

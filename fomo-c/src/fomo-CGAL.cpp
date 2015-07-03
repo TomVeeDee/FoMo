@@ -218,19 +218,24 @@ FoMo::RenderCube CGALinterpolation(FoMo::GoftCube goftcube, Delaunay_triangulati
 					intpolpeak=peakmap[nearest];
 					intpolfwhm=fwhmmap[nearest];
 					intpollosvel=losvelmap[nearest];
+				}
+				else
+				{
+					intpolpeak=0;
+				}
 					if (lambda_pixel>1)// spectroscopic study
 					{
 						for (int il=0; il<lambda_pixel; il++) // changed index from global variable l into il [D.Y. 17 Nov 2014]
 						{
-							// lambda is made around lambda0, with a width of lambda_width 
+							// lambda the relative wavelength around lambda0, with a width of lambda_width
 							lambdaval=double(il)/(lambda_pixel-1)*lambda_width-lambda_width/2.;
 							tempintens=intpolpeak*exp(-pow(lambdaval-intpollosvel/speedoflight*lambda0,2)/pow(intpolfwhm,2)*4.*log(2.));
 							ind=(i*(x_pixel)+j)*lambda_pixel+il;// 
-							newgrid[0][ind]=x;
-							newgrid[1][ind]=y;
-							newgrid[2][ind]=lambdaval;
+							newgrid.at(0).at(ind)=x;
+							newgrid.at(1).at(ind)=y;
+							newgrid.at(2).at(ind)=lambdaval+lambda0; // store the full wavelength
 							// this is critical, but with tasks, the ind is unique for each task, and no collision should occur
-							intens[ind]+=tempintens;// loop over z and lambda [D.Y 17 Nov 2014]
+							intens.at(ind)+=tempintens;// loop over z and lambda [D.Y 17 Nov 2014]
 						}
 					}
 			
@@ -242,7 +247,6 @@ FoMo::RenderCube CGALinterpolation(FoMo::GoftCube goftcube, Delaunay_triangulati
 						newgrid[1][ind]=y;
 						intens[ind]+=tempintens; // loop over z [D.Y 17 Nov 2014]
 					}
-				}
 			// print progress
 				++show_progress;
 			}
@@ -252,7 +256,7 @@ FoMo::RenderCube CGALinterpolation(FoMo::GoftCube goftcube, Delaunay_triangulati
 	FoMo::RenderCube rendercube(goftcube);
 	FoMo::tvars newdata;
 	double pathlength=(maxz-minz)/(z_pixel-1);
-	// intens*=pathlength*1e5; // assume that the coordinates are given in km, and convert to cm
+	intens=FoMo::operator*(pathlength*1e8,intens); // assume that the coordinates are given in Mm, and convert to cm
 	newdata.push_back(intens);
 	rendercube.setdata(newgrid,newdata);
 	rendercube.setresolution(x_pixel,y_pixel,z_pixel,lambda_pixel,lambda_width);
@@ -288,6 +292,7 @@ namespace FoMo
 				rendercube=CGALinterpolation(goftcube,&DT,*lit,*bit, x_pixel, y_pixel, z_pixel, lambda_pixel, lambda_width);
 				rendercube.setangles(*lit,*bit);
 				std::stringstream ss;
+				// if outfile is "", then this should not be executed.
 				ss << outfile;
 				ss << "l";
 				ss << std::setfill('0') << std::setw(3) << *lit/pi*180.;

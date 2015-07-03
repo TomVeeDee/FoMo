@@ -66,26 +66,30 @@ int main(int argc, char* argv[])
 	// data is in structure, now start the rendering
 	
 	/// [Set rendering options]
-	Object.setchiantifile("/home/tom/data/idl/FoMo/chiantitables/goft_table_fe_12_0194small.dat");
-	Object.setabundfile("/empty"); //use "/empty" for the default sun_coronal.abund file
+	Object.setchiantifile("/home/tom/data/idl/FoMo/chiantitables/goft_table_fe_12_0194small.dat"); // the default value is "../chiantitables/goft_table_fe_12_0194small_abco.dat"
+	Object.setabundfile("/empty"); //use "/empty" or do not set it at all for the default sun_coronal.abund file
 	Object.setrendermethod("CGAL"); // CGAL is the default rendermethod
 	Object.setobservationtype(FoMo::Spectroscopic);
+	// adjust the resolution with these parameters
 	int x_pixel=101;
 	int y_pixel=102;
 	int z_pixel=300;
 	int lambda_pixel=30;
 	double lambda_width=.13;
 	Object.setresolution(x_pixel,y_pixel,z_pixel,lambda_pixel,lambda_width);
+	// determine where the output will be written
 	Object.setoutfile("fomo-example-out.");
 	/// [Set rendering options]
 	
 	/// [Render]
-	Object.render();
-	// alternatively, you could add angles as in radians as argument, e.g. Object.render(1.57,0.52).
+	Object.render(1.57,1.57);
+	// alternatively, you could add different angles in radians as argument, e.g. Object.render(1.57/2.,1.57/2.) to obtain some nice Doppler shifts.
 	/// [Render]
 	
 	/// [Details]
+	// read the rendering
 	FoMo::RenderCube rendercube=Object.readrendering();
+	// read the resolution
 	int nx,ny,nz,nlambda;
 	double lambdawidth;
 	rendercube.readresolution(nx,ny,nz,nlambda,lambdawidth);
