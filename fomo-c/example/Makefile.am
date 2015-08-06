@@ -1,8 +1,9 @@
-noinst_PROGRAMS = example searchfiles searchfiles_2d
+noinst_PROGRAMS = example searchfiles searchfiles_2d stiefkinkfording
 LDADD = -L$(top_builddir)/src/.libs/ -lFoMo
 AM_CPPFLAGS = -I$(top_srcdir)/src
 #example_DEPENDENCIES=libFoMo.la
 example_SOURCES=example.cpp 
+stiefkinkfording_SOURCES=stiefkinkfording.cpp
 searchfiles_LDADD=-L$(top_builddir)/src/.libs/ -lFoMo -lboost_system -lboost_filesystem
 searchfiles_SOURCES=searchfiles.cpp
 searchfiles_2d_LDADD=-L$(top_builddir)/src/.libs/ -lFoMo -lboost_system -lboost_filesystem

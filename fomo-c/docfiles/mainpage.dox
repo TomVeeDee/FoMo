@@ -9,7 +9,7 @@ Here we will list some implementation details
 
 \subsection Prerequisites
 
-To install FoMo, you first need to install <a href="http://www.cgal.org">CGAL</a>. It is available for most Linux distributions. Additionally, the code uses the boost library and the <a href="http://www.gnu.org/software/gsl/">GNU scientific library</a>.\n
+To install FoMo, you first need to install <a href="http://www.cgal.org">CGAL</a>. It is available for most Linux distributions. Additionally, the code uses the boost library (at least version 1.36) and the <a href="http://www.gnu.org/software/gsl/">GNU scientific library</a>.\n
 Some parts of the code require a c++ compiler with the C++11 standard. For <a href="http://gcc.gnu.org">gcc</a>, this means that it needs to be at least 4.7. On Centos, this can be achieved by executing 
 \code{.sh}
 scl enable devtoolset-2 bash
