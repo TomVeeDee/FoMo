@@ -7,6 +7,103 @@ Here we will list some implementation details
 
 \section Installation
 
+\subsection Prerequisites
+
+To install FoMo, you first need to install <a href="http://www.cgal.org">CGAL</a>. It is available for most Linux distributions. \n
+Some parts of the code require a c++ compiler with the C++11 standard. For <a href="http://gcc.gnu.org">gcc</a>, this means that it needs to be at least 4.7. On Centos, this can be achieved by executing 
+\code{.sh}
+scl enable devtoolset-2 bash
+\endcode
+This code documentation is generated with doxygen. At least version 1.7.5 is required.\n
+If you want parallel triangulation, please install <a href="https://www.threadingbuildingblocks.org/">Intel Thread Building Blocks</a>. If parallel triangulation is desired, CGAL should have version 4.5 or higher.\n
+
+\subsection code Obtaining the code
+
+The FoMo code may be obtained from the subversion repository by
+\code{.sh}
+	mkdir fomo
+	cd fomo
+	svn co https://svn.esat.kuleuven.be/FoMo/fomo-c .
+\endcode
+Alternatively, you may extract the FoMo tarball instead of the svn checkout:\n
+\t tar -xvf fomo-$(fomoversion).tar.gz
+
+\subsection compilation Compilation
+
+\subsubsection firsttime First time only
+
+Just after downloading the code, you need to prepare the autotools (autoconf, autoheader, automake, libtool), which FoMo uses to manage the compilation process. This is done by subsequently running
+\code{.sh}
+	libtoolize
+	aclocal -I m4/
+	autoheader
+	automake --add-missing
+\endcode
+
+\subsubsection compflags Setting the compilation flags
+
+The compilation options are set with the configure command. All possible options are listed in the help:
+
+\code{.sh}
+	./configure --help
+\endcode
+
+On my computer, I run 
+\code{.sh}
+CXXFLAGS="-O2 -g -Wall -march=core2 -fopenmp" ./configure --prefix=`pwd` --libdir=`pwd` --includedir=`pwd` --bindir=`pwd`
+\endcode
+The first variable CXXFLAGS sets the compilation flags. Especially -O2 and -fopenmp are important to enable essential speed-ups (-O2) and parallelisation (-fopenmp).\n
+The last parts (prefix, libdir, includedir, bindir) tell configure where to install FoMo. If you do not specify these, then the code will be installed in standard paths, such as /usr/include, /usr/lib, etc. In the above example, I just specify that I want the FoMo-library to be installed in the current directory (`pwd`), rather than system-wide.\n
+If your CGAL or TBB libraries are in a non-standard location, it's possible you need to add 
+\code{.sh}
+LDFLAGS="-L/path/to/tbb -L/path/to/cgal"
+\endcode
+If you do not want to link to TBB for parallel triangulation (perhaps because you have not installed them), then you should add --without-tbb after ./configure. For example
+\code{.sh}
+CXXFLAGS="-O2 -g -Wall -march=core2 -fopenmp" ./configure --without-tbb --prefix=`pwd` --libdir=`pwd` --includedir=`pwd` --bindir=`pwd`
+\endcode
+
+\subsubsection building Building and installing the code
+
+After setting the compilation flags, building and installing the code is as easy as
+\code{.sh}
+	make -j4
+	make install
+\endcode
+where the -j4 indicates how many parallel compilation process you want to have. My computer has 4 cores, so I choose 4.\n
+
+FoMo installs 4 files:
+- FoMo.h
+- libFoMo.la
+- libFoMo-$(fomoversion).so
+- libFoMo.so (a link to the previous file)
+
+FoMo.h is installed in the includedir, while the others are installed in the libdir.
+
+\subsection ownprog Making your own program, and link against FoMo.
+
+A good way to start creating your own program is to have a look at the programs in the example directory. Schematically, a FoMo program should follow this set-up:
+-# Read in data from simulation
+-# Initialize FoMoObject
+-# Load data into FoMoObject
+-# Set rendering parameters
+-# Render
+-# Write rendering to disk
+
+Assume now that you have written the code in program.cpp. Additionally, it is assumed that you installed/copied the FoMo-libraries to /path/to/fomolib and the header FoMo.h to /path/to/fomoheader. Then you can compile your code with
+\code{.sh}
+	g++ -O2 -fopenmp -I/path/to/fomoheader -L/path/to/fomolib -o program program.cpp -lFoMo
+\endcode
+
+Then, the program can be run with
+\code{.sh}
+	./program
+\endcode
+In case this gives a link error, you may need to add /path/to/fomolib to your $LD_LIBRARY_PATH or you can add the compiler flag
+\code{.sh}
+	g++ -O2 -fopenmp -I/path/to/fomoheader -L/path/to/fomolib -Wl,-rpath -Wl,/path/to/fomolib -o program program.cpp -lFoMo
+\endcode
+
 \section Example
 
 Here we will explain the code in example/example.cpp. It illustrates the most straightforward way to 
