@@ -13,17 +13,17 @@ using namespace std;
 
 void printusage(const char* programname){
 // print the usage of the program
-	printf("Usage: %s [--reuse] [--help] [--parameter value] \n\n",programname);
+	printf("Usage: %s [--help] [--parameter value] \n\n",programname);
 	printf("  --help        Print this message\n\n");
 	printf("CHIANTI parameters:\n");
 	printf("  --goftfile    Filename containing the table with the G(T) written by CHIANTI\n");
 	printf("  --abundfile   Filename containing the table with the abundances (standard sun_coronal.abund is used)\n\n");
 	printf("IO parameters:\n");
-        printf("  --infileini    input data cube initials\n\n");
-        printf("  --outfileini   output data cube initials\n\n");
-        printf("  --tstart   the first frame to process, default=0\n\n");
-        printf("  --tend     the final frame to process, default=1\n\n");
-        printf("  --tstep     the time steps to process input files, default=1\n\n");
+        printf("  --infileini   input data cube initials\n");
+        printf("  --outfileini  output data cube initials\n");
+        printf("  --tstart      the first frame to process, default=0\n");
+        printf("  --tend        the final frame to process, default=1\n");
+        printf("  --tstep       the time steps to process input files, default=1\n");
 	printf("\n");
 }
 
