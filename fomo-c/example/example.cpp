@@ -2,6 +2,7 @@
 #include <cstdlib>
 #include <iostream>
 #include <fstream>
+#include <cmath>
 
 /**
  * @file 
@@ -82,7 +83,7 @@ int main(int argc, char* argv[])
 	/// [Set rendering options]
 	
 	/// [Render]
-	Object.render(1.57,1.57);
+	Object.render(2*atan(1.),2*atan(1.));
 	// alternatively, you could add different angles in radians as argument, e.g. Object.render(1.57/2.,1.57/2.) to obtain some nice Doppler shifts.
 	/// [Render]
 	
