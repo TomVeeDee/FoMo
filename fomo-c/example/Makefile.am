@@ -1,6 +1,10 @@
-noinst_PROGRAMS = example 
+noinst_PROGRAMS = example searchfiles searchfiles_2d
 LDADD = -L$(top_builddir)/src/.libs/ -lFoMo
 AM_CPPFLAGS = -I$(top_srcdir)/src
 #example_DEPENDENCIES=libFoMo.la
 example_SOURCES=example.cpp 
+searchfiles_LDADD=-L$(top_builddir)/src/.libs/ -lFoMo -lboost_system -lboost_filesystem
+searchfiles_SOURCES=searchfiles.cpp
+searchfiles_2d_LDADD=-L$(top_builddir)/src/.libs/ -lFoMo -lboost_system -lboost_filesystem
+searchfiles_2d_SOURCES=searchfiles_2d.cpp
 EXTRA_DIST = testfile.txt
