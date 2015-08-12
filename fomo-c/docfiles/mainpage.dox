@@ -38,6 +38,7 @@ Just after downloading the code, you need to prepare the autotools (autoconf, au
 	aclocal -I m4/
 	autoheader
 	automake --add-missing
+	autoconf
 \endcode
 
 \subsubsection compflags Setting the compilation flags
