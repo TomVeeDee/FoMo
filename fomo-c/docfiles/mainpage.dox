@@ -141,4 +141,16 @@ access the rendering and write out some details about it, or write out to an alt
 
 \snippet example/example.cpp Details
 
+\subsection idl How to read in the data from the example into IDL
+
+Several routines are provided in the idl subdirectory to read in FoMo output into IDL. Reading in the data from the example above can be achieved with
+
+\code{IDL}
+IDL> data=readgoftcube('example/fomo-output.txt')       
+IDL> regulargoftcube,data,xvec,yvec,lvec,emiss          
+IDL> gaussfitgoftcube,emiss,lvec,int,doppler,sigma,chisq
+\endcode
+
+Then the int, doppler, sigma, chisq variables are 2D arrays with intensity, Doppler shift, Doppler width, and chi-squared values. They can be easily visualised with tvscl or surface.
+
 */
