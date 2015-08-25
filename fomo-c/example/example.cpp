@@ -44,6 +44,7 @@ int main(int argc, char* argv[])
 			{
 				// Read one value of a coordinate at a time.
 				filetoread >> tmpvar;
+                                tmpvar = tmpvar * 1.e5;
 				// push it back into the coordinate vector.
 				coordinates.push_back(tmpvar);
 			}
@@ -53,6 +54,8 @@ int main(int argc, char* argv[])
 			{
 				// Read one value of a variable at a time.
 				filetoread >> tmpvar;
+                                if (i == 0) tmpvar = tmpvar * 1.e-12 * 1.204 * 1.e21; //dens to cm^-3
+                                if (i >= 2) tmpvar = tmpvar * 1.e6; //vel in m/s
 				// push it back into the variable vector.
 				variables.push_back(tmpvar);
 			}
@@ -67,14 +70,14 @@ int main(int argc, char* argv[])
 	// data is in structure, now start the rendering
 	
 	/// [Set rendering options]
-	Object.setchiantifile("/home/tom/data/idl/FoMo/chiantitables/goft_table_fe_12_0194small.dat"); // the default value is "../chiantitables/goft_table_fe_12_0194small_abco.dat"
+	Object.setchiantifile("/users/cpa/tomvd/data/idl/FoMo/chiantitables/goft_table_fe_12_0194small.dat"); // the default value is "../chiantitables/goft_table_fe_12_0194small_abco.dat"
 	Object.setabundfile("/empty"); //use "/empty" or do not set it at all for the default sun_coronal.abund file
 	Object.setrendermethod("CGAL"); // CGAL is the default rendermethod
 	Object.setobservationtype(FoMo::Spectroscopic);
 	// adjust the resolution with these parameters
-	int x_pixel=101;
-	int y_pixel=102;
-	int z_pixel=300;
+	int x_pixel=301;
+	int y_pixel=302;
+	int z_pixel=500;
 	int lambda_pixel=30;
 	double lambda_width=.13;
 	Object.setresolution(x_pixel,y_pixel,z_pixel,lambda_pixel,lambda_width);

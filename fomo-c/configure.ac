@@ -25,6 +25,15 @@ AC_PROG_CXXCPP([cpp])
 AC_LANG(C++)
 AC_LANG_CPLUSPLUS
 AX_CXX_COMPILE_STDCXX_11
+AX_LIB_HDF5([serial])
+AC_CHECK_PROG(H5CPP,h5c++,`which h5c++`)
+if test -z "${H5CPP}"; then
+    CXXCPP="[h5c++]"
+    CXX="[h5c++]"
+    CPP="[h5c++]"
+else
+    CXXCPP="[g++]"
+fi
 AC_HEADER_STDC
 AC_CHECK_HEADERS([string])
 AC_CHECK_HEADERS([iostream])
@@ -75,4 +84,4 @@ DX_PDF_FEATURE(ON)
 DX_INIT_DOXYGEN($PACKAGE_NAME,docfiles/fomo-doxygen.cfg,doc)
 
 # write the Makefiles
-AC_OUTPUT(Makefile src/Makefile example/Makefile)
+AC_OUTPUT(Makefile src/Makefile example/Makefile example_FLASH/Makefile)

@@ -11,7 +11,7 @@
 
 using namespace std;
 
-static const string rootdir="/home/tom/data/idl/FoMo/chiantitables/";
+static const string rootdir="/users/cpa/tomvd/data/idl/FoMo/chiantitables/";
 
 static const map<string,string>::value_type AIAfilters[]=
 {
