@@ -1,3 +1,4 @@
+subdirs = example_FLASH
 noinst_PROGRAMS = example searchfiles searchfiles_2d stiefkinkfording
 LDADD = -L$(top_builddir)/src/.libs/ -lFoMo
 AM_CPPFLAGS = -I$(top_srcdir)/src
