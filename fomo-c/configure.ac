@@ -25,15 +25,45 @@ AC_PROG_CXXCPP([cpp])
 AC_LANG(C++)
 AC_LANG_CPLUSPLUS
 AX_CXX_COMPILE_STDCXX_11
+
+# check for HDF5 for the hdf5 example
 AX_LIB_HDF5([serial])
-AC_CHECK_PROG(H5CPP,h5c++,`which h5c++`)
-if test -z "${H5CPP}"; then
-    CXXCPP="[h5c++]"
-    CXX="[h5c++]"
-    CPP="[h5c++]"
-else
-    CXXCPP="[g++]"
+if test "x$with_hdf5" = "xyes"; then
+   AC_CHECK_PROGS(HDF5_CXX,[h5c++ h5c++-64])
+   if [test -z "$HDF5_CXX"]; then
+	   AC_MSG_ERROR([h5c++ not found])
+   else
+	   HDF5_SHOW=$(eval $HDF5_CXX -show -shlib)
+           HDF5_tmp_flags=$(eval $HDF5_CXX -showconfig \
+            | $GREP 'FLAGS\|Extra libraries:' \
+            | $AWK -F: '{printf("%s "), $[]2}' )
+
+           HDF5_tmp_inst=$(eval $HDF5_CXX -showconfig \
+            | $GREP 'Installation point:' \
+            | $AWK '{print $[]NF}' )
+
+           HDF5_CPPFLAGS="-I${HDF5_tmp_inst}/include"
+
+           dnl Now sort the flags out based upon their prefixes
+           for arg in $HDF5_SHOW $HDF5_tmp_flags ; do
+             case "$arg" in
+               -I*) echo $HDF5_CPPFLAGS | $GREP -e "$arg" 2>&1 >/dev/null \
+                     || HDF5_CPPFLAGS="$arg $HDF5_CPPFLAGS"
+                 ;;
+               -L*) echo $HDF5_LDFLAGS | $GREP -e "$arg" 2>&1 >/dev/null \
+                     || HDF5_LDFLAGS="$arg $HDF5_LDFLAGS"
+                ;;
+               -l*) echo $HDF5_LIBS | $GREP -e "$arg" 2>&1 >/dev/null \
+                     || HDF5_LIBS="$arg $HDF5_LIBS"
+                 ;;
+             esac
+           done
+
+           HDF5_LIBS="$HDF5_LIBS -lhdf5"
+   fi
 fi
+AM_CONDITIONAL(HAVE_HDF5, [test -n "$HDF5_CXX"])
+
 AC_HEADER_STDC
 AC_CHECK_HEADERS([string])
 AC_CHECK_HEADERS([iostream])
@@ -84,4 +114,4 @@ DX_PDF_FEATURE(ON)
 DX_INIT_DOXYGEN($PACKAGE_NAME,docfiles/fomo-doxygen.cfg,doc)
 
 # write the Makefiles
-AC_OUTPUT(Makefile src/Makefile example/Makefile example_FLASH/Makefile)
+AC_OUTPUT(Makefile src/Makefile example/Makefile example/example_FLASH/Makefile)
