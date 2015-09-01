@@ -298,9 +298,9 @@ void FoMo::FoMoObject::render(const std::vector<double> lvec, const std::vector<
  * @brief A single rendering of a datacube.
  * 
  * For practical reasons, it results in a call to render(std::vector<double>, std::vector<double>),
- * with as first argument {l} and second argument {b}.
- * @param l First the FoMoObject.goftcube is rotated around ... . It defaults to 0.
- * @param b Secondly, the FoMoObject.goftcube is rotated around ... . It defaults to 0.
+ * with as first argument {l} and second argument {b}. First, the simulation box is rotated with an angle -b around the y-axis, then it is rotated around an angle -l around the z-axis.
+ * @param b First, the FoMoObject.goftcube is rotated an angle -b around the y-axis. It defaults to 0.
+ * @param l Then, the FoMoObject.goftcube is rotated an angle -l around the z-axis. It defaults to 0.
  */
 void FoMo::FoMoObject::render(const double l, const double b)
 {
