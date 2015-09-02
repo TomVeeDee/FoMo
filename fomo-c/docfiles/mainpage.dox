@@ -25,8 +25,10 @@ The FoMo code may be obtained from the subversion repository by
 	cd fomo
 	svn co https://svn.esat.kuleuven.be/FoMo/fomo-c .
 \endcode
-Alternatively, you may extract the FoMo tarball (<a href="http://homes.esat.kuleuven.be/~tomvd/fomo-$(fomoversion).tar.gz">fomo-$(fomoversion).tar.gz</a>) instead of the svn checkout:\n
-\t tar -xvf fomo-$(fomoversion).tar.gz
+Alternatively, you may extract the FoMo tarball (<a href='http://homes.esat.kuleuven.be/~tomvd/fomo-VERSION.tar.gz'>fomo-VERSION.tar.gz</a>) instead of the svn checkout:\n
+\code{.sh}
+tar -xvf fomo-VERSION.tar.gz
+\endcode
 
 \subsection compilation Compilation
 
@@ -76,7 +78,7 @@ where the -j4 indicates how many parallel compilation process you want to have. 
 FoMo installs 4 files:
 - FoMo.h
 - libFoMo.la
-- libFoMo-$(fomoversion).so
+- libFoMo-VERSION.so
 - libFoMo.so (a link to the previous file)
 
 FoMo.h is installed in the includedir, while the others are installed in the libdir.
