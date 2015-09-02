@@ -25,7 +25,7 @@ The FoMo code may be obtained from the subversion repository by
 	cd fomo
 	svn co https://svn.esat.kuleuven.be/FoMo/fomo-c .
 \endcode
-Alternatively, you may extract the FoMo tarball instead of the svn checkout:\n
+Alternatively, you may extract the FoMo tarball (<a href="http://homes.esat.kuleuven.be/~tomvd/fomo-$(fomoversion).tar.gz">fomo-$(fomoversion).tar.gz</a>) instead of the svn checkout:\n
 \t tar -xvf fomo-$(fomoversion).tar.gz
 
 \subsection compilation Compilation
