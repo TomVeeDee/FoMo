@@ -92,18 +92,67 @@ LDFLAGS+="-lCGAL -lgmp"
 CXXFLAGS+=" -frounding-math"
 
 AC_ARG_WITH([tbb],
-	    [AS_HELP_STRING([--with-tbb],
+	    [AS_HELP_STRING([--with-tbb=yes/no/PATH],
 			    [link with Intel Thread Building Block (TBB) for parallelisation @<:@default=yes@:>@])],
 	    [tbb=$withval],
 	    [tbb=yes])
-AS_CASE(["$tbb"],
-	[yes], [PKG_CHECK_MODULES([tbb], [tbb], [HAVE_TBB=1])],
-	[no], [HAVE_TBB=0],
-	[PKG_CHECK_MODULES([tbb], [tbb], [HAVE_TBB=1], [HAVE_TBB=0])])
-AS_IF([test "$tbb" = yes -a "$HAVE_TBB" -eq 1], [PKG_CHECK_MODULES([tbbmalloc], [tbbmalloc], [HAVE_TBB=1], [HAVE_TBB=0])])
-AS_IF([test "$tbb" = yes -a "$HAVE_TBB" -eq 1], [AC_DEFINE([CGAL_LINKED_WITH_TBB], [1], [Define if using TBB.])
-CXXFLAGS+=" $tbb_CFLAGS $tbbmalloc_CFLAGS"
-LDFLAGS+=" $tbb_LIBS $tbbmalloc_LIBS"
+HAVE_TBB=0
+AS_IF([test "a$tbb" != ano -a "$HAVE_TBB" -eq 0], 
+      # pkg_config did not find the TBB yet, it is probably in a special dir
+      [
+       AS_IF([test "a$tbb" = ayes],tbbdirs="/usr /usr/local /opt /opt/local",tbbdirs="$withval")
+       found=false
+       if ! $found; then
+         tbb_CPPFLAGS=
+         for tbbdir in $tbbdirs; do
+             AC_MSG_CHECKING([for tbb/tbb.h in $tbbdir])
+             if test -f "$tbbdir/include/tbb/tbb.h"; then
+                tbb_CPPFLAGS="-I$tbbdir/include"
+                tbb_LDFLAGS="-L$tbbdir/lib"
+                tbb_LIBS="-ltbb -ltbbmalloc"
+                found=true
+		HAVE_TBB=1
+                AC_MSG_RESULT([yes])
+                break
+            else
+                AC_MSG_RESULT([no])
+            fi
+         done
+       # as a last resort, check if the TBB may be found with pkg-config
+         if ! $found; then 
+	       PKG_CHECK_MODULES([tbb],[tbb tbbmalloc], [HAVE_TBB=1])
+	 fi
+       fi
+       AC_MSG_CHECKING([whether compiling and linking against tbb works])
+       echo "Trying link with tbb_LDFLAGS=$tbb_LDFLAGS;" \
+        "tbb_LIBS=$tbb_LIBS; tbb_CPPFLAGS=$tbb_CPPFLAGS" >&AS_MESSAGE_LOG_FD
+
+       save_LIBS="$LIBS"
+       save_LDFLAGS="$LDFLAGS"
+       save_CPPFLAGS="$CPPFLAGS"
+       LDFLAGS="$LDFLAGS $tbb_LDFLAGS"
+       LIBS="$tbb_LIBS $LIBS"
+       CPPFLAGS="$tbb_CPPFLAGS $CPPFLAGS"
+
+       AC_LINK_IFELSE(
+           [AC_LANG_PROGRAM([#include <tbb/tbb.h>],
+                           [tbb::concurrent_hash_map<int,int>()])],
+           [ 
+               AC_MSG_RESULT([yes])
+           ], [
+               AC_MSG_RESULT([no])
+           ])
+    CPPFLAGS="$save_CPPFLAGS"
+    LDFLAGS="$save_LDFLAGS"
+    LIBS="$save_LIBS" 
+      ]
+      )
+AS_IF([test "a$tbb" != ano -a "$HAVE_TBB" -eq 1], [AC_DEFINE([CGAL_LINKED_WITH_TBB], [1], [Define if using TBB.])
+CXXFLAGS+=" $tbb_CFLAGS"
+LDFLAGS+=" $tbb_LIBS"
+LDFLAGS="$LDFLAGS $tbb_LDFLAGS"
+LIBS="$tbb_LIBS $LIBS"
+CPPFLAGS="$tbb_CPPFLAGS $CPPFLAGS"
 ])
 
 # generate documentation by doxygen

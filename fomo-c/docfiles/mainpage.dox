@@ -115,14 +115,21 @@ CXXFLAGS="-O2 -g -Wall -march=core2 -fopenmp" ./configure --prefix=`pwd` --libdi
 \endcode
 The first variable CXXFLAGS sets the compilation flags. Especially -O2 and -fopenmp are important to enable essential speed-ups (-O2) and parallelisation (-fopenmp).\n
 The last parts (prefix, libdir, includedir, bindir) tell configure where to install FoMo. If you do not specify these, then the code will be installed in standard paths, such as /usr/include, /usr/lib, etc. In the above example, I just specify that I want the FoMo-library to be installed in the current directory (`pwd`), rather than system-wide.\n
-If your CGAL or TBB libraries are in a non-standard location, it's possible you need to add 
+If your CGAL libraries are in a non-standard location, it's possible you need to add 
 \code{.sh}
-LDFLAGS="-L/path/to/tbb -L/path/to/cgal"
+LDFLAGS="-L/path/to/cgal/lib" CPPFLAGS="-I/path/to/cgal/include"
 \endcode
+Do not forget to set your $LD_LIBRARY_PATH when running the program as well!
+
 If you do not want to link to TBB for parallel triangulation (perhaps because you have not installed them), then you should add --without-tbb after ./configure. For example
 \code{.sh}
-CXXFLAGS="-O2 -g -Wall -march=core2 -fopenmp" ./configure --without-tbb --prefix=`pwd` --libdir=`pwd` --includedir=`pwd` --bindir=`pwd`
+CXXFLAGS="-O2 -g -Wall -march=core2 -fopenmp" ./configure --prefix=`pwd` --libdir=`pwd` --includedir=`pwd` --bindir=`pwd` --without-tbb
 \endcode
+If TBB is in a special location, and not in your pkg-config, then you can point FoMo in the right direction by running
+\code{.sh}
+CXXFLAGS="-O2 -g -Wall -march=core2 -fopenmp" ./configure --prefix=`pwd` --libdir=`pwd` --includedir=`pwd` --bindir=`pwd` --with-tbb=/path/to/tbb
+\endcode
+Again, you should add the correct path to the $LD_LIBRARY_PATH as well.
 
 \subsubsection building Building and installing the code
 
