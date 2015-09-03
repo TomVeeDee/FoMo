@@ -3,7 +3,65 @@
 
 \section Implementation
 
-Here we will list some implementation details
+(This is a blatant copy of the "instrument" paper on FoMo, to appear in Frontiers)
+
+The spectral intensity \f$I(\lambda,x',y')\f$ (in \f$\mbox{ergs cm}^{-2} \mbox{s}^{-1} \mbox{sr}^{-1} \AA{}^{-1}\f$) at a wavelength \f$\lambda\f$ is the integral of the spectral emissivity \f$\epsilon(\lambda,x,y,z)\f$ at each point along the line-of-sight (LOS, along \f$z'\f$):
+\f{equation}{
+	I(\lambda,x',y')=\int \epsilon(\lambda,x,y,z) dz'.
+	\label{eq:int}
+\f}
+Here \f$(x,y,z)\f$ are the coordinates in the original simulation, and \f$(x',y',z')\f$ are the coordinates in the rotated frame of reference of the observation. \f$(x',y')\f$ are the coordinates in the image plane, and \f$z'\f$ is the direction along the LOS. The two coordinate systems are connected by two rotations, first an angle \f$-b\f$ around the \f$y\f$-axis, then around an angle \f$-l\f$ around the \f$z\f$-axis:
+\f{equation}{
+	\begin{pmatrix} x' \\ y' \\ z'\end{pmatrix}=\begin{pmatrix} \cos{l} & -\sin{l} &0\\ \sin{l} & \cos{l} &0\\ 0&0&1\end{pmatrix}\begin{pmatrix} \cos{b} & 0 & -\sin{b} \\ 0&1&0\\ \sin{b} & 0 & \cos{b}\end{pmatrix} \begin{pmatrix} x\\y\\z\end{pmatrix}.
+	\label{eq:angle}
+\f}
+The viewing angles are set as argument of the FoMo::FoMoObject.render() function.
+The simulation box with grid \f$(x,y,z)\f$ is considered as the input, and is the data for which the forward model needs to be computed. There the input model needs to contain the \f$x-, y-, z-\f$coordinates of each data point, and specify the number density \f$n_\mathrm{e}\f$, the temperature \f$T\f$ and three velocity components \f$(v_x,v_y,v_z)\f$ at these data points. \f$(x,y,z)\f$ should be in Mm (megameter), \f$n_\mathrm{e}\f$ in \f$\mbox{cm}^{-3}\f$, temperature \f$T\f$ in K and the velocity components should have units m/s.
+
+Then, a new grid is generated in the observation reference frame \f$(x',y',z')\f$. The grid points in this new, "observational" grid are called voxels. The resolution of the new grid is set by the user, with the FoMo::FoMoObject member function FoMo::FoMoObject.setresolution(). Especially the resolution in the \f$z'-\f$direction (\f$\Delta l\f$) should be close to the numerical resolution of the input model, as otherwise emission features may be missed in the forward models. At each voxel \f$(x'_i,y'_j,z'_k)\f$, the emissivity is interpolated from the nearest grid point in the \f$(x,y,z)\f$-space and then the LOS integration is performed.
+
+The integral in Eq. 1 is then discretised as follows
+\f{equation}{
+	I(\lambda,x'_i,y'_j)=\sum_{k} \epsilon(\lambda,x'_i,y'_j,z'_k) \Delta l,
+	\label{eq:discrete}
+\f}
+which converges to the true emission for \f$\Delta l\to 0\f$, thus stressing the need for a high resolution in the \f$z'-\f$direction.
+
+The spectral emission is calculated by first converting the physical variables \f$n_\mathrm{e},T\f$ to the emissivity \f$\overline{\epsilon}(x,y,z)\f$ (in \f$\mbox{ergs cm}^{-3} \mbox{s}^{-1} \mbox{sr}^{-1}\f$) of the spectral line at rest wavelength \f$\lambda_0\f$ at each grid point by
+\f{equation}{
+	\overline{\epsilon}(x,y,z)=\frac{A_\mathrm{b}}{4\pi} n^2_\mathrm{e}(x,y,z) G_{\lambda_0}(n_\mathrm{e}(x,y,z),T(x,y,z)),
+	\label{eq:contrib}
+\f}
+where \f$A_\mathrm{b}\f$ is the abundance of the emitting element (w.r.t. hydrogen) and \f$G_{\lambda_0}\f$ the contribution function for that specific spectral line. The \f$G_{\lambda_0}\f$ is calculated by a look-up table (see the tables list on the wiki webpage at <a>https://wiki.esat.kuleuven.be/FoMo/GeneratingTables</a>), selected by FoMo::FoMoObject.setchiantifile(). The abundance \f$A_\mathrm{b}\f$ is read from a CHIANTI abundance file. As a standard sun_coronal.abund is used, but it may be swapped with another file if needed by FoMo::FoMoObject.setabundfile().
+
+Moreover, we compute the full-width half-maximum of the spectral line \f$\lambda_\mathrm{w}\f$ from the temperature by 
+\f{equation}{
+	\lambda_\mathrm{w}=2\sqrt{2\ln{2}}\sqrt{\frac{2kT}{\mu_{\lambda_0}m_\mathrm{p}}}\frac{\lambda_0}{c},
+	\label{eq:lambdaw}
+\f}
+where \f$k\f$ is the Boltzmann constant, \f$c\f$ is the speed of light, \f$m_\mathrm{p}\f$ is the mass of a proton and \f$\mu_{\lambda_0}\f$ is the atomic weight (in proton masses) of the emitting element.
+Thus, in this first step of the computation FoMo::FoMoObject.render(), the physical variables \f$n_\mathrm{e},T\f$ are converted to \f$\overline{\epsilon},\lambda_\mathrm{w}\f$, and is stored as FoMo::FoMoObject.goftcube.
+
+In the second step of FoMo::FoMoObject.render(), the integration along the LOS is performed. At each voxel, the emissivity, spectral line width and velocity \f$\overline{\epsilon},\lambda_\mathrm{w},\vec{v}\f$ are interpolated from its nearest neighbour in the \f$(x,y,z)\f$ grid. Then the wavelength dependence of the spectral emissivity is calculated by taking a Gaussian shaped spectral line with the correct thermal line width (Eq. 5) and the local Doppler shift. 
+\f{equation}{
+	\epsilon(\lambda,x,y,z)=\frac{2\sqrt{2\ln{2}}}{\sqrt{2\pi}\lambda_\mathrm{w}}\overline{\epsilon}(x,y,z) \exp{\left(-\frac{4\ln{2}}{\lambda^2_\mathrm{w}}\left(\lambda-\lambda_0\left(1-\vec{1}_\mathrm{LOS}\cdot \vec{v}/c\right)\right)^2\right)}
+\f}
+The local Doppler shift is calculated by projecting the local velocity \f$\vec{v}\f$ onto a unit vector along the LOS, given by 
+\f{equation}{
+	\vec{1}_\mathrm{LOS}=\begin{pmatrix}\sin{b}\cos{l}\\ -\sin{b}\sin{l}\\ \cos{b}\end{pmatrix}.
+	\label{eq:los}
+\f}
+After summation with Eq. 3, the spectral intensity \f$I(\lambda,x'_i,y'_j)\f$ is returned as a result of the second step in the code, and is stored as FoMo::FoMoObject.rendering.
+
+For the calculation of emission in the imaging telescopes of SDO/AIA, we have computed instrument response functions \f$\kappa_\alpha(n_\mathrm{e},T)\f$ for bandpass \f$\alpha\f$ on a grid of densities \f$n_\mathrm{e}\f$ and temperatures \f$T\f$ (see <a>https://wiki.esat.kuleuven.be/FoMo/GeneratingTables</a>). This feature can be used by setting FoMo::FoMoObject.setobservationtype() to FoMo::Imaging and using the appropriate emission file (set by FoMo::FoMoObject.setchiantifile()). The instrument response is then computed by
+\f{equation}{
+	\kappa_\alpha(n_\mathrm{e},T)=\int_\lambda G(\lambda,n_\mathrm{e},T) R_\alpha(\lambda) d\lambda,
+\f}
+where \f$R_\alpha\f$ is the wavelength-dependent response function of bandpass \f$\alpha\f$. Then, the instrument response in the image plane of the forward model is obtained through integrating \f$\kappa_\alpha\f$ over the LOS. Thus, the equivalent for Eq. 3 for the imaging telescope is
+\f{equation}{
+	I(x'_i,y'_j)=\sum_{k} \kappa_\alpha(x'_i,y'_j,z'_k) \Delta l,
+\f}
+in which the emissivity was replaced by the instrument response function. 
 
 \section Installation
 
