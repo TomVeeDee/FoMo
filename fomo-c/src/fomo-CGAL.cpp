@@ -13,7 +13,7 @@
 #include <CGAL/interpolation_functions.h>
 
 typedef CGAL::Exact_predicates_inexact_constructions_kernel K;
-#ifdef CGAL_LINKED_WITH_TBB
+#if defined(CGAL_LINKED_WITH_TBB) && CGAL_VERSION_NR >= CGAL_VERSION_NUMBER(4,4,0) 
 typedef CGAL::Triangulation_data_structure_3< 
     CGAL::Triangulation_vertex_base_3<K>, 
     CGAL::Triangulation_cell_base_3<K>, 
@@ -55,7 +55,7 @@ Delaunay_triangulation_3 triangulationfromdatacube(FoMo::DataCube goftcube)
 	// CGAL::spatial_sort(delaunaygrid.begin(),delaunaygrid.end());
 	// but I don't know how this affects the values in the maps.
 	// Apparently, this is already done internally.
-#ifdef CGAL_LINKED_WITH_TBB
+#if defined(CGAL_LINKED_WITH_TBB) && CGAL_VERSION_NR >= CGAL_VERSION_NUMBER(4,4,0) 
 	double minz=*(min_element(grid[2].begin(),grid[2].end()));
 	double maxz=*(max_element(grid[2].begin(),grid[2].end()));
 	double minx=*(min_element(grid[0].begin(),grid[0].end()));
