@@ -129,7 +129,7 @@ If TBB is in a special location, and not in your pkg-config, then you can point 
 \code{.sh}
 CXXFLAGS="-O2 -g -Wall -march=core2 -fopenmp" ./configure --prefix=`pwd` --libdir=`pwd` --includedir=`pwd` --bindir=`pwd` --with-tbb=/path/to/tbb
 \endcode
-Again, you should add the correct path to the $LD_LIBRARY_PATH as well.
+Again, you should add the correct path to the $LD_LIBRARY_PATH as well. On my KU Leuven ESAT system, I also need to add CPATH="/users/cpa/tomvd/extrasoft/tbb/tbb43_20140724oss/include:$CPATH".
 
 \subsubsection building Building and installing the code
 
