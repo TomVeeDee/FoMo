@@ -51,6 +51,18 @@ std::string FoMo::FoMoObject::readrendermethod()
 }
 
 /**
+ * @brief This routine returns the GoftCube of the FoMoObject.
+ * 
+ * FoMoObject.goftcube is a private member, thus its access can only be done through this function.
+ * @return The return value is the goftcube of the FoMoObject and is of type GoftCube. It contains the calculated
+ * emission at each datapoint of the original mesh.
+ */
+FoMo::GoftCube FoMo::FoMoObject::readgoftcube()
+{
+	 return goftcube;
+}
+
+/**
  * @brief This sets the abundance file to be used for the CHIANTI conversion to emissivity.
  * 
  * The abundance file is set to the string argument. The string argument should 
@@ -264,6 +276,7 @@ static std::map<std::string, FoMoRenderValue> RenderMap{ &RenderMapEntries[0], &
  */
 void FoMo::FoMoObject::render(const std::vector<double> lvec, const std::vector<double> bvec)
 {
+        FoMo::GoftCube tmpgoft;
 	FoMo::RenderCube tmprender(this->goftcube);
 	int x_pixel, y_pixel, z_pixel, lambda_pixel;
 	double lambda_width;
@@ -275,14 +288,15 @@ void FoMo::FoMoObject::render(const std::vector<double> lvec, const std::vector<
 		case CGAL2D:
 			std::cout << "Using CGAL-2D for rendering." << std::endl << std::flush;
 			if (bvec.size()>0) std::cout << "Warning: the bvec-values are not used in this 2D routine." << std::endl << std::flush;
+                        tmpgoft=FoMo::emissionfromdatacube(this->datacube,this->rendering.readchiantifile(),this->rendering.readabundfile(),this->rendering.readobservationtype());
+
 			tmprender=FoMo::RenderWithCGAL2D(this->datacube,this->rendering.readchiantifile(),this->rendering.readabundfile(),this->rendering.readobservationtype(),
-			x_pixel, y_pixel, lambda_pixel, lambda_width, lvec, this->outfile);
+			x_pixel, y_pixel, lambda_pixel, lambda_width, lvec, this->outfile, tmpgoft);
 			break;
 		case CGAL:
-			std::cout << "Using CGAL for rendering." << std::endl << std::flush;
-			tmprender=FoMo::RenderWithCGAL(this->datacube,this->rendering.readchiantifile(),this->rendering.readabundfile(),this->rendering.readobservationtype(), 
-			x_pixel, y_pixel, z_pixel, lambda_pixel, lambda_width,
-			lvec,bvec,this->outfile);
+      			std::cout << "Using CGAL for rendering." << std::endl << std::flush;
+                        tmpgoft=FoMo::emissionfromdatacube(this->datacube,this->rendering.readchiantifile(),this->rendering.readabundfile(),this->rendering.readobservationtype());
+			tmprender=FoMo::RenderWithCGAL(this->datacube,this->rendering.readchiantifile(),this->rendering.readabundfile(),this->rendering.readobservationtype(),x_pixel, y_pixel, z_pixel, lambda_pixel, lambda_width,lvec,bvec,this->outfile,tmpgoft);
 			break;
 		case LastVirtualRenderMethod: // this should not be reached, since it is excluded from the map
 		default:
@@ -292,6 +306,7 @@ void FoMo::FoMoObject::render(const std::vector<double> lvec, const std::vector<
 	}
 	
 	this->rendering=tmprender;
+        this->goftcube=tmpgoft;
 }
 
 /**
