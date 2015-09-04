@@ -234,10 +234,10 @@ namespace FoMo
 {
 	FoMo::RenderCube RenderWithCGAL2D(FoMo::DataCube datacube, std::string chiantifile, std::string abundfile, FoMoObservationType observationtype, 
 	const int x_pixel, const int y_pixel, const int lambda_pixel, const double lambda_width,
-	std::vector<double> lvec, std::string outfile)
+	std::vector<double> lvec, std::string outfile, FoMo::GoftCube goftcube)
 	{
 		assert(datacube.readdim() == 2);
-		FoMo::GoftCube goftcube=FoMo::emissionfromdatacube(datacube, chiantifile, abundfile, observationtype);
+		goftcube=FoMo::emissionfromdatacube(datacube, chiantifile, abundfile, observationtype);
 		FoMo::RenderCube rendercube(goftcube);
 		for (std::vector<double>::iterator lit=lvec.begin(); lit!=lvec.end(); ++lit)
 			{

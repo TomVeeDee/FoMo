@@ -204,8 +204,8 @@ FoMo::RenderCube CGALinterpolation(FoMo::GoftCube goftcube, Delaunay_triangulati
 				#endif
 				
 		// Only look for the nearest point and interpolate, if the point p is inside the convex hull.
-				if (lt!=Delaunay_triangulation_3::OUTSIDE_CONVEX_HULL)
-				{
+				//if (lt!=Delaunay_triangulation_3::OUTSIDE_CONVEX_HULL)
+				//{
 					v=DTpointer->nearest_vertex_in_cell(p,c_new);
 					nearest=v->point();
 /* This is how it is done in the CGAL examples		
@@ -218,11 +218,11 @@ FoMo::RenderCube CGALinterpolation(FoMo::GoftCube goftcube, Delaunay_triangulati
 					intpolpeak=peakmap[nearest];
 					intpolfwhm=fwhmmap[nearest];
 					intpollosvel=losvelmap[nearest];
-				}
-				else
+				//}
+				/*else
 				{
 					intpolpeak=0;
-				}
+				}*/
 					if (lambda_pixel>1)// spectroscopic study
 					{
 						for (int il=0; il<lambda_pixel; il++) // changed index from global variable l into il [D.Y. 17 Nov 2014]
@@ -275,9 +275,9 @@ namespace FoMo
 {
 	FoMo::RenderCube RenderWithCGAL(FoMo::DataCube datacube, std::string chiantifile, std::string abundfile, FoMoObservationType observationtype, 
 	const int x_pixel, const int y_pixel, const int z_pixel, const int lambda_pixel, const double lambda_width,
-	std::vector<double> lvec, std::vector<double> bvec, std::string outfile)
+	std::vector<double> lvec, std::vector<double> bvec, std::string outfile, FoMo::GoftCube goftcube)
 	{
-		FoMo::GoftCube goftcube=FoMo::emissionfromdatacube(datacube, chiantifile, abundfile, observationtype);
+                //goftcube=FoMo::emissionfromdatacube(datacube, chiantifile, abundfile, observationtype);
 //		goftcube.setchiantifile(chiantifile);
 //		goftcube.setabundfile(abundfile);
 		/* A good speedup would be to calculate the triangulation per ray.
