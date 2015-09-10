@@ -204,8 +204,8 @@ FoMo::RenderCube CGALinterpolation(FoMo::GoftCube goftcube, Delaunay_triangulati
 				#endif
 				
 		// Only look for the nearest point and interpolate, if the point p is inside the convex hull.
-				//if (lt!=Delaunay_triangulation_3::OUTSIDE_CONVEX_HULL)
-				//{
+				if (lt!=Delaunay_triangulation_3::OUTSIDE_CONVEX_HULL)
+				{
 					v=DTpointer->nearest_vertex_in_cell(p,c_new);
 					nearest=v->point();
 /* This is how it is done in the CGAL examples		
