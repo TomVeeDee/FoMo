@@ -5,6 +5,7 @@
 #include <iostream>
 #include <string>
 #include <cmath>
+#include <omp.h>
 #include "H5Cpp.h"
 #include "FoMo.h"
 
@@ -24,25 +25,27 @@ using namespace std;
 //---------------------------------------------
 const H5std_string	FILE_NAME("example2.hdf5");
 
-
 const H5std_string	DENS_NAME("dens");
 const H5std_string	TEMP_NAME("temp");
 const H5std_string	VELX_NAME("velx");
 const H5std_string	VELY_NAME("vely");
 const H5std_string	VELZ_NAME("velz");
 const H5std_string	BOUND_NAME("bounding box");
+const H5std_string      REFINE_NAME("refine level");
 const int       RANK = 3;
+
 
 int main (void)
 {
        
     int i, j, k, l, nr;
-    int nxa,nxb,nxc;
+    int nxa,nxb,nxc,blocks;
     float dx,dy,dz;
     float lnorm, dnorm, tnorm, vnorm;
 
     try
     {
+      double start = omp_get_wtime();
       // Open an existing file and datasets.
       H5File file(FILE_NAME, H5F_ACC_RDWR);
       DataSet densSet = file.openDataSet(DENS_NAME);
@@ -51,8 +54,8 @@ int main (void)
       DataSet velySet = file.openDataSet(VELY_NAME);
       DataSet velzSet = file.openDataSet(VELZ_NAME);
       DataSet boundSet = file.openDataSet(BOUND_NAME);
-      
-        
+      DataSet refineSet = file.openDataSet(REFINE_NAME);
+       
       // Turn off the auto-printing when failure occurs so that we can
       // handle the errors appropriately
       Exception::dontPrint();
@@ -77,6 +80,7 @@ int main (void)
       DataSpace velySpace = velySet.getSpace();
       DataSpace velzSpace = velzSet.getSpace();
       DataSpace boundSpace = boundSet.getSpace();
+      DataSpace refineSpace = refineSet.getSpace();
  
       // rank - dimensions - 4 for 3D data
       int rank = densSpace.getSimpleExtentNdims();
@@ -95,14 +99,17 @@ int main (void)
           
        hsize_t var_dims[3];
        hsize_t bound_dims[2];
+       hsize_t block_dims[1];
 
        var_dims[0] = nd[1]; var_dims[1] = nd[2]; var_dims[2] = nd[3];
-       bound_dims[0] = 3; bound_dims[1] = 2;
+       bound_dims[0] = 3; bound_dims[1] = 2; 
+       block_dims[0] = nd[0];
 
-       nxa = nd[3]; nxb = nd[2]; nxc = nd[1]; 
+       nxa = nd[3]; nxb = nd[2]; nxc = nd[1]; blocks = nd[0];
 
        DataSpace space(RANK,var_dims);
        DataSpace bound_space(2,bound_dims);
+       DataSpace refine_space(1,block_dims);
 
        //Arrays to read in variables
        float* dens = new float[nxa*nxb*nxc]();
@@ -114,18 +121,27 @@ int main (void)
        //Arrays for coordinates
        float* bound = new float[6]();
        float* coord = new float[nxa*nxb*nxc*3]();
+       float* refine = new float[blocks]();
+  
+       //myfile.open("test.dat");
  
        //Create FoMoObject
        FoMo::FoMoObject Object;
+
        //
        cout << "No. of cells in one block: " << nxa*nxb*nxc << endl;
 
        //Read all the blocks, one by one, for coordinates and variables
        cout << "Reading in ... " << endl;
 
-       for (i = 0; i < nd[0]; i++)
+       //Read level of refinement of each block
+       refineSet.read(refine,PredType::NATIVE_FLOAT,refine_space,refineSpace);
+       
+       for (i = 0; i < blocks; i++)
        {
-          
+          //Deal only with the highest refinement level blocks
+          if (refine[i] >= refine[i+1]) 
+          {
           //Read 1 block from the variables and put it in 1D array
           hsize_t offset[4] = {i,0,0,0};
           hsize_t count[4] = {1,nxc,nxb,nxa};
@@ -190,8 +206,18 @@ int main (void)
             variables.push_back(velx[j]*vnorm); 
             variables.push_back(vely[j]*vnorm); 
             variables.push_back(velz[j]*vnorm);
+        
+            /*myfile << coordinates[0] << " " <<
+                      coordinates[1] << " " <<
+                      coordinates[2] << " " <<
+                      variables[0] << " " <<
+                      variables[1] << " " <<
+                      variables[2] << " " <<
+                      variables[3] << " " <<
+                      variables[4] << endl;*/
             
             Object.push_back_datapoint(coordinates,variables);
+          }
           }  
         }
 
@@ -204,19 +230,22 @@ int main (void)
     delete [] velz;
     delete [] bound;
     delete [] coord;
+    delete [] refine;
+ 
+    //myfile.close();
 
     // data is in structure, now start the rendering
 	
     /// [Set rendering options]
-    Object.setchiantifile("/users/cpa/tomvd/data/idl/FoMo/chiantitables/goft_table_fe_12_0194small.dat"); // the default value is "../chiantitables/goft_table_fe_12_0194small_abco.dat"
+    Object.setchiantifile("/users/cpa/tomvd/data/idl/FoMo/chiantitables/goft_table_aia171_abco.dat"); // the default value is "../chiantitables/goft_table_fe_12_0194small_abco.dat"
     Object.setabundfile("/empty"); //use "/empty" or do not set it at all for the default sun_coronal.abund file
     Object.setrendermethod("CGAL"); // CGAL is the default rendermethod
-    Object.setobservationtype(FoMo::Spectroscopic);
+    Object.setobservationtype(FoMo::Imaging);
     // adjust the resolution with these parameters
-    int x_pixel=301;
-    int y_pixel=302;
-    int z_pixel=500;
-    int lambda_pixel=30;
+    int x_pixel=128;
+    int y_pixel=200;
+    int z_pixel=200;
+    int lambda_pixel=1;
     double lambda_width=.13;
     Object.setresolution(x_pixel,y_pixel,z_pixel,lambda_pixel,lambda_width);
     // determine where the output will be written
@@ -224,11 +253,16 @@ int main (void)
     /// [Set rendering options]
 	
     /// [Render]
-    Object.render(2*atan(1.),2*atan(1.));
+    //Object.render(2*atan(1.),2*atan(1.));
+      Object.render(0.,0.);
     // alternatively, you could add different angles in radians as argument, e.g. Object.render(1.57/2.,1.57/2.) to obtain some nice Doppler shifts.
     /// [Render]
 	
     /// [Details] 
+    //    //Write out goftcube
+    FoMo::GoftCube cube=Object.readgoftcube();
+    cube.writegoftcube("goftcube.txt");
+    
     // read the rendering
 	
     FoMo::RenderCube rendercube=Object.readrendering();
@@ -242,11 +276,14 @@ int main (void)
     cout << "It was done using the rendermethod " << rendercube.readrendermethod() << endl;
     cout << "with a resolution of " << nz << " along the line-of-sight." << endl;
     // This writes out the rendering results to the file fomo-output.txt.
+    
     rendercube.writegoftcube("fomo-hdf5-output.txt");
     /// [Details]
+    
+    double end_time = omp_get_wtime() - start;
+    
+    cout << end_time << " s" << endl;
     }  // end of try block
-
-
 
     // catch failure caused by the H5File operations
     catch(FileIException error)
