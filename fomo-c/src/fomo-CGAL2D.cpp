@@ -237,7 +237,7 @@ namespace FoMo
 	std::vector<double> lvec, std::string outfile, FoMo::GoftCube goftcube)
 	{
 		assert(datacube.readdim() == 2);
-		goftcube=FoMo::emissionfromdatacube(datacube, chiantifile, abundfile, observationtype);
+		//goftcube=FoMo::emissionfromdatacube(datacube, chiantifile, abundfile, observationtype);
 		FoMo::RenderCube rendercube(goftcube);
 		for (std::vector<double>::iterator lit=lvec.begin(); lit!=lvec.end(); ++lit)
 			{

@@ -218,11 +218,11 @@ FoMo::RenderCube CGALinterpolation(FoMo::GoftCube goftcube, Delaunay_triangulati
 					intpolpeak=peakmap[nearest];
 					intpolfwhm=fwhmmap[nearest];
 					intpollosvel=losvelmap[nearest];
-				//}
-				/*else
+				}
+				else
 				{
 					intpolpeak=0;
-				}*/
+				}
 					if (lambda_pixel>1)// spectroscopic study
 					{
 						for (int il=0; il<lambda_pixel; il++) // changed index from global variable l into il [D.Y. 17 Nov 2014]
