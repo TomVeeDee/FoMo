@@ -186,6 +186,7 @@ namespace FoMo
 		void render(const std::vector<double> lvec, const std::vector<double> bvec);
 		void setrenderingdata(tgrid ingrid, tvars invars);
 		FoMo::RenderCube readrendering();
+		FoMo::GoftCube readgoftcube();
 		void setrendermethod(const std::string inrendermethod);
 		std::string readrendermethod();
 		void setchiantifile(const std::string inchianti);
