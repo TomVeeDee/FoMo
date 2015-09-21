@@ -30,7 +30,7 @@ int main(int argc, char* argv[])
 	
 	/// [Read in data]
 	// Open the file in the argument as fstream
-	// File contains lines with x, y, z (km), rho (cm^-3), T (K), vx, vy, vz (m/s)
+	// File contains lines with x, y, z (Mm), rho (cm^-3), T (K), vx, vy, vz (m/s)
 	ifstream filetoread(argv[1]);
 	
 	if (filetoread.is_open())
