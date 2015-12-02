@@ -44,7 +44,6 @@ int main(int argc, char* argv[])
 			{
 				// Read one value of a coordinate at a time.
 				filetoread >> tmpvar;
-                                tmpvar = tmpvar * 1.e5;
 				// push it back into the coordinate vector.
 				coordinates.push_back(tmpvar);
 			}
@@ -54,8 +53,6 @@ int main(int argc, char* argv[])
 			{
 				// Read one value of a variable at a time.
 				filetoread >> tmpvar;
-                                if (i == 0) tmpvar = tmpvar * 1.e-12 * 1.204 * 1.e21; //dens to cm^-3
-                                if (i >= 2) tmpvar = tmpvar * 1.e6; //vel in m/s
 				// push it back into the variable vector.
 				variables.push_back(tmpvar);
 			}
