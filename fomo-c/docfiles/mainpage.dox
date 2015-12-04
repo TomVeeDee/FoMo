@@ -221,9 +221,9 @@ Several routines are provided in the idl subdirectory to read in FoMo output int
 \code{IDL}
 IDL> data=readgoftcube('example/fomo-output.txt')       
 IDL> regulargoftcube,data,xvec,yvec,lvec,emiss          
-IDL> gaussfitgoftcube,emiss,lvec,int,doppler,sigma,chisq
+IDL> gaussfitgoftcube,emiss,lvec,peak,doppler,sigma,chisq=chisq,int=int
 \endcode
 
-Then the int, doppler, sigma, chisq variables are 2D arrays with intensity, Doppler shift, Doppler width, and chi-squared values. They can be easily visualised with tvscl or surface.
+Then the peak, int, doppler, sigma, chisq variables are 2D arrays with peak intensity, total intensity, Doppler shift, Doppler width, and chi-squared values. They can be easily visualised with tvscl or surface.
 
 */

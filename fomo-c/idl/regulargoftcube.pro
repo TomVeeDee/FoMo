@@ -3,6 +3,7 @@ pro regulargoftcube,data,xvec,yvec,lvec,emiss
 ; data is the return product of readgoftcube.pro
 ; it is a 2D array, with 4 columns and N rows
 ; N = nx*ny*nlambda
+; This routine then converts the array to a 3D emiss array of dimension (nx,ny,nlambda)
 
 sizes=size(data)
 N=sizes[2]
