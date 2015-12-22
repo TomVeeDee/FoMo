@@ -83,16 +83,28 @@ If you want parallel triangulation, please install <a href="https://www.threadin
 
 \subsection code Obtaining the code
 
-The FoMo code may be obtained from the subversion repository by
+The FoMo code may be obtained from the Github repository by
 \code{.sh}
 	mkdir fomo
 	cd fomo
-	svn co https://svn.esat.kuleuven.be/FoMo/fomo-c .
+	git init
+	git remote add -f origin https://github.com/TomVeeDee/FoMo.git
+	git config core.sparseCheckout true
 \endcode
-Alternatively, you may extract the FoMo tarball (<a href='http://homes.esat.kuleuven.be/~tomvd/fomo-VERSION.tar.gz'>fomo-VERSION.tar.gz</a>) instead of the svn checkout:\n
+Then you select which components of FoMo you need. For FoMo-C, you would select "fomo-c" and "chiantitables". You can also add "FoMo-GS" or "fomo-idl".
 \code{.sh}
-tar -xvf fomo-VERSION.tar.gz
+	echo "fomo-c" >> .git/info/sparse-checkout
+	echo "chiantitables" >> .git/info/sparse-checkout
 \endcode
+Then you can download the files with
+\code{.sh}
+	git pull origin master
+\endcode
+Alternatively, you may extract the FoMo tarball (<a href='https://github.com/TomVeeDee/FoMo/archive/vVERSION.tar.gz'>FoMo-VERSION.tar.gz</a>) instead of the git pull:\n
+\code{.sh}
+	tar -xvf FoMo-VERSION.tar.gz
+\endcode
+
 
 \subsection compilation Compilation
 
