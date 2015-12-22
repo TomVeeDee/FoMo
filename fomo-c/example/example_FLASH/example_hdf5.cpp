@@ -23,7 +23,7 @@ using namespace std;
 //---------------------------------------------
 //The name of the file being read - edit this
 //---------------------------------------------
-const H5std_string	FILE_NAME("example2.hdf5");
+const H5std_string	FILE_NAME("example.hdf5");
 
 const H5std_string	DENS_NAME("dens");
 const H5std_string	TEMP_NAME("temp");
