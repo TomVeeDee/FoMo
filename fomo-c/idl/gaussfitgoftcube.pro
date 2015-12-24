@@ -1,4 +1,4 @@
-pro gaussfitgoftcube,emiss,lambda,peak,doppler,sigma,chisq=chisq,int=int
+pro gaussfitgoftcube,emiss,lambda,peak=peak,doppler=doppler,sigma=sigma,chisq=chisq,int=int
 
 ; this assumes a regular emiss file, where the last dimension coincides with the length of lambda (given in \AA)
 ; peak is the peak intensity of the spectral line (erg cm^-2 s^-1 sr^-1 \AA^-1, if the wavelength is given in \AA)
