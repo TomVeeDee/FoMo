@@ -105,7 +105,7 @@ if wayemi eq 5 then begin
 
       losvel = -losvel/1.e2
 
-      integrateemission,emission=emission_goft,logt=logt,n_gridx=n_gridx,n_gridy=n_gridy,ngrid=ngrid,w0=w0,direction=direction,losvel=losvel,imaging=imaging,imsp=imsp
+      integrateemission,emission=emission_goft,logt=logt,n_gridx=n_gridx,n_gridy=n_gridy,ngrid=ngrid,w0=w0,direction=direction,losvel=losvel,imaging=imaging,imsp
       dlos = (size(imsp))[1]
       inan = string(i+1,format="(i1)")
       exe1 = 'line_'+inan+' = imsp'
@@ -134,7 +134,7 @@ endif else begin
 
       losvel = -losvel/1.e2
 
-      integrateemission,emission=emission_goft,logt=logt,n_gridx=n_gridx,n_gridy=n_gridy,ngrid=ngrid,wave=wave,w0=w0,direction=direction,losvel=losvel,imaging=imaging,imsp=imsp,watom=watom,wayemi=wayemi,ne_s=ne_s
+      integrateemission,emission=emission_goft,logt=logt,n_gridx=n_gridx,n_gridy=n_gridy,ngrid=ngrid,wave=wave,w0=w0,direction=direction,losvel=losvel,imaging=imaging,imsp,watom=watom,wayemi=wayemi
 
       dlos = (size(imsp))[1]
       inan = string(i+1,format="(i1)")

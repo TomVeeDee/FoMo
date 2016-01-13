@@ -71,7 +71,7 @@ if imaging eq 0 then begin
                mnlgt = mean(logt[indx[0,Re[Re[j]:Re[j+1]-1]],indx[1,Re[Re[j]:Re[j+1]-1]]])
                sigma = sqrt(kboltz/proton/watom*w0^2/(c*1.e5)^2*10^(mnlgt))
                prms =[lhemi[j],wdop,sigma]
-               dopemi = gaussian(wave,prms)
+               dopemi = gaussian(wave,prms)/sigma/sqrt(2*!Pi)
                if dims eq 3 then begin
 ;                  dopemi=interpol(emission[0,indx[0,Re[Re[j]]],indx[1,Re[Re[j]]],*],wave,newwave,/spline) 
                   for k=0.,hemi[j]-1 do doppleremission[0,indx[0,Re[Re[j]+k]],indx[1,Re[Re[j]+k]],*]=dopemi

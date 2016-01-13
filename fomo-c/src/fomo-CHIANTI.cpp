@@ -293,7 +293,7 @@ FoMo::tphysvar linefwhm(const FoMo::tphysvar T, const double lambda0, const doub
 {
 // uses the absolute temperature! i.e. not log(T), but T
 // for spectroscopic study return, line width
-	FoMo::tphysvar w=FoMo::operator*(2*sqrt(2*log(2))*sqrt(2*boltzmannconstant/massproton/atweight)*lambda0/speedoflight,FoMo::sqrt(T));
+	FoMo::tphysvar w=FoMo::operator*(2*sqrt(2*log(2))*sqrt(boltzmannconstant/massproton/atweight)*lambda0/speedoflight,FoMo::sqrt(T));
  	return w;
 }
 
