@@ -111,6 +111,14 @@ void FoMo::GoftCube::readgoftcube(const std::string emissionsave, Delaunay_trian
 	}
 }*/
 
+/**
+ * @brief This writes out the contents of the GoftCube.
+ * 
+ * This member function writes out the contents of the GoftCube to the hard disk, in the filename given by the argument. 
+ * The file can then be read into IDL with the commands provide under the idl/ directory, here in particular readgoftcube.pro.
+ * Normally, one would use it to post-process the forward modelling results (when using with a RenderCube), but it is also very useful for debugging purposes when using it with a GoftCube before the rendering.
+ * @param filename This parameter specifies which filename the data needs to be written to.
+ */
 void FoMo::GoftCube::writegoftcube(const std::string filename)
 {
 	// write out goftcube to file "filename"
@@ -152,6 +160,12 @@ void FoMo::GoftCube::writegoftcube(const std::string filename)
 	}
 }
 
+/**
+ * @brief This is a routine for reading a previously saved GoftCube.
+ * 
+ * This member reads the information from file emissionsave, which was previously written by GoftCube::writegoftcube, and stores it in the GoftCube.
+ * @param emissionsave The filename from which the GoftCube should be read.
+ */
 void FoMo::GoftCube::readgoftcube(const std::string emissionsave)
 {
 	// Read GoftCube datacube from file "emissionsave"
