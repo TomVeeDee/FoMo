@@ -234,6 +234,7 @@ enum FoMoRenderValue
 	RenderMethodNotDefined,
 	CGAL,
 	CGAL2D,
+	NearestNeighbour,
 	// add more methods here
 	LastVirtualRenderMethod
 };
@@ -243,6 +244,7 @@ static const std::map<std::string, FoMoRenderValue>::value_type RenderMapEntries
 	/// [Rendermethods]
 	std::map<std::string, FoMoRenderValue>::value_type("CGAL",CGAL),
 	std::map<std::string, FoMoRenderValue>::value_type("CGAL2D",CGAL2D),
+	std::map<std::string, FoMoRenderValue>::value_type("NearestNeighbour",NearestNeighbour),
 	/// [Rendermethods]
 	std::map<std::string, FoMoRenderValue>::value_type("ThisIsNotARealRenderMethod",LastVirtualRenderMethod)
 };
@@ -282,21 +284,25 @@ void FoMo::FoMoObject::render(const std::vector<double> lvec, const std::vector<
 	double lambda_width;
 	this->rendering.readresolution(x_pixel,y_pixel,z_pixel,lambda_pixel,lambda_width);
 	
+	tmpgoft=FoMo::emissionfromdatacube(this->datacube,this->rendering.readchiantifile(),this->rendering.readabundfile(),this->rendering.readobservationtype());
+	this->goftcube=tmpgoft;
+	
 	switch (RenderMap[rendering.readrendermethod()])
 	{
 		// add other rendermethods here
 		case CGAL2D:
 			std::cout << "Using CGAL-2D for rendering." << std::endl << std::flush;
 			if (bvec.size()>0) std::cout << "Warning: the bvec-values are not used in this 2D routine." << std::endl << std::flush;
-                        tmpgoft=FoMo::emissionfromdatacube(this->datacube,this->rendering.readchiantifile(),this->rendering.readabundfile(),this->rendering.readobservationtype());
-
-			tmprender=FoMo::RenderWithCGAL2D(this->datacube,this->rendering.readchiantifile(),this->rendering.readabundfile(),this->rendering.readobservationtype(),
-			x_pixel, y_pixel, lambda_pixel, lambda_width, lvec, this->outfile, tmpgoft);
+			tmprender=FoMo::RenderWithCGAL2D(this->datacube,this->goftcube,this->rendering.readobservationtype(),
+			x_pixel, y_pixel, lambda_pixel, lambda_width, lvec, this->outfile);
 			break;
 		case CGAL:
-      			std::cout << "Using CGAL for rendering." << std::endl << std::flush;
-                        tmpgoft=FoMo::emissionfromdatacube(this->datacube,this->rendering.readchiantifile(),this->rendering.readabundfile(),this->rendering.readobservationtype());
-			tmprender=FoMo::RenderWithCGAL(this->datacube,this->rendering.readchiantifile(),this->rendering.readabundfile(),this->rendering.readobservationtype(),x_pixel, y_pixel, z_pixel, lambda_pixel, lambda_width,lvec,bvec,this->outfile,tmpgoft);
+			std::cout << "Using CGAL for rendering." << std::endl << std::flush;
+			tmprender=FoMo::RenderWithCGAL(this->datacube,this->goftcube,this->rendering.readobservationtype(),x_pixel, y_pixel, z_pixel, lambda_pixel, lambda_width,lvec,bvec,this->outfile);
+			break;
+		case NearestNeighbour:
+			std::cout << "Using nearest-neighbour rendering." << std::endl << std::flush;
+			tmprender=FoMo::RenderWithNearestNeighbour(this->datacube,this->goftcube,this->rendering.readobservationtype(),x_pixel, y_pixel, z_pixel, lambda_pixel, lambda_width, lvec, bvec, this->outfile);
 			break;
 		case LastVirtualRenderMethod: // this should not be reached, since it is excluded from the map
 		default:
@@ -306,7 +312,6 @@ void FoMo::FoMoObject::render(const std::vector<double> lvec, const std::vector<
 	}
 	
 	this->rendering=tmprender;
-        this->goftcube=tmpgoft;
 }
 
 /**

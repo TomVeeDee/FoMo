@@ -273,13 +273,10 @@ FoMo::RenderCube CGALinterpolation(FoMo::GoftCube goftcube, Delaunay_triangulati
 
 namespace FoMo
 {
-	FoMo::RenderCube RenderWithCGAL(FoMo::DataCube datacube, std::string chiantifile, std::string abundfile, FoMoObservationType observationtype, 
+	FoMo::RenderCube RenderWithCGAL(FoMo::DataCube datacube, FoMo::GoftCube goftcube, FoMoObservationType observationtype, 
 	const int x_pixel, const int y_pixel, const int z_pixel, const int lambda_pixel, const double lambda_width,
-	std::vector<double> lvec, std::vector<double> bvec, std::string outfile, FoMo::GoftCube goftcube)
+	std::vector<double> lvec, std::vector<double> bvec, std::string outfile)
 	{
-                //goftcube=FoMo::emissionfromdatacube(datacube, chiantifile, abundfile, observationtype);
-//		goftcube.setchiantifile(chiantifile);
-//		goftcube.setabundfile(abundfile);
 		/* A good speedup would be to calculate the triangulation per ray.
 		 * It would be good to select only the points around the ray, make the triangulation of that.
 		 * The number of points would be drastically reduced, and the triangulation would be greatly sped up.

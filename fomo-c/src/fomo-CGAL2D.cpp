@@ -232,9 +232,9 @@ FoMo::RenderCube CGAL2D(FoMo::GoftCube goftcube, const double l, const int x_pix
 
 namespace FoMo
 {
-	FoMo::RenderCube RenderWithCGAL2D(FoMo::DataCube datacube, std::string chiantifile, std::string abundfile, FoMoObservationType observationtype, 
+	FoMo::RenderCube RenderWithCGAL2D(FoMo::DataCube datacube, FoMo::GoftCube goftcube, FoMoObservationType observationtype, 
 	const int x_pixel, const int y_pixel, const int lambda_pixel, const double lambda_width,
-	std::vector<double> lvec, std::string outfile, FoMo::GoftCube goftcube)
+	std::vector<double> lvec, std::string outfile)
 	{
 		assert(datacube.readdim() == 2);
 		//goftcube=FoMo::emissionfromdatacube(datacube, chiantifile, abundfile, observationtype);
