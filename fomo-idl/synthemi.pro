@@ -1,10 +1,11 @@
 
-pro synthemi,rho=rho,nem=nem,tem=tem,v1m=v1m,v2m=v2m,ion=ion,mua_d=mua_d,gridx=gridx,gridy=gridy,emission_goft=emission_goft,wave=wave,nwave=nwave,w0=w0,n_gridx_1=n_gridx_1,n_gridy_1=n_gridy_1,ngrid_1=ngrid_1,n_gridx_2=n_gridx_2,n_gridy_2=n_gridy_2,ngrid_2=ngrid_2,n_gridx_3=n_gridx_3,n_gridy_3=n_gridy_3,ngrid_3=ngrid_3,n_gridx_4=n_gridx_4,n_gridy_4=n_gridy_4,ngrid_4=ngrid_4,dl_1=dl_1,dl_2=dl_2,dl_3=dl_3,dl_4=dl_4,line_1=line_1,line_2=line_2,line_3=line_3,line_4=line_4,conv=conv,wayemi=wayemi,filenm=filenm,gotdir=gotdir,file_abund=file_abund,ext_abund=ext_abund,vers=vers
+pro synthemi,rho=rho,nem=nem,tem=tem,v1m=v1m,v2m=v2m,ion=ion,mua_d=mua_d,gridx=gridx,gridy=gridy,emission_goft=emission_goft,wave=wave,nwave=nwave,w0=w0,n_gridx_1=n_gridx_1,n_gridy_1=n_gridy_1,ngrid_1=ngrid_1,n_gridx_2=n_gridx_2,n_gridy_2=n_gridy_2,ngrid_2=ngrid_2,n_gridx_3=n_gridx_3,n_gridy_3=n_gridy_3,ngrid_3=ngrid_3,n_gridx_4=n_gridx_4,n_gridy_4=n_gridy_4,ngrid_4=ngrid_4,n_gridx_5=n_gridx_5,n_gridy_5=n_gridy_5,ngrid_5=ngrid_5,n_gridx_6=n_gridx_6,n_gridy_6=n_gridy_6,ngrid_6=ngrid_6,n_gridx_7=n_gridx_7,n_gridy_7=n_gridy_7,ngrid_7=ngrid_7,dl_1=dl_1,dl_2=dl_2,dl_3=dl_3,dl_4=dl_4,dl_5=dl_5,dl_6=dl_6,dl_7=dl_7,line_1=line_1,line_2=line_2,line_3=line_3,line_4=line_4,line_5=line_5,line_6=line_6,line_7=line_7,wayemi=wayemi,filenm=filenm,gotdir=gotdir,file_abund=file_abund,ext_abund=ext_abund,imaging=imaging,revvel=revvel
 
 if arg_present(rho) lt 1 or arg_present(nem) lt 1 then begin
-   print,'synthemi,rho=rho,nem=nem,tem=tem,v1m=v1m,v2m=v2m,ion=ion,mua_d=mua_d,gridx=gridx,gridy=gridy,emission_goft=emission_goft,wave=wave,nwave=nwave,w0=w0,n_gridx_1=n_gridx_1,n_gridy_1=n_gridy_1,ngrid_1=ngrid_1,n_gridx_2=n_gridx_2,n_gridy_2=n_gridy_2,ngrid_2=ngrid_2,n_gridx_3=n_gridx_3,n_gridy_3=n_gridy_3,ngrid_3=ngrid_3,n_gridx_4=n_gridx_4,n_gridy_4=n_gridy_4,ngrid_4=ngrid_4,dl_1=dl_1,dl_2=dl_2,dl_3=dl_3,dl_4=dl_4,line_1=line_1,line_2=line_2,line_3=line_3,line_4=line_4,conv=conv,wayemi=wayemi,filenm=filenm,gotdir=gotdir,file_abund=file_abund,ext_abund=ext_abund,vers=vers'
+   print,'synthemi,rho=rho,nem=nem,tem=tem,v1m=v1m,v2m=v2m,ion=ion,mua_d=mua_d,gridx=gridx,gridy=gridy,emission_goft=emission_goft,wave=wave,nwave=nwave,w0=w0,n_gridx_1=n_gridx_1,n_gridy_1=n_gridy_1,ngrid_1=ngrid_1,n_gridx_2=n_gridx_2,n_gridy_2=n_gridy_2,ngrid_2=ngrid_2,n_gridx_3=n_gridx_3,n_gridy_3=n_gridy_3,ngrid_3=ngrid_3,n_gridx_4=n_gridx_4,n_gridy_4=n_gridy_4,ngrid_4=ngrid_4,n_gridx_5=n_gridx_5,n_gridy_5=n_gridy_5,ngrid_5=ngrid_5,n_gridx_6=n_gridx_6,n_gridy_6=n_gridy_6,ngrid_6=ngrid_6,n_gridx_7=n_gridx_7,n_gridy_7=n_gridy_7,ngrid_7=ngrid_7,dl_1=dl_1,dl_2=dl_2,dl_3=dl_3,dl_4=dl_4,dl_5=dl_5,dl_6=dl_6,dl_7=dl_7,line_1=line_1,line_2=line_2,line_3=line_3,line_4=line_4,line_5=line_5,line_6=line_6,line_7=line_7,wayemi=wayemi,filenm=filenm,gotdir=gotdir,file_abund=file_abund,ext_abund=ext_abund,imaging=imaging,revvel=revvel'
    return
 endif
+
 
 ; INPUT:
 ; rho (or nem): (2d float array) density (or number density) in CGS
@@ -23,20 +24,22 @@ endif
 ;            By default the 'coronal' abundance package is set.
 ;	     If other abundance is desired set file_abund = 'other' and provide 
 ;	     the full path to the abundance file in the keyword 'ext_abund'.
-; vers: (int) the CHIANTI version (6 or 7).
+; imaging: set this keyword for only imaging (no spectral info)
 ; wayemi: (int) for different ways of calculating the emissivity in the
 ;        routine lineongrid_goft_tab.pro. The default is wayemi =
 ;        4. Set wayemi = 5 when only imaging is desired (for SDO/AIA
 ;        filters for instance)
+; revvel: By default the LOS angles are set considering the
+; x-direction and y-directions as positive. If this is not the case
+; then the velocity is of opposite signs with respect to the LOS. Set
+; this keyword in this case.
 
 ; Optional:
-; conv: set for converting density into number density when the latter is
-;       in SI units, has been normalized by 1.e10 and the plasma is
-;       fully ionized
 ; filenm = (string) relevant only for imaging purposes (wayemi = 5). Used for
 ;         saving the emission_goft file in routine interpol_emiss_data.pro
 
 ; OUTPUT:
+ 
 ; emission_goft: (2d float array) calculated emissivity values at each
 ;        point point of the 2D plane. 
 ; wave: (1d float array) the wavelength array for the line transition of interest
@@ -59,26 +62,12 @@ endif
 ; CALLS:
 ; lineongrid_goft_tab, integrateemission, interpol_emiss_data, gridlos
 
-if keyword_set(conv) then begin
-   proton = 1.67262158*10^(-27.)
-   kboltz = 1.380658*10^(-23.)
-   normro = 1.e10
-   normte = proton/(2*kboltz)*normro
-;   nefrac = 1.2
-   nefrac = 1.
-   rh = rho*normro*nefrac
-   te = tem /normte
-   ne_s = rh/proton/1.e6 
-   if ~keyword_set(nem) then nem = ne_s
-endif else begin
    ; check for CGS
-   te = tem
-   if keyword_set(rho) then rh = rho
-   if keyword_set(nem) then ne_s = nem
-endelse
+te_s = tem
+if keyword_set(rho) then rh_s = rho
+if keyword_set(nem) then ne_s = nem
 
 direction = 4
-imaging = 0
 nang = n_elements(mua_d)
 width = 0.
 
@@ -93,22 +82,23 @@ if wayemi eq 5 then begin
    ; SDO AIA filters:
    imaging = 1
    logt = alog10(tem)
-
-   interpol_emiss_data,ne_s,tem,ion=ion, w0=w0,emission_goft=emission_goft,filenm=filenm
-
+   interpol_emiss_data,ne_s,tem,ion=ion, w0=w0,emission_goft=emission_goft,filenm=filenm,file_abund=file_abund,ext_abund=ext_abund
    for i=0,nang-1 do begin
       mua = mua_d[i]
       if mua eq 0. then direction = 2
       if mua eq 90. then direction = 1
       if mua ne 0. and mua ne 90. then direction = 4
       gridlos, gridx=gridx, gridy=gridy, mua_d=mua, velx=velx, vely=vely, dx=dx, dy=dy, n_gridx, n_gridy, ngrid, dl=dl, losvel
-
-      losvel = -losvel/1.e2
-
-      integrateemission,emission=emission_goft,logt=logt,n_gridx=n_gridx,n_gridy=n_gridy,ngrid=ngrid,w0=w0,direction=direction,losvel=losvel,imaging=imaging,imsp
-      dlos = (size(imsp))[1]
+ 
+      if keyword_set(revvel) then begin
+         losvel = -losvel
+      endif else begin 
+         losvel = losvel
+      endelse
+      integrateemission,emission=emission_goft,logt=logt,n_gridx=n_gridx,n_gridy=n_gridy,ngrid=ngrid,w0=w0,direction=direction,losvel=losvel,imaging=imaging,image=image,dl=dl
+      dlos = (size(image))[1]
       inan = string(i+1,format="(i1)")
-      exe1 = 'line_'+inan+' = imsp'
+      exe1 = 'line_'+inan+' = image'
       exe2 = 'dl_'+inan+'= dl'
       exe3 = 'n_gridx_'+inan+'=n_gridx'
       exe4 = 'n_gridy_'+inan+'=n_gridy'
@@ -122,9 +112,8 @@ if wayemi eq 5 then begin
    endfor
 endif else begin
 
-   lineongrid_goft_tab, rh_s=rh, te_s=te, ne_s=ne_s, gotdir=gotdir,wave=wave,nwave=nwave,ion=ion, w0=w0, emission_goft=emission_goft,goft=goft, logt=logt,wayemi=wayemi,watom=watom,conv=conv,file_abund=file_abund,ext_abund=ext_abund,vers=vers
+   lineongrid_goft_tab, rh_s=rh_s, te_s=te_s, ne_s=ne_s, gotdir=gotdir,wave=wave,nwave=nwave,ion=ion, w0=w0, emission_goft=emission_goft,goft=goft, logt=logt,wayemi=wayemi,watom=watom,file_abund=file_abund,ext_abund=ext_abund
 
-; Sideview:
    for i=0,nang-1 do begin
       mua = mua_d[i]
       if mua eq 0. then direction = 2
@@ -132,13 +121,17 @@ endif else begin
       if mua ne 0. and mua ne 90. then direction = 4
       gridlos, gridx=gridx, gridy=gridy, mua_d=mua, velx=velx, vely=vely, dx=dx, dy=dy, n_gridx, n_gridy, ngrid, dl=dl, losvel
 
-      losvel = -losvel/1.e2
+      if keyword_set(revvel) then begin
+         losvel = -losvel
+      endif else begin 
+         losvel = losvel
+      endelse
 
-      integrateemission,emission=emission_goft,logt=logt,n_gridx=n_gridx,n_gridy=n_gridy,ngrid=ngrid,wave=wave,w0=w0,direction=direction,losvel=losvel,imaging=imaging,imsp,watom=watom,wayemi=wayemi
+      integrateemission,emission=emission_goft,logt=logt,n_gridx=n_gridx,n_gridy=n_gridy,ngrid=ngrid,wave=wave,w0=w0,direction=direction,losvel=losvel,imaging=imaging,image=image,watom=watom,wayemi=wayemi,dl=dl
 
-      dlos = (size(imsp))[1]
+      dlos = (size(image))[1]
       inan = string(i+1,format="(i1)")
-      exe1 = 'line_'+inan+' = imsp'
+      exe1 = 'line_'+inan+' = image'
       exe2 = 'dl_'+inan+'= dl'
       exe3 = 'n_gridx_'+inan+'=n_gridx'
       exe4 = 'n_gridy_'+inan+'=n_gridy'

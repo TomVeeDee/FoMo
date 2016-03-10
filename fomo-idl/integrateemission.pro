@@ -1,4 +1,4 @@
-pro integrateemission,emission=emission,logt=logt,n_gridx=n_gridx,n_gridy=n_gridy,ngrid=ngrid,wave=wave,w0=w0,direction=direction,losvel=losvel,imaging=imaging,watom=watom,image, wayemi=wayemi
+pro integrateemission,emission=emission,logt=logt,n_gridx=n_gridx,n_gridy=n_gridy,ngrid=ngrid,wave=wave,w0=w0,direction=direction,losvel=losvel,imaging=imaging,watom=watom,image=image, dl=dl, wayemi=wayemi
 
 ; Calculates intensity by integrating emissivity along a given
 ; line-of-sight
@@ -8,7 +8,7 @@ pro integrateemission,emission=emission,logt=logt,n_gridx=n_gridx,n_gridy=n_grid
 ; wave = wavelength array from lineongrid_goft_tab.pro
 ; n_gridx, n_gridy, ngrid = output of gridlos.pro
 ; direction = (int) direction of the integration (1 = x, 2 = y, 3 = z, 4 = mua_d angle)
-; losvel = (2d array) output of gridlos.pro, line-of-sight velocity (in 10^5 m/s unit)
+; losvel = (2d array) output of gridlos.pro, line-of-sight velocity (in km/s unit)
 
 ; OPTIONAL:
 ; set keyword imaging for no doppler shift calculation (imaging
@@ -31,13 +31,14 @@ endif else begin
 endelse
 proton=1.67262158*10^(-27.)
 kboltz = 1.380658*10^(-23.)
-c=299792000.d/1.e5
+c=299792000.d
+
 if dims eq 3 then doppleremission = fltarr(nx,ny,nz,nwave) else doppleremission = fltarr(nx,ny,nwave)
 
 if imaging eq 0 then begin
 
 ; calculate doppler shifts through binning of velocity matrix
-   bsize = 0.005
+   bsize = 0.5 ; bins of 0.5 km/s
    nhlosvel = histogram(losvel,binsize=bsize,locations=histvel,reverse_indices=R)
    nhist = n_elements(nhlosvel)
 
@@ -57,8 +58,8 @@ if imaging eq 0 then begin
 
    for i=0.,nhist-1 do begin
       losv = histvel[i]
-      newwave = wave+losv/c*w0  ;mean(wave)
-      wdop = w0+double(losv/c*w0)
+      newwave = wave+losv*1.e3/c*w0  ;mean(wave)
+      wdop = w0+double(losv*1.e3/c*w0)
       if R[i] ne R[i+1] then begin
          nR = n_elements(R[R[i]:R[i+1]-1])
          emi = emipk[R[R[i]:R[i+1]-1]]
@@ -69,7 +70,7 @@ if imaging eq 0 then begin
          for j=0.,nhemi-1 do begin
             if (Re[j] ne Re[j+1] and lhemi[j] ne 0.) then begin
                mnlgt = mean(logt[indx[0,Re[Re[j]:Re[j+1]-1]],indx[1,Re[Re[j]:Re[j+1]-1]]])
-               sigma = sqrt(kboltz/proton/watom*w0^2/(c*1.e5)^2*10^(mnlgt))
+               sigma = sqrt(kboltz/proton/watom*w0^2/c^2*10^(mnlgt))
                prms =[lhemi[j],wdop,sigma]
                dopemi = gaussian(wave,prms)/sigma/sqrt(2*!Pi)
                if dims eq 3 then begin
@@ -91,17 +92,17 @@ endelse
 ; then sum up over rays:
 
 if (direction le dims) then begin
-	image=total(doppleremission,direction)
+	image=total(doppleremission,direction)*dl
 endif else begin
    if direction eq 4 then begin
       if dims eq 2 then image = dblarr(n_elements(ngrid)-1,nwave) else image = dblarr(nx,n_elements(ngrid)-1,nwave)
       for i=0., n_elements(ngrid)-2 do begin
          if (dims eq 2) then begin
-            for j=0,nwave-1 do image[i,j] = total(interpolate(reform(doppleremission[*,*,j]),n_gridx[ngrid[i]:ngrid[i+1]-1],n_gridy[ngrid[i]:ngrid[i+1]-1]))
+            for j=0,nwave-1 do image[i,j] = total(interpolate(reform(doppleremission[*,*,j]),n_gridx[ngrid[i]:ngrid[i+1]-1],n_gridy[ngrid[i]:ngrid[i+1]-1]))*dl
          endif
          if (dims eq 3) then begin
             for k=0,nx-1 do begin
-               for j=0,nwave-1 do image[k,i,j] = total(interpolate(reform(doppleremission[k,*,*,j]),n_gridx[ngrid[i]:ngrid[i+1]-1],n_gridy[ngrid[i]:ngrid[i+1]-1]),/double)
+               for j=0,nwave-1 do image[k,i,j] = total(interpolate(reform(doppleremission[k,*,*,j]),n_gridx[ngrid[i]:ngrid[i+1]-1],n_gridy[ngrid[i]:ngrid[i+1]-1]),/double)*dl
             endfor
          endif
          print,string(13b)+' % finished: ',float(i)*100./(n_elements(ngrid)-2),format='(a,f4.0,$)'

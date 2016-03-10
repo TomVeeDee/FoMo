@@ -1,7 +1,7 @@
-pro lineongrid_goft_tab, rh_s=rh_s, te_s=te_s, ne_s=ne_s, gotdir=gotdir,wave=wave,nwave=nwave,ion=ion, w0=w0, emission_goft=emission_goft, goft=goft, logt=logt, wayemi=wayemi, watom=watom, conv=conv,file_abund=file_abund,ext_abund=ext_abund,vers=vers
+pro lineongrid_goft_tab, rh_s=rh_s, te_s=te_s, ne_s=ne_s, gotdir=gotdir,wave=wave,nwave=nwave,ion=ion, w0=w0, emission_goft=emission_goft, goft=goft, logt=logt, wayemi=wayemi, watom=watom,file_abund=file_abund,ext_abund=ext_abund
 
 if arg_present(rh_s) lt 1 or arg_present(ne_s) lt 1 then begin
-   print,'lineongrid_goft_tab, rh_s=rh_s, te_s=te_s, ne_s=ne_s, gotdir=gotdir,wave=wave,nwave=nwave,ion=ion, w0=w0, emission_goft=emission_goft, goft=goft, logt=logt, wayemi=wayemi, watom=watom, conv=conv,file_abund=file_abund,ext_abund=ext_abund,vers=vers'
+   print,'lineongrid_goft_tab, rh_s=rh_s, te_s=te_s, ne_s=ne_s, gotdir=gotdir,wave=wave,nwave=nwave,ion=ion, w0=w0, emission_goft=emission_goft, goft=goft, logt=logt, wayemi=wayemi, watom=watom, file_abund=file_abund,ext_abund=ext_abund'
    return
 endif
 
@@ -23,7 +23,6 @@ endif
 ;            By default the 'coronal' abundance package is set.
 ;	     If other abundance is desired set file_abund = 'other' and provide 
 ;	     the full path to the abundance file in the keyword 'ext_abund'.
-; vers: (int) the CHIANTI version (6 or 7).
 ; wayemi: (int) for different ways of calculating the emissivity in the
 ;        routine lineongrid_goft_tab.pro. The default is wayemi = 4
 ;        If wayemi = 5 for imaging then this procedure should not
@@ -34,9 +33,6 @@ endif
 ;        set keyword wayemi to 1 if emission calculated point by
 ;        point, else set to 2-4 if calculated through binning of
 ;        G(T)*ne^2 term (default = 4) 
-; conv: set for converting density into number density when the latter is
-;       in SI units, has been normalized by 1.e10 and the plasma is
-;       fully ionized
 
 ; OUTPUT:
 ; wave = wavelength array set to nwave pts, containing line transition	
@@ -82,26 +78,14 @@ proton=1.67262158*10^(-27.)
 kboltz = 1.380658*10^(-23.)
 c = 299792000.
 gamma = 5./3.
-mu = 1.27
-normro = 1.e10
-normte = proton/(2*kboltz)*normro
-if keyword_set(conv) then begin
-   T = te_s * normte
-   if ~keyword_set(ne_s) then begin
-       rh = rh_s / normro
-       n_e = rh/proton/1.e6 
-   endif else begin
-       n_e = ne_s               ; in cgs
-   endelse
+
+; check for CGS
+T = te_s
+if ~keyword_set(ne_s) then begin
+   rh = rh_s
+   n_e = rh/proton 
 endif else begin
-                                ; check for CGS
-   T = te_s
-   if ~keyword_set(ne_s) then begin
-       rh = rh_s
-       n_e = rh/proton 
-   endif else begin
-       n_e = ne_s
-   endelse
+   n_e = ne_s
 endelse
 
 logT = alog10(T>1.)
@@ -145,7 +129,7 @@ Tlg_sorted = logT[ne_sort]
 
 ; Read tabulated G(ne,T) values for given number density (n_e_lg) and temperature (t_lg) arrays
 lookup_goft, ion=ion, w0=w0, gotdir=gotdir,n_e_lg=n_e_lg, logt=t_lg, goft_mat=goft_mat, watom= watom
-elements, w0=w0, ion=ion, logTm=logTm, enum=enum, inum=inum, ind=ind, vers=vers
+elements, w0=w0, ion=ion, logTm=logTm, enum=enum, inum=inum, ind=ind
 
 if wayemi ne 3 and wayemi ne 4 then begin
 ; create a ch_synthetic structure called "singleline"
