@@ -1,8 +1,8 @@
 
-pro elements, w0=w0, ion=ion, logTm=logTm, enum=enum, inum=inum, ind=ind, vers=vers
+pro elements,w0=w0,ion=ion,logTm=logTm,enum=enum,inum=inum,ind=ind,vers=vers
 
 if keyword_set(w0) eq 0 then begin
-   print,'elements, w0=w0, ion=ion, logTm=logTm, enum=enum, inum=inum, ind=ind'
+   print,'elements,w0=w0,ion=ion,logTm=logTm,enum=enum,inum=inum,ind=ind,vers=vers'
    return
 endif
 
