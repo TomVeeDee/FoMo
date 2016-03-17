@@ -28,8 +28,8 @@ FoMo::FoMoObject::~FoMoObject()
 /**
  * @brief This member sets the rendermethod to be used.
  * 
- * Use this method to set the rendermethod. At the moment (version 3.1), there 
- * are two rendermethods: "CGAL" and "CGAL2D".
+ * Use this method to set the rendermethod. At the moment (version 3.3), there 
+ * are three rendermethods: "CGAL", "CGAL2D" and "NearestNeighbour".
  * It should be read before the render() is called, because that used the information here.
  * @param inrendermethod The function takes a string as an argument, which is 
  * then internally connected to a rendermethod.
@@ -229,6 +229,7 @@ void FoMo::FoMoObject::setoutfile(const std::string instring)
 /** 
  * I think it would be great if we could document these in the manual. I'm not sure how to do  that.
  */
+/// [RenderMethods]
 enum FoMoRenderValue
 {
 	RenderMethodNotDefined,
@@ -238,6 +239,7 @@ enum FoMoRenderValue
 	// add more methods here
 	LastVirtualRenderMethod
 };
+/// [RenderMethods]
 
 static const std::map<std::string, FoMoRenderValue>::value_type RenderMapEntries[]=
 {
@@ -278,7 +280,7 @@ static std::map<std::string, FoMoRenderValue> RenderMap{ &RenderMapEntries[0], &
  */
 void FoMo::FoMoObject::render(const std::vector<double> lvec, const std::vector<double> bvec)
 {
-        FoMo::GoftCube tmpgoft;
+	FoMo::GoftCube tmpgoft;
 	FoMo::RenderCube tmprender(this->goftcube);
 	int x_pixel, y_pixel, z_pixel, lambda_pixel;
 	double lambda_width;
@@ -298,11 +300,13 @@ void FoMo::FoMoObject::render(const std::vector<double> lvec, const std::vector<
 			break;
 		case CGAL:
 			std::cout << "Using CGAL for rendering." << std::endl << std::flush;
-			tmprender=FoMo::RenderWithCGAL(this->datacube,this->goftcube,this->rendering.readobservationtype(),x_pixel, y_pixel, z_pixel, lambda_pixel, lambda_width,lvec,bvec,this->outfile);
+			tmprender=FoMo::RenderWithCGAL(this->datacube,this->goftcube,this->rendering.readobservationtype(),
+			x_pixel, y_pixel, z_pixel, lambda_pixel, lambda_width,lvec,bvec,this->outfile);
 			break;
 		case NearestNeighbour:
 			std::cout << "Using nearest-neighbour rendering." << std::endl << std::flush;
-			tmprender=FoMo::RenderWithNearestNeighbour(this->datacube,this->goftcube,this->rendering.readobservationtype(),x_pixel, y_pixel, z_pixel, lambda_pixel, lambda_width, lvec, bvec, this->outfile);
+			tmprender=FoMo::RenderWithNearestNeighbour(this->datacube,this->goftcube,this->rendering.readobservationtype(),
+			x_pixel, y_pixel, z_pixel, lambda_pixel, lambda_width, lvec, bvec, this->outfile);
 			break;
 		case LastVirtualRenderMethod: // this should not be reached, since it is excluded from the map
 		default:

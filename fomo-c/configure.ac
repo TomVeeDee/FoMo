@@ -1,4 +1,4 @@
-m4_define(FOMOVERSION,3.2)
+m4_define(FOMOVERSION,3.3)
 AC_INIT(FoMo,FOMOVERSION,tom.vandoorsselaere@wis.kuleuven.be)
 AC_SUBST(fomoversion,FOMOVERSION)
 AC_PREREQ(2.59)

@@ -14,18 +14,12 @@
 
 const double speedoflight=GSL_CONST_MKSA_SPEED_OF_LIGHT; // speed of light
 const double pi=M_PI; //pi
-const int subsetgoftn=10; // include subsetgoftn * z_pixel points in the subset of points along the ray
+const unsigned int subsetgoftn=10; // include subsetgoftn * z_pixel points in the subset of points along the ray
 
 template <typename T>
 T norm(const std::vector<T> a)
 {
 	return std::sqrt(inner_product(a.begin(),a.end(),a.begin(),0.));
-	/*T temporaryresult=T(0);
-	for (auto a_it=a.begin(); a_it!=a.end(); ++a_it)
-	{
-		temporaryresult+=std::pow(*a_it,2);
-	}
-	return std::sqrt(temporaryresult);*/
 }
 
 template <typename T> 
@@ -37,16 +31,6 @@ T distancebetweenpoints(const std::vector<T> a, const std::vector<T> b)
 	std::transform(a.begin(), a.end(), b.begin(), intermediate.begin(), std::minus<T>());
 	// then take the norm of the difference vector
 	return norm(intermediate);	
-	/*
-	T temporaryresult=T(0);
-	auto b_it=b.begin();
-	for (auto a_it=a.begin(); a_it!=a.end(); ++a_it)
-	{
-		temporaryresult+=std::pow(*a_it-*b_it,2);
-		++b_it;
-	}
-	return std::sqrt(temporaryresult);
-	 */
 }
 
 
@@ -65,6 +49,20 @@ T distancetoline(const std::vector<T> point, const std::vector<T> pointonline, c
 	return std::sqrt(std::pow(pointdist,2)*std::pow(normunit,2)-std::pow(temporary,2))/normunit;
 }
 
+template <typename T>
+T coordinateonline(const std::vector<T> point, const std::vector<T> pointonline, const std::vector<T> directionofline)
+{
+	assert(point.size() == pointonline.size());
+	assert(point.size() == directionofline.size());
+	
+	std::vector<T> pointdiff(point.size());
+	std::transform(point.begin(),point.end(),pointonline.begin(),pointdiff.begin(),std::minus<T>());
+	T normunit = norm(directionofline);
+	T temporary = inner_product(pointdiff.begin(),pointdiff.end(),directionofline.begin(),0.);
+	// Eq. 3 on http://mathworld.wolfram.com/Point-LineDistance3-Dimensional.html
+	return -temporary/normunit;
+}
+
 struct point {
 	double x;
 	double y;
@@ -78,12 +76,11 @@ struct by_distance {
 	{
 		return a.distance < b.distance;
 	}
+	bool operator()(point const &a, double const val)
+	{
+		return a.distance < val;
+	}
 };
-
-bool distancesmallerthan(point const &a, double const val)
-{
-	return a.distance < val;
-}
 
 FoMo::RenderCube nearestneighbourinterpolation(FoMo::GoftCube goftcube, const double l, const double b, const int x_pixel, const int y_pixel, const int z_pixel, const int lambda_pixel, const double lambda_width)
 {
@@ -166,6 +163,11 @@ FoMo::RenderCube nearestneighbourinterpolation(FoMo::GoftCube goftcube, const do
 	if (lambda_pixel > 1) newgrid.push_back(lambdavec);
 	FoMo::tphysvar intens(x_pixel*y_pixel*lambda_pixel,0);
 	
+	// maxdistance is the furthest distance between a grid point and a simulation point at which the emission is interpolated
+	// it is computed as the half diagonal of the rectangle around this ray, with the sides equal to the x and y distance between rays
+	// i.e. it needs to be closer to this ray than to any other ray
+	double maxdistance = std::sqrt(std::pow((maxx-minx)/(x_pixel-1),2)+std::pow((maxy-miny)/(y_pixel-1),2))/2.;
+	
 #ifdef _OPENMP
 #pragma omp parallel for schedule(dynamic) collapse(2) private (x,y,z,intpolpeak,intpolfwhm,intpollosvel,lambdaval,tempintens,ind)
 #endif
@@ -177,55 +179,54 @@ FoMo::RenderCube nearestneighbourinterpolation(FoMo::GoftCube goftcube, const do
 			y = double(i)/(y_pixel-1)*(maxy-miny)+miny;
 			z = minz;
 			// thus the coordinates of this point in the (x,y,z) of the datacube are
-			std::vector<double> p={x*cos(b)*cos(l)+y*sin(l)+z*sin(b)*cos(l),-x*cos(b)*sin(l)+y*cos(l)-z*sin(b)*sin(l),-x*sin(b)+z*cos(b)};
+			std::vector<double> startp={x*cos(b)*cos(l)+y*sin(l)+z*sin(b)*cos(l),-x*cos(b)*sin(l)+y*cos(l)-z*sin(b)*sin(l),-x*sin(b)+z*cos(b)};
 			// for each ray, we select a subset of points closest to the ray
-			// (if set) std::set<point,by_distance> subsetofpoints;
 			std::vector<point> subsetofpoints;
-			subsetofpoints.resize(subsetgoftn*z_pixel);
 			point tmppoint;
-			double distance;
-			// subsetgoftn really needs to select a subset, otherwise the following loop will segfault
-			assert(subsetgoftn*z_pixel < ng);
-			for (int l=0; l<subsetgoftn*z_pixel; l++)
+			
+			for (int l=0; l<ng; l++)
 			{
-				// (if set) 
-				/*tmppoint.x=grid[0][l];
-				tmppoint.y=grid[1][l];
-				tmppoint.z=grid[2][l];
-				tmppoint.index=l;
-				tmppoint.distance=distancetoline({tmppoint.x,tmppoint.y,tmppoint.z},p,unit);
-				subsetofpoints.insert(tmppoint);*/
-				subsetofpoints.at(l).x=grid[0][l];
-				subsetofpoints.at(l).y=grid[1][l];
-				subsetofpoints.at(l).z=grid[2][l];
-				subsetofpoints.at(l).index=l;
-				// unit is the direction of the line
-				distance=distancetoline({subsetofpoints.at(l).x,subsetofpoints.at(l).y,subsetofpoints.at(l).z},p,unit);
-				subsetofpoints.at(l).distance=distance;
-			}
-			std::sort(subsetofpoints.begin(),subsetofpoints.end(),by_distance()); // (if set) comment this line
-			for (int l=subsetgoftn*z_pixel; l<ng; l++)
-			{
-				//compute distance of new point to ray
+				//compute distance of each point to ray
 				tmppoint.x=grid[0][l];
 				tmppoint.y=grid[1][l];
 				tmppoint.z=grid[2][l];
 				tmppoint.index=l;
-				tmppoint.distance=distancetoline({tmppoint.x,tmppoint.y,tmppoint.z},p,unit);
-				if (tmppoint.distance < (*std::prev(subsetofpoints.end())).distance)
+				tmppoint.distance=distancetoline({tmppoint.x,tmppoint.y,tmppoint.z},startp,unit);
+				
+				// if the distance is small enough, we need to add the point
+				if (tmppoint.distance < maxdistance)
 				{
-				// insert in subsetofpoints at correct location
-				// std::lower_bound and then std::insert
-					auto low = std::lower_bound(subsetofpoints.begin(), subsetofpoints.end(), tmppoint.distance, distancesmallerthan);
+					// find at which position the value should be inserted
+					// this ensures that the vector remains sorted
+					auto low = std::lower_bound(subsetofpoints.begin(), subsetofpoints.end(), tmppoint.distance, by_distance());
 					subsetofpoints.insert(low,tmppoint);
-					// (if set) subsetofpoints.insert(tmppoint);
-//					if (i==0 && j==0) std::cout << l << " " << tmppoint.distance << std::endl << std::flush;
-				// remove last point of subsetofpoints
-					// (if set) subsetofpoints.erase(std::prev(subsetofpoints.end()));
-					subsetofpoints.pop_back();
+					// if the subset is already too large, we need to get rid of the last element
+					if (subsetofpoints.size()>subsetgoftn*z_pixel) subsetofpoints.pop_back();
 				}
 			}
-			if (i==0 && j==0) std::cout << subsetofpoints.size() << " " << subsetgoftn*z_pixel << std::endl << std::flush;
+			
+			double mincoordinate, maxcoordinate, newcoordinate, pointcoordinate;
+			// build in a check for the case that there are no close points, otherwise it segfaults
+			if (subsetofpoints.size()==0) 
+			{
+				mincoordinate=0;
+			}
+			else
+			{
+				mincoordinate=coordinateonline({subsetofpoints.at(0).x,subsetofpoints.at(0).y,subsetofpoints.at(0).z},startp,unit);
+			}
+			maxcoordinate=mincoordinate;
+			for (unsigned int l=1; l<subsetofpoints.size(); l++)
+			{
+				// compute the coordinate of each point on the line and store it in the struct (new member, to define)
+				// this can be done with formula 3 on http://mathworld.wolfram.com/Point-LineDistance3-Dimensional.html
+				newcoordinate=coordinateonline({subsetofpoints.at(l).x,subsetofpoints.at(l).y,subsetofpoints.at(l).z},startp,unit);
+				// go through subsetofpoints and use coordinateonline, keep the min value and max value.
+				if (newcoordinate < mincoordinate) mincoordinate = newcoordinate;
+				if (newcoordinate > maxcoordinate) maxcoordinate = newcoordinate;
+			}
+			
+			std::vector<double> p;
 			
 			#ifdef _OPENMP
 			#pragma omp task
@@ -236,64 +237,75 @@ FoMo::RenderCube nearestneighbourinterpolation(FoMo::GoftCube goftcube, const do
 		// calculate the interpolation in the original frame of reference
 		// i.e. derotate the point using angles -l and -b
 				p={x*cos(b)*cos(l)+y*sin(l)+z*sin(b)*cos(l),-x*cos(b)*sin(l)+y*cos(l)-z*sin(b)*sin(l),-x*sin(b)+z*cos(b)};
-				for (int m=0; m<dim; m++) gridpoint.at(m)=grid[m][0];
-				double nearestdistance=distancebetweenpoints(p,gridpoint);
-				int nearestindex=0;
-				
-				for (auto subsetpointer=subsetofpoints.begin(); subsetpointer != subsetofpoints.end(); ++subsetpointer)
-				{
-					gridpoint.at(0)=(*subsetpointer).x;
-					gridpoint.at(1)=(*subsetpointer).y;
-					gridpoint.at(2)=(*subsetpointer).z;
-					double tempdistance=distancebetweenpoints(p,gridpoint);
-					// if ((i==2) && (j==60)) std::cout << k << " "<< l << std::endl;
-					// std::cout << i<< " " << j << " " << k << " "<< l << std::endl;
-					if (tempdistance < nearestdistance)
-					{
-						nearestindex=(*subsetpointer).index;
-						nearestdistance=tempdistance;
-					}
-				}
-				
-				// compute max distance, let's set it at 2Mm initially
-				double maxdistance=2.;
+				pointcoordinate=coordinateonline(p,startp,unit);
 				
 		// Only look for the nearest point and interpolate, if the point p is inside the convex hull.
 		// Check if the z-coordinate is between the minimum and maximum coordinate of subsetofpoints
-				if (nearestdistance < maxdistance)
+				if (pointcoordinate >= mincoordinate && pointcoordinate <= maxcoordinate)
 				{
-					intpolpeak=peakvec.at(nearestindex);
-					intpolfwhm=fwhmvec.at(nearestindex);
-					intpollosvel=losvel.at(nearestindex);
+					for (int m=0; m<dim; m++) gridpoint.at(m)=grid[m][0];
+					double nearestdistance=distancebetweenpoints(p,gridpoint);
+					int nearestindex=0;
+				
+					for (auto subsetpointer=subsetofpoints.begin(); subsetpointer != subsetofpoints.end(); ++subsetpointer)
+					{
+						gridpoint.at(0)=(*subsetpointer).x;
+						gridpoint.at(1)=(*subsetpointer).y;
+						gridpoint.at(2)=(*subsetpointer).z;
+						double tempdistance=distancebetweenpoints(p,gridpoint);
+						if (tempdistance < nearestdistance)
+						{
+							nearestindex=(*subsetpointer).index;
+							nearestdistance=tempdistance;
+						}
+					}
+
+					if (nearestdistance < maxdistance)
+					{
+						intpolpeak=peakvec.at(nearestindex);
+						intpolfwhm=fwhmvec.at(nearestindex);
+						intpollosvel=losvel.at(nearestindex);
+					}
+					else
+					{
+						intpolpeak=0;
+					}
 				}
 				else
 				{
 					intpolpeak=0;
 				}
-					if (lambda_pixel>1)// spectroscopic study
+					
+				if (lambda_pixel>1)// spectroscopic study
+				{
+					for (int il=0; il<lambda_pixel; il++) // changed index from global variable l into il [D.Y. 17 Nov 2014]
 					{
-						for (int il=0; il<lambda_pixel; il++) // changed index from global variable l into il [D.Y. 17 Nov 2014]
-						{
-							// lambda the relative wavelength around lambda0, with a width of lambda_width
-							lambdaval=double(il)/(lambda_pixel-1)*lambda_width-lambda_width/2.;
-							tempintens=intpolpeak*exp(-pow(lambdaval-intpollosvel/speedoflight*lambda0,2)/pow(intpolfwhm,2)*4.*log(2.));
-							ind=(i*(x_pixel)+j)*lambda_pixel+il;// 
-							newgrid.at(0).at(ind)=x;
-							newgrid.at(1).at(ind)=y;
-							newgrid.at(2).at(ind)=lambdaval+lambda0; // store the full wavelength
-							// this is critical, but with tasks, the ind is unique for each task, and no collision should occur
-							intens.at(ind)+=tempintens;// loop over z and lambda [D.Y 17 Nov 2014]
-						}
+						// lambda the relative wavelength around lambda0, with a width of lambda_width
+						lambdaval=double(il)/(lambda_pixel-1)*lambda_width-lambda_width/2.;
+						// here a ternary operator may be used
+						// if intpolpeak is not zero then the correct expression is used. otherwise, the intensity is just 0
+						// it remains to be tested if this is faster than just the direct computation
+						//tempintens=intpolpeak ? intpolpeak*exp(-pow(lambdaval-intpollosvel/speedoflight*lambda0,2)/pow(intpolfwhm,2)*4.*log(2.)) : 0;
+						tempintens=intpolpeak*exp(-pow(lambdaval-intpollosvel/speedoflight*lambda0,2)/pow(intpolfwhm,2)*4.*log(2.));
+						ind=(i*(x_pixel)+j)*lambda_pixel+il;// 
+						newgrid.at(0).at(ind)=x;
+						newgrid.at(1).at(ind)=y;
+						newgrid.at(2).at(ind)=lambdaval+lambda0; // store the full wavelength
+						// this is critical, but with tasks, the ind is unique for each task, and no collision should occur
+						intens.at(ind)+=tempintens;// loop over z and lambda [D.Y 17 Nov 2014]
 					}
+				}
 			
-					if (lambda_pixel==1) // AIA imaging study. Algorithm not verified [DY 14 Nov 2014]
-					{
-						tempintens=intpolpeak;
-						ind=(i*x_pixel+j); 
-						newgrid[0][ind]=x;
-						newgrid[1][ind]=y;
-						intens[ind]+=tempintens; // loop over z [D.Y 17 Nov 2014]
-					}
+				if (lambda_pixel==1) // AIA imaging study. Algorithm not verified [DY 14 Nov 2014]
+				{
+					tempintens=intpolpeak;
+					ind=(i*x_pixel+j); 
+					newgrid.at(0).at(ind)=x;
+					newgrid.at(1).at(ind)=y;
+					// this is critical, but with tasks, the ind is unique for each task, and no collision should occur
+					intens.at(ind)+=tempintens;// loop over z and lambda [D.Y 17 Nov 2014]
+				}
+
 			// print progress
 				++show_progress;
 			}
@@ -306,6 +318,7 @@ FoMo::RenderCube nearestneighbourinterpolation(FoMo::GoftCube goftcube, const do
 	intens=FoMo::operator*(pathlength*1e8,intens); // assume that the coordinates are given in Mm, and convert to cm
 	newdata.push_back(intens);
 	rendercube.setdata(newgrid,newdata);
+	rendercube.setrendermethod("NearestNeighbour");
 	rendercube.setresolution(x_pixel,y_pixel,z_pixel,lambda_pixel,lambda_width);
 	if (lambda_pixel == 1)
 	{

@@ -242,4 +242,31 @@ IDL> gaussfitgoftcube,emiss,lvec,peak=peak,doppler=doppler,sigma=sigma,chisq=chi
 
 Then the peak, int, doppler, sigma, chisq variables are 2D arrays with peak intensity, total intensity, Doppler shift, Doppler width, and chi-squared values. They can be easily visualised with tvscl or surface.
 
+\section RenderMethods
+
+The list of currently implemented RenderMethods (to be set with FoMo::FoMoObject.setrendermethod()) can be found in src/fomo-object.cpp.
+
+\snippet src/fomo-object.cpp RenderMethods
+
+\subsection cgal CGAL/CGAL2D
+
+Here we use the <a href="http://www.cgal.org">CGAL</a> library for the interpolation. The grid of the FoMo::GoftCube is triangulated, and 
+the points on the rays are located in that triangulation using a nearest neighbour look-up. 
+
+CGAL treats the 3D case, while CGAL2D treats the 2D case. In the CGAL2D case, the z-coordinate of the data points in FoMo::GoftCube are 
+not used.
+
+This method uses a lot of memory.
+
+\subsection NearestNeighbour
+
+This rendermethod is independent of external software libraries. It works in two steps: first there are subsetgoftn*z_pixel points 
+selected near a ray (z_pixels is the number of points on a ray, subsetgoftn is typically set to 10) to form a subset of the grid 
+points, then secondly, for each point on the ray the nearest point within this subset of grid points is computed, which is used for the 
+interpolation. It is checked if the point-to-be-interpolated is within the boundaries of the subset of points on the ray (coordinate 
+along the ray is used as delimiter).
+
+The advantage of this method (compared to CGAL) is that the triangulation does not need to be constructed, but that finding the nearest 
+point is slower than with CGAL. 
+
 */

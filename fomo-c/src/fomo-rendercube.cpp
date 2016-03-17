@@ -6,7 +6,7 @@
  * @brief The default constructor for a RenderCube.
  * 
  * As part of the initialisation, the information in the GoftCube is copied (such as chiantifile, 
- * abundfile, lambda0, grid). The rendermethod defaults to "CGAL", and the observationtype to 
+ * abundfile, lambda0, grid). The rendermethod defaults to "NearestNeighbour", and the observationtype to 
  * Spectroscopic.\n
  * The resolution is also set to initial values of 101 (x resolution), 102 (y resolution), 300
  * (resolution along LOS). The number of pixels in the wavelength direction is set to 30, and the width
@@ -25,7 +25,7 @@ FoMo::RenderCube::RenderCube(FoMo::GoftCube goftcube)
 	z_pixel=300;
 	lambda_pixel=30;
 	lambda_width=.13;
-	rendermethod="CGAL";
+	rendermethod="NearestNeighbour";
 	observationtype=Spectroscopic;
 }
 

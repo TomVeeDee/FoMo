@@ -218,6 +218,7 @@ FoMo::RenderCube CGAL2D(FoMo::GoftCube goftcube, const double l, const int x_pix
 	intens=FoMo::operator*(pathlength*1e8,intens); // assume that the coordinates are given in Mm, and convert to cm
 	newdata.push_back(intens);
 	rendercube.setdata(newgrid,newdata);
+	rendercube.setrendermethod("CGAL2D");
 	rendercube.setresolution(x_pixel,y_pixel,1,lambda_pixel,lambda_width);
 	if (lambda_pixel == 1)
 	{

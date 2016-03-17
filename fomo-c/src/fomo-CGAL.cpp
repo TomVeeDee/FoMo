@@ -259,6 +259,7 @@ FoMo::RenderCube CGALinterpolation(FoMo::GoftCube goftcube, Delaunay_triangulati
 	intens=FoMo::operator*(pathlength*1e8,intens); // assume that the coordinates are given in Mm, and convert to cm
 	newdata.push_back(intens);
 	rendercube.setdata(newgrid,newdata);
+	rendercube.setrendermethod("CGAL");
 	rendercube.setresolution(x_pixel,y_pixel,z_pixel,lambda_pixel,lambda_width);
 	if (lambda_pixel == 1)
 	{
