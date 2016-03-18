@@ -104,39 +104,16 @@ double abundfromchianti(std::istream & in, const std::string & ion)
 FoMo::tphysvar goft(const FoMo::tphysvar logT, const FoMo::tphysvar logrho, const FoMo::DataCube gofttab)
 {
 	// uses the log(T), because the G(T) is also stored using those values.
-	typedef CGAL::Delaunay_triangulation_2<K>             Delaunay_triangulation;
-	typedef CGAL::Interpolation_traits_2<K>               Traits;
-	typedef K::FT                                         Coord_type;
-	typedef K::Point_2                                    Point;
-        std::map<Point, Coord_type, K::Less_xy_2> function_values;
-        typedef CGAL::Data_access< std::map<Point, Coord_type, K::Less_xy_2 > >  Value_access;
 
 	FoMo::tgrid grid=gofttab.readgrid();
+	// this is sorted by a slowly varying density and quickly varying temperature
 	FoMo::tphysvar tempgrid=grid[0];
 	FoMo::tphysvar rhogrid=grid[1];
+	// we can find the elementary vector length by using std::count
+	unsigned int nrho=std::count(tempgrid.begin(),tempgrid.end(),tempgrid.at(0));
+	unsigned int nt=std::count(rhogrid.begin(),rhogrid.end(),rhogrid.at(0));
+	assert(tempgrid.size()==nt*nrho);
 	FoMo::tphysvar goftvec=gofttab.readvar(0);
-
-	// put the temperature and density grid from the gofttab into the CGAL data structures
-	std::vector<Point> delaunaygrid;
-	Point temporarygridpoint;
-
-	FoMo::tphysvar::const_iterator tempit=tempgrid.begin();
-	FoMo::tphysvar::const_iterator rhoit=rhogrid.begin();
-	FoMo::tphysvar::const_iterator goftit=goftvec.begin();
-
-	for (; tempit != tempgrid.end(); ++tempit)
-	{
-		temporarygridpoint=Point(*tempit,*rhoit);
-		delaunaygrid.push_back(temporarygridpoint);
-		function_values.insert(std::make_pair(temporarygridpoint,Coord_type(*goftit)));
-		++rhoit;
-		++goftit;
-	}
-	Value_access tempmap=Value_access(function_values);
-
-	// compute the Delaunay triangulation
-        Delaunay_triangulation DT;
-	DT.insert(delaunaygrid.begin(),delaunaygrid.end());
 
 	FoMo::tphysvar g;
 	int ng=logT.size();
@@ -144,57 +121,42 @@ FoMo::tphysvar goft(const FoMo::tphysvar logT, const FoMo::tphysvar logrho, cons
 	g.resize(ng);
 	std::cout << "Doing G(T) interpolation: " << std::flush;
 
-	// If MPI is available, we should divide the work between nodes, we can just use a geometric division by the commsize
-	int commrank,commsize;
-#ifdef HAVEMPI
-        MPI_Comm_rank(MPI_COMM_WORLD,&commrank);
-        MPI_Comm_size(MPI_COMM_WORLD,&commsize);
-#else
-	commrank = 0;
-	commsize = 1;
-#endif
-	int mpimin, mpimax;
-	// MPE_Decomp1d decomposes a vector into more or less equal parts
-	// The only restriction is that it takes the vector from 1:ng, rather than 0:ng-1
-	// Therefore, the mpimin and mpimax are decreases afterwards.
-	MPE_Decomp1d(ng,commsize, commrank, &mpimin, &mpimax);
-	mpimin--;
-	mpimax--;
-
-	boost::progress_display show_progress((mpimax-mpimin+1)/10);
+	unsigned int floortemp, ceiltemp, rhoindex,goftindex;
+	double res, x1, x2, y1, y2;
+	boost::progress_display show_progress((ng+1)/10);
 
 #ifdef _OPENMP
 #pragma omp parallel for schedule(dynamic)
 #endif
-	for (int i=mpimin; i<mpimax; i++)
+	for (int i=0; i<ng; i++)
 	{
-		Point p(logT[i],logrho[i]);
-// a possible linear interpolation
-// see http://www.cgal.org/Manual/latest/doc_html/cgal_manual/Interpolation/Chapter_main.html#Subsection_70.3.3
-// make sure to use small interpolation file. If not, this takes hours!
-  
-  		std::vector< std::pair< Point, Coord_type > > coords;
-		Coord_type norm = CGAL::natural_neighbor_coordinates_2(DT, p,std::back_inserter(coords)).second;
-
-		Coord_type res =  CGAL::linear_interpolation(coords.begin(), coords.end(),
-                                               norm,
-                                               Value_access(function_values));	
-		g[i]=res;
-
-// let's not do nearest neighbour
-// it is much faster than the linear interpolation
-// but the spacing in temperature is too broad too handle this
-
-		/*Delaunay_triangulation::Vertex_handle v=DT.nearest_vertex(p);
-		Point nearest=v->point();
-		std::pair<Coord_type,bool> funcval=tempmap(nearest);
-		g[i]=funcval.first;*/
-	
-		// This introduces a race condition between threads, but since it's only a counter, it doesn't really matter.
-		/*#ifdef _OPENMP
-		#pragma omp atomic
-		#endif*/
-		if ((i-mpimin)%10 == 0) ++show_progress;
+		// find index of logT[i] in tempgrid[0:nt-1]
+		// find index of logrho[i] in rhogrid[0:nrho-1]
+		// tempindex=round((logT.at(i)-tempgrid.at(0))/(tempgrid.at(1)-tempgrid.at(0)));
+		floortemp=floor((logT.at(i)-tempgrid.at(0))/(tempgrid.at(1)-tempgrid.at(0)));
+		ceiltemp=floortemp+1;
+		rhoindex=round((logrho.at(i)-rhogrid.at(0))/(rhogrid.at(nt)-rhogrid.at(0)));
+		
+		// if these indices are outside the domain, then the G(T) is 0
+		if (floortemp<0 || rhoindex<0 || ceiltemp>nt-1 || rhoindex>nrho-1)
+		{
+			res=0;
+		}
+		else
+		{
+			goftindex=rhoindex*nt+ceiltemp;
+		// we do a linear interpolation
+		// Patrick does a linear interpolation in temperature, and a nearest neighbour in density
+			x1=tempgrid.at(ceiltemp);
+			y1=goftvec.at(goftindex);
+			x2=tempgrid.at(floortemp);
+			y2=goftvec.at(goftindex-1);
+			res=(logT.at(i)-x1)*(y2-y1)/(x2-x1)+y1;
+		}
+		
+		g.at(i)=res;
+		
+		if (i % 10 == 0) ++show_progress;
 	}
 	std::cout << " Done!" << std::endl << std::flush;
 
