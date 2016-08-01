@@ -7,16 +7,9 @@
 #include <cstdlib>
 #include <cmath>
 #include <gsl/gsl_const_mksa.h>
-#include <boost/progress.hpp>
-
-// CGAL stuff
-#include <CGAL/Exact_predicates_inexact_constructions_kernel.h>
-#include <CGAL/Delaunay_triangulation_2.h>
-#include <CGAL/Interpolation_traits_2.h>
-#include <CGAL/natural_neighbor_coordinates_2.h>
-#include <CGAL/interpolation_functions.h>
-
-typedef CGAL::Exact_predicates_inexact_constructions_kernel K;
+#include <algorithm>
+#include <cassert>
+#include <cstring>
 
 // Physical constants
 const double alphaconst=1.0645; // alpha=\sqrt{2\pi}/2/\sqrt{2ln2}
@@ -25,40 +18,6 @@ const double massproton=GSL_CONST_MKSA_MASS_PROTON; // hydrogen mass
 const double speedoflight=GSL_CONST_MKSA_SPEED_OF_LIGHT; // speed of light
 
 const std::string ______chiantitables_sun_coronal_abund_string;
-
-int MPE_Decomp1d(int n, int size, int rank, int *s, int *e )
-/*
-~  This file contains a routine for producing a decomposition of a 1-d array
-~  when given a number of processors.  It may be used in "direct" product
-~  decomposition.  The values returned assume a "global" domain in [1:n]
-~ */
-/*@
-~  MPE_Decomp1d - Compute a balanced decomposition of a 1-D array
-
-~  Input Parameters:
-+ n  - Length of the array
-. size - Number of processors in decomposition
-- rank - Rank of this processor in the decomposition (0 <= rank < size)
-
-~  Output Parameters:
-. s,e - Array indices are s:e, with the original array considered as 1:n.
-@*/
-{
-	int nlocal, deficit;
-
-	nlocal      = n / size;
-	*s  = rank * nlocal + 1;
-	deficit     = n % size;
-	*s  = *s + ((rank < deficit) ? rank : deficit);
-	if (rank < deficit) nlocal++;
-	*e      = *s + nlocal - 1;
-	if (*e > n || rank == size-1) *e = n;
-#ifdef HAVEMPI
-	return MPI_SUCCESS;
-#else
-	return EXIT_SUCCESS;
-#endif
-}
 
 double abundfromchianti(std::istream & in, const std::string & ion)
 {
@@ -119,11 +78,10 @@ FoMo::tphysvar goft(const FoMo::tphysvar logT, const FoMo::tphysvar logrho, cons
 	int ng=logT.size();
 	// the reservation of the size is necessary, otherwise the vector reallocates in the openmp threads with segfaults as consequence
 	g.resize(ng);
-	std::cout << "Doing G(T) interpolation: " << std::flush;
+	std::cout << "Doing G(T) interpolation... " << std::flush;
 
 	unsigned int floortemp, ceiltemp, rhoindex,goftindex;
 	double res, x1, x2, y1, y2;
-	boost::progress_display show_progress((ng+1)/10);
 
 #ifdef _OPENMP
 #pragma omp parallel for schedule(dynamic)
@@ -155,8 +113,6 @@ FoMo::tphysvar goft(const FoMo::tphysvar logT, const FoMo::tphysvar logrho, cons
 		}
 		
 		g.at(i)=res;
-		
-		if (i % 10 == 0) ++show_progress;
 	}
 	std::cout << " Done!" << std::endl << std::flush;
 
