@@ -28,38 +28,6 @@ typedef std::pair<point, unsigned> value;
 const double speedoflight=GSL_CONST_MKSA_SPEED_OF_LIGHT; // speed of light
 const double pi=M_PI; //pi
 
-template <typename T>
-T norm(const std::vector<T> a)
-{
-	return std::sqrt(inner_product(a.begin(),a.end(),a.begin(),0.));
-}
-
-template <typename T> 
-T distancebetweenpoints(const std::vector<T> a, const std::vector<T> b)
-{
-	assert(a.size() == b.size());
-	std::vector<T> intermediate(a.size());
-	// subtract the vectors from each other, and store in intermediate
-	std::transform(a.begin(), a.end(), b.begin(), intermediate.begin(), std::minus<T>());
-	// then take the norm of the difference vector
-	return norm(intermediate);	
-}
-
-template <typename T>
-T coordinateonline(const std::vector<T> point, const std::vector<T> pointonline, const std::vector<T> directionofline)
-{
-	assert(point.size() == pointonline.size());
-	assert(point.size() == directionofline.size());
-	
-	std::vector<T> pointdiff(point.size());
-	std::transform(point.begin(),point.end(),pointonline.begin(),pointdiff.begin(),std::minus<T>());
-	T normunit = norm(directionofline);
-	T temporary = inner_product(pointdiff.begin(),pointdiff.end(),directionofline.begin(),0.);
-	// Eq. 3 on http://mathworld.wolfram.com/Point-LineDistance3-Dimensional.html
-	return -temporary/normunit;
-}
-
-
 FoMo::RenderCube nearestneighbourinterpolation(FoMo::GoftCube goftcube, const double l, const double b, const int x_pixel, const int y_pixel, const int z_pixel, const int lambda_pixel, const double lambda_width)
 {
 //
@@ -103,7 +71,6 @@ FoMo::RenderCube nearestneighbourinterpolation(FoMo::GoftCube goftcube, const do
 	point boostpoint, targetpoint;
 	value boostpair;
 	std::vector<value> returned_values;
-	int numberofpoints;
 	box maxdistancebox;
 	
 // No openmp possible here
@@ -118,13 +85,11 @@ FoMo::RenderCube nearestneighbourinterpolation(FoMo::GoftCube goftcube, const do
 		double losvelval = inner_product(unit.begin(),unit.end(),velvec.begin(),0.0);//velocity along line of sight for position [i]/[ng]
 		losvel.at(i)=losvelval;
 		
-		// build r-tree from gridpoints
+		// build r-tree from gridpoints, this part is not parallel
 		boostpoint = point(gridpoint.at(0), gridpoint.at(1), gridpoint.at(2));
 		boostpair=std::make_pair(boostpoint,i);
 		rtree.insert(boostpair);
 	}
-	// compute the convex hull of the input data points
-	//bg::convex_hull(rtree,hull);
 	
 	// compute the bounds of the input data points, so that we can equidistantly distribute the target pixels
 	double minz=*(min_element(zacc.begin(),zacc.end()));
@@ -157,7 +122,10 @@ FoMo::RenderCube nearestneighbourinterpolation(FoMo::GoftCube goftcube, const do
 	// maxdistance is the furthest distance between a grid point and a simulation point at which the emission is interpolated
 	// it is computed as the half diagonal of the rectangle around this ray, with the sides equal to the x and y distance between rays
 	// i.e. it needs to be closer to this ray than to any other ray
-	double maxdistance = std::sqrt(std::pow((maxx-minx)/(x_pixel-1),2)+std::pow((maxy-miny)/(y_pixel-1),2))/2.;
+	double maxdistance; 
+	maxdistance = std::sqrt(std::pow((maxx-minx)/(x_pixel-1),2)+std::pow((maxy-miny)/(y_pixel-1),2))/2.;
+	// However, it is better to just take the minimum of the pixel size in either direction, because it is then used in the maxdistancebox
+	maxdistance = std::max((maxx-minx)/(x_pixel-1),(maxy-miny)/(y_pixel-1))/2.;
 	
 #ifdef _OPENMP
 #pragma omp parallel for schedule(dynamic) collapse(2) shared (rtree) private (x,y,z,intpolpeak,intpolfwhm,intpollosvel,lambdaval,tempintens,ind,returned_values,targetpoint,maxdistancebox)
@@ -187,13 +155,16 @@ FoMo::RenderCube nearestneighbourinterpolation(FoMo::GoftCube goftcube, const do
 				// look for nearest point to targetpoint
 				targetpoint=point(p.at(0),p.at(1),p.at(2));
 				returned_values.clear();
-				// the second condition ensures the point is not further away than maxdistance
-				maxdistancebox=box(point(p.at(0)-maxdistance,p.at(1)-maxdistance,p.at(2)-maxdistance),point(p.at(0)+maxdistance,p.at(1)+maxdistance,p.at(2)+maxdistance));
-				numberofpoints=rtree.query(bgi::nearest(targetpoint, 1) && bgi::within(maxdistancebox), std::back_inserter(returned_values));
+				// the second condition ensures the point is not further away than 
+				// - half the x-resolution in the x-direction
+				// - half the y-resolution in the y-direction
+				// - the maximum of both the previous numbers in the z-direction (sort of improvising a convex hull approach)
+				maxdistancebox=box(point(p.at(0)-(maxx-minx)/(x_pixel-1)/2.,p.at(1)-(maxy-miny)/(y_pixel-1)/2.,p.at(2)-maxdistance),point(p.at(0)+(maxx-minx)/(x_pixel-1)/2.,p.at(1)+(maxy-miny)/(y_pixel-1)/2.,p.at(2)+maxdistance));
+				//numberofpoints=
+				rtree.query(bgi::nearest(targetpoint, 1) && bgi::within(maxdistancebox), std::back_inserter(returned_values));
 				if (returned_values.size() >= 1)
 				{
 					nearestindex=returned_values.at(0).second;
-					//std::cout << i << " " << j << " " << k << " " << nearestindex << " " << p[0] << " " << grid[0][nearestindex] << " " <<  p[1] << " " << grid[1][nearestindex] << " " << p[2] << " "<< grid[2][nearestindex] << std::endl; 
 					intpolpeak=peakvec.at(nearestindex);
 					intpolfwhm=fwhmvec.at(nearestindex);
 					intpollosvel=losvel.at(nearestindex);
@@ -260,14 +231,9 @@ FoMo::RenderCube nearestneighbourinterpolation(FoMo::GoftCube goftcube, const do
 
 namespace FoMo
 {
-	FoMo::RenderCube RenderWithNearestNeighbour(FoMo::DataCube datacube, FoMo::GoftCube goftcube, FoMoObservationType observationtype, 
-	const int x_pixel, const int y_pixel, const int z_pixel, const int lambda_pixel, const double lambda_width,
+	FoMo::RenderCube RenderWithNearestNeighbour(FoMo::GoftCube goftcube, const int x_pixel, const int y_pixel, const int z_pixel, const int lambda_pixel, const double lambda_width,
 	std::vector<double> lvec, std::vector<double> bvec, std::string outfile)
 	{
-		/* A good speedup would be to calculate the triangulation per ray.
-		 * It would be good to select only the points around the ray, make the triangulation of that.
-		 * The number of points would be drastically reduced, and the triangulation would be greatly sped up.
-		 */
 		FoMo::RenderCube rendercube(goftcube);
 		for (std::vector<double>::iterator lit=lvec.begin(); lit!=lvec.end(); ++lit)
 			for (std::vector<double>::iterator bit=bvec.begin(); bit!=bvec.end(); ++bit)

@@ -305,8 +305,7 @@ void FoMo::FoMoObject::render(const std::vector<double> lvec, const std::vector<
 			break;
 		case NearestNeighbour:
 			std::cout << "Using nearest-neighbour rendering." << std::endl << std::flush;
-			tmprender=FoMo::RenderWithNearestNeighbour(this->datacube,this->goftcube,this->rendering.readobservationtype(),
-			x_pixel, y_pixel, z_pixel, lambda_pixel, lambda_width, lvec, bvec, this->outfile);
+			tmprender=FoMo::RenderWithNearestNeighbour(this->goftcube,x_pixel, y_pixel, z_pixel, lambda_pixel, lambda_width, lvec, bvec, this->outfile);
 			break;
 		case LastVirtualRenderMethod: // this should not be reached, since it is excluded from the map
 		default:

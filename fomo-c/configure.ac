@@ -76,8 +76,10 @@ AC_CHECK_HEADERS([iomanip])
 AC_CHECK_HEADERS([map])
 AC_CHECK_HEADERS([cassert])
 
-AX_BOOST_BASE([1.36])
-AC_CHECK_HEADER(boost/progress.hpp,[],[AC_MSG_ERROR(Boost header not found)])
+AX_BOOST_BASE([1.54])
+AC_CHECK_HEADER(boost/progress.hpp,[],[AC_MSG_ERROR(Boost progress header not found)])
+AC_CHECK_HEADER(boost/geometry.hpp,[],[AC_MSG_ERROR(Boost geometry header not found)])
+AC_CHECK_HEADER(boost/geometry/index/rtree.hpp,[],[AC_MSG_ERROR(Boost rtree header not found)],[#include <iostream>])
 PKG_PROG_PKG_CONFIG
 #check if MPI is available
 if test "a$mpi" = "ayes" ; then

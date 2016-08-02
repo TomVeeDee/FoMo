@@ -76,7 +76,7 @@ in which the emissivity was replaced by the instrument response function.
 
 \subsection Prerequisites
 
-To install FoMo, you first need to install <a href="http://www.cgal.org">CGAL</a>. It is available for most Linux distributions. Additionally, the code uses the boost library (at least version 1.36) and the <a href="http://www.gnu.org/software/gsl/">GNU scientific library</a>.\n
+To install FoMo, you first need to install <a href="http://www.cgal.org">CGAL</a>. It is available for most Linux distributions. Additionally, the code uses the boost library (at least version 1.54) and the <a href="http://www.gnu.org/software/gsl/">GNU scientific library</a>.\n
 Some parts of the code require a c++ compiler with the C++11 standard. For <a href="http://gcc.gnu.org">gcc</a>, this means that it needs to be at least 4.7. On Centos, this can be achieved by executing 
 \code{.sh}
 scl enable devtoolset-2 bash
@@ -260,13 +260,10 @@ This method uses a lot of memory.
 
 \subsection NearestNeighbour
 
-This rendermethod is independent of external software libraries. It works in two steps: first there are subsetgoftn*z_pixel points 
-selected near a ray (z_pixels is the number of points on a ray, subsetgoftn is typically set to 10) to form a subset of the grid 
-points, then secondly, for each point on the ray the nearest point within this subset of grid points is computed, which is used for the 
-interpolation. It is checked if the point-to-be-interpolated is within the boundaries of the subset of points on the ray (coordinate 
-along the ray is used as delimiter).
+This rendermethod is independent of CGAL, instead it relies on Boost.rtree (from version 1.54). It works in two steps: first an R-tree is 
+constructed from the data points. Then, the nearest points are found via the rtree.query() function. 
 
-The advantage of this method (compared to CGAL) is that the triangulation does not need to be constructed, but that finding the nearest 
-point is slower than with CGAL. 
+The advantage of this method (compared to CGAL) is that the triangulation does not need to be constructed. It turns out that this method
+is much faster than CGAL and uses less memory. However, it is less precise.
 
 */
