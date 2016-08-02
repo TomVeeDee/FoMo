@@ -12,9 +12,21 @@
 #include <cassert>
 #include <set>
 
+
+#include <boost/geometry.hpp>
+#include <boost/geometry/geometries/point.hpp>
+#include <boost/geometry/geometries/box.hpp>
+#include <boost/geometry/index/rtree.hpp>
+#include <functional>
+namespace bg = boost::geometry;
+namespace bgi = boost::geometry::index;
+
+typedef bg::model::point<float, 3, bg::cs::cartesian> point;
+typedef bg::model::box<point> box;
+typedef std::pair<point, unsigned> value;
+
 const double speedoflight=GSL_CONST_MKSA_SPEED_OF_LIGHT; // speed of light
 const double pi=M_PI; //pi
-const unsigned int subsetgoftn=10; // include subsetgoftn * z_pixel points in the subset of points along the ray
 
 template <typename T>
 T norm(const std::vector<T> a)
@@ -33,22 +45,6 @@ T distancebetweenpoints(const std::vector<T> a, const std::vector<T> b)
 	return norm(intermediate);	
 }
 
-
-template <typename T>
-T distancetoline(const std::vector<T> point, const std::vector<T> pointonline, const std::vector<T> directionofline)
-{
-	assert(point.size() == pointonline.size());
-	assert(point.size() == directionofline.size());
-	
-	std::vector<T> pointdiff(point.size());
-	std::transform(point.begin(),point.end(),pointonline.begin(),pointdiff.begin(),std::minus<T>());
-	T pointdist = norm(pointdiff);
-	T normunit = norm(directionofline);
-	T temporary = inner_product(pointdiff.begin(),pointdiff.end(),directionofline.begin(),0.);
-	// Eq. 6 on http://mathworld.wolfram.com/Point-LineDistance3-Dimensional.html
-	return std::sqrt(std::pow(pointdist,2)*std::pow(normunit,2)-std::pow(temporary,2))/normunit;
-}
-
 template <typename T>
 T coordinateonline(const std::vector<T> point, const std::vector<T> pointonline, const std::vector<T> directionofline)
 {
@@ -63,24 +59,6 @@ T coordinateonline(const std::vector<T> point, const std::vector<T> pointonline,
 	return -temporary/normunit;
 }
 
-struct point {
-	double x;
-	double y;
-	double z;
-	int index;
-	double distance;
-};
-
-struct by_distance {
-	bool operator()(point const &a, point const &b)
-	{
-		return a.distance < b.distance;
-	}
-	bool operator()(point const &a, double const val)
-	{
-		return a.distance < val;
-	}
-};
 
 FoMo::RenderCube nearestneighbourinterpolation(FoMo::GoftCube goftcube, const double l, const double b, const int x_pixel, const int y_pixel, const int z_pixel, const int lambda_pixel, const double lambda_width)
 {
@@ -119,13 +97,17 @@ FoMo::RenderCube nearestneighbourinterpolation(FoMo::GoftCube goftcube, const do
 	FoMo::tphysvar vx=goftcube.readvar(2);  
 	FoMo::tphysvar vy=goftcube.readvar(3);
 	FoMo::tphysvar vz=goftcube.readvar(4);
-
+	
+	// initialisations for boost nearest neighbour
+	bgi::rtree< value, bgi::quadratic<16> > rtree;
+	point boostpoint, targetpoint;
+	value boostpair;
+	std::vector<value> returned_values;
+	int numberofpoints;
+	box maxdistancebox;
+	
 // No openmp possible here
 // Because of the insertions at the end of the loop, we get segfaults :(
-// I think it is possible now, if we make losvelval private.
-/*#ifdef _OPENMP
-#pragma omp parallel for
-#endif*/
 	for (int i=0; i<ng; i++)
 	{
 		for (int j=0; j<dim; j++)	gridpoint[j]=grid[j][i];
@@ -135,7 +117,16 @@ FoMo::RenderCube nearestneighbourinterpolation(FoMo::GoftCube goftcube, const do
 		std::vector<double> velvec = {vx[i], vy[i], vz[i]};// velocity vector
 		double losvelval = inner_product(unit.begin(),unit.end(),velvec.begin(),0.0);//velocity along line of sight for position [i]/[ng]
 		losvel.at(i)=losvelval;
+		
+		// build r-tree from gridpoints
+		boostpoint = point(gridpoint.at(0), gridpoint.at(1), gridpoint.at(2));
+		boostpair=std::make_pair(boostpoint,i);
+		rtree.insert(boostpair);
 	}
+	// compute the convex hull of the input data points
+	//bg::convex_hull(rtree,hull);
+	
+	// compute the bounds of the input data points, so that we can equidistantly distribute the target pixels
 	double minz=*(min_element(zacc.begin(),zacc.end()));
 	double maxz=*(max_element(zacc.begin(),zacc.end()));
 	double minx=*(min_element(xacc.begin(),xacc.end()));
@@ -169,7 +160,7 @@ FoMo::RenderCube nearestneighbourinterpolation(FoMo::GoftCube goftcube, const do
 	double maxdistance = std::sqrt(std::pow((maxx-minx)/(x_pixel-1),2)+std::pow((maxy-miny)/(y_pixel-1),2))/2.;
 	
 #ifdef _OPENMP
-#pragma omp parallel for schedule(dynamic) collapse(2) private (x,y,z,intpolpeak,intpolfwhm,intpollosvel,lambdaval,tempintens,ind)
+#pragma omp parallel for schedule(dynamic) collapse(2) shared (rtree) private (x,y,z,intpolpeak,intpolfwhm,intpollosvel,lambdaval,tempintens,ind,returned_values,targetpoint,maxdistancebox)
 #endif
 	for (int i=0; i<y_pixel; i++)
 		for (int j=0; j<x_pixel; j++)
@@ -177,55 +168,7 @@ FoMo::RenderCube nearestneighbourinterpolation(FoMo::GoftCube goftcube, const do
 			// now we're on one ray, through point with coordinates in the image plane
 			x = double(j)/(x_pixel-1)*(maxx-minx)+minx;
 			y = double(i)/(y_pixel-1)*(maxy-miny)+miny;
-			z = minz;
-			// thus the coordinates of this point in the (x,y,z) of the datacube are
-			std::vector<double> startp={x*cos(b)*cos(l)+y*sin(l)+z*sin(b)*cos(l),-x*cos(b)*sin(l)+y*cos(l)-z*sin(b)*sin(l),-x*sin(b)+z*cos(b)};
-			// for each ray, we select a subset of points closest to the ray
-			std::vector<point> subsetofpoints;
-			point tmppoint;
-			
-			for (int l=0; l<ng; l++)
-			{
-				//compute distance of each point to ray
-				tmppoint.x=grid[0][l];
-				tmppoint.y=grid[1][l];
-				tmppoint.z=grid[2][l];
-				tmppoint.index=l;
-				tmppoint.distance=distancetoline({tmppoint.x,tmppoint.y,tmppoint.z},startp,unit);
-				
-				// if the distance is small enough, we need to add the point
-				if (tmppoint.distance < maxdistance)
-				{
-					// find at which position the value should be inserted
-					// this ensures that the vector remains sorted
-					auto low = std::lower_bound(subsetofpoints.begin(), subsetofpoints.end(), tmppoint.distance, by_distance());
-					subsetofpoints.insert(low,tmppoint);
-					// if the subset is already too large, we need to get rid of the last element
-					if (subsetofpoints.size()>subsetgoftn*z_pixel) subsetofpoints.pop_back();
-				}
-			}
-			
-			double mincoordinate, maxcoordinate, newcoordinate, pointcoordinate;
-			// build in a check for the case that there are no close points, otherwise it segfaults
-			if (subsetofpoints.size()==0) 
-			{
-				mincoordinate=0;
-			}
-			else
-			{
-				mincoordinate=coordinateonline({subsetofpoints.at(0).x,subsetofpoints.at(0).y,subsetofpoints.at(0).z},startp,unit);
-			}
-			maxcoordinate=mincoordinate;
-			for (unsigned int l=1; l<subsetofpoints.size(); l++)
-			{
-				// compute the coordinate of each point on the line and store it in the struct (new member, to define)
-				// this can be done with formula 3 on http://mathworld.wolfram.com/Point-LineDistance3-Dimensional.html
-				newcoordinate=coordinateonline({subsetofpoints.at(l).x,subsetofpoints.at(l).y,subsetofpoints.at(l).z},startp,unit);
-				// go through subsetofpoints and use coordinateonline, keep the min value and max value.
-				if (newcoordinate < mincoordinate) mincoordinate = newcoordinate;
-				if (newcoordinate > maxcoordinate) maxcoordinate = newcoordinate;
-			}
-			
+						
 			std::vector<double> p;
 			
 			#ifdef _OPENMP
@@ -237,39 +180,23 @@ FoMo::RenderCube nearestneighbourinterpolation(FoMo::GoftCube goftcube, const do
 		// calculate the interpolation in the original frame of reference
 		// i.e. derotate the point using angles -l and -b
 				p={x*cos(b)*cos(l)+y*sin(l)+z*sin(b)*cos(l),-x*cos(b)*sin(l)+y*cos(l)-z*sin(b)*sin(l),-x*sin(b)+z*cos(b)};
-				pointcoordinate=coordinateonline(p,startp,unit);
 				
-		// Only look for the nearest point and interpolate, if the point p is inside the convex hull.
-		// Check if the z-coordinate is between the minimum and maximum coordinate of subsetofpoints
-				if (pointcoordinate >= mincoordinate && pointcoordinate <= maxcoordinate)
+				// initialise nearestindex to point -1
+				int nearestindex=-1;
+				
+				// look for nearest point to targetpoint
+				targetpoint=point(p.at(0),p.at(1),p.at(2));
+				returned_values.clear();
+				// the second condition ensures the point is not further away than maxdistance
+				maxdistancebox=box(point(p.at(0)-maxdistance,p.at(1)-maxdistance,p.at(2)-maxdistance),point(p.at(0)+maxdistance,p.at(1)+maxdistance,p.at(2)+maxdistance));
+				numberofpoints=rtree.query(bgi::nearest(targetpoint, 1) && bgi::within(maxdistancebox), std::back_inserter(returned_values));
+				if (returned_values.size() >= 1)
 				{
-					for (int m=0; m<dim; m++) gridpoint.at(m)=grid[m][0];
-					double nearestdistance=distancebetweenpoints(p,gridpoint);
-					int nearestindex=0;
-				
-					for (auto subsetpointer=subsetofpoints.begin(); subsetpointer != subsetofpoints.end(); ++subsetpointer)
-					{
-						gridpoint.at(0)=(*subsetpointer).x;
-						gridpoint.at(1)=(*subsetpointer).y;
-						gridpoint.at(2)=(*subsetpointer).z;
-						double tempdistance=distancebetweenpoints(p,gridpoint);
-						if (tempdistance < nearestdistance)
-						{
-							nearestindex=(*subsetpointer).index;
-							nearestdistance=tempdistance;
-						}
-					}
-
-					if (nearestdistance < maxdistance)
-					{
-						intpolpeak=peakvec.at(nearestindex);
-						intpolfwhm=fwhmvec.at(nearestindex);
-						intpollosvel=losvel.at(nearestindex);
-					}
-					else
-					{
-						intpolpeak=0;
-					}
+					nearestindex=returned_values.at(0).second;
+					//std::cout << i << " " << j << " " << k << " " << nearestindex << " " << p[0] << " " << grid[0][nearestindex] << " " <<  p[1] << " " << grid[1][nearestindex] << " " << p[2] << " "<< grid[2][nearestindex] << std::endl; 
+					intpolpeak=peakvec.at(nearestindex);
+					intpolfwhm=fwhmvec.at(nearestindex);
+					intpollosvel=losvel.at(nearestindex);
 				}
 				else
 				{
