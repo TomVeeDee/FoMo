@@ -76,13 +76,15 @@ in which the emissivity was replaced by the instrument response function.
 
 \subsection Prerequisites
 
-To install FoMo, you first need to install <a href="http://www.cgal.org">CGAL</a>. It is available for most Linux distributions. Additionally, the code uses the boost library (at least version 1.54) and the <a href="http://www.gnu.org/software/gsl/">GNU scientific library</a>.\n
-Some parts of the code require a c++ compiler with the C++11 standard. For <a href="http://gcc.gnu.org">gcc</a>, this means that it needs to be at least 4.7. On Centos, this can be achieved by executing 
-\code{.sh}
-scl enable devtoolset-2 bash
-\endcode
+To install FoMo, you first need to install the boost library (at least version 1.54) and the 
+<a href="http://www.gnu.org/software/gsl/">GNU scientific library</a>.\n
+Some parts of the code require a c++ compiler with the C++11 standard. For <a href="http://gcc.gnu.org">gcc</a>, this means that it needs 
+to be at least 4.7. \n
 This code documentation is generated with doxygen. At least version 1.7.5 is required.\n
-If you want parallel triangulation, please install <a href="https://www.threadingbuildingblocks.org/">Intel Thread Building Blocks</a>. If parallel triangulation is desired, CGAL should have version 4.5 or higher.\n
+If you want to use the CGAL triangulation for the emission interpolation, then you should install the 
+<a href="http://www.cgal.org">CGAL</a> library. It is available for most Linux distributions. If you want CGAL to use parallel 
+triangulation, please install <a href="https://www.threadingbuildingblocks.org/">Intel Thread Building Blocks</a>. If parallel 
+triangulation is desired, CGAL should have version 4.5 or higher.\n
 
 \subsection code Obtaining the code
 
