@@ -233,8 +233,10 @@ void FoMo::FoMoObject::setoutfile(const std::string instring)
 enum FoMoRenderValue
 {
 	RenderMethodNotDefined,
+#ifdef HAVE_CGAL_DELAUNAY_TRIANGULATION_2_H
 	CGAL,
 	CGAL2D,
+#endif
 	NearestNeighbour,
 	// add more methods here
 	LastVirtualRenderMethod
@@ -244,8 +246,10 @@ enum FoMoRenderValue
 static const std::map<std::string, FoMoRenderValue>::value_type RenderMapEntries[]=
 {
 	/// [Rendermethods]
+#ifdef HAVE_CGAL_DELAUNAY_TRIANGULATION_2_H
 	std::map<std::string, FoMoRenderValue>::value_type("CGAL",CGAL),
 	std::map<std::string, FoMoRenderValue>::value_type("CGAL2D",CGAL2D),
+#endif
 	std::map<std::string, FoMoRenderValue>::value_type("NearestNeighbour",NearestNeighbour),
 	/// [Rendermethods]
 	std::map<std::string, FoMoRenderValue>::value_type("ThisIsNotARealRenderMethod",LastVirtualRenderMethod)
@@ -292,6 +296,7 @@ void FoMo::FoMoObject::render(const std::vector<double> lvec, const std::vector<
 	switch (RenderMap[rendering.readrendermethod()])
 	{
 		// add other rendermethods here
+#ifdef HAVE_CGAL_DELAUNAY_TRIANGULATION_2_H
 		case CGAL2D:
 			std::cout << "Using CGAL-2D for rendering." << std::endl << std::flush;
 			if (bvec.size()>0) std::cout << "Warning: the bvec-values are not used in this 2D routine." << std::endl << std::flush;
@@ -303,6 +308,7 @@ void FoMo::FoMoObject::render(const std::vector<double> lvec, const std::vector<
 			tmprender=FoMo::RenderWithCGAL(this->datacube,this->goftcube,this->rendering.readobservationtype(),
 			x_pixel, y_pixel, z_pixel, lambda_pixel, lambda_width,lvec,bvec,this->outfile);
 			break;
+#endif
 		case NearestNeighbour:
 			std::cout << "Using nearest-neighbour rendering." << std::endl << std::flush;
 			tmprender=FoMo::RenderWithNearestNeighbour(this->goftcube,x_pixel, y_pixel, z_pixel, lambda_pixel, lambda_width, lvec, bvec, this->outfile);

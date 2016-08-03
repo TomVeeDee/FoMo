@@ -7,6 +7,7 @@
 #include <gsl/gsl_const_mksa.h>
 #include <boost/progress.hpp>
 
+#ifdef HAVE_CGAL_DELAUNAY_TRIANGULATION_2_H
 // CGAL
 #include <CGAL/Exact_predicates_inexact_constructions_kernel.h>
 #include <CGAL/Delaunay_triangulation_3.h>
@@ -302,4 +303,4 @@ namespace FoMo
 		return rendercube;
 	}
 }
-
+#endif

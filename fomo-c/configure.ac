@@ -88,18 +88,25 @@ if test "a$mpi" = "ayes" ; then
 fi
 
 AC_CHECK_HEADER([gsl/gsl_const_mksa.h],[],AC_MSG_ERROR([GSL physical constants not found]))
-AC_CHECK_HEADER([CGAL/Delaunay_triangulation_2.h],[],AC_MSG_ERROR([CGAL Delaunay headers not found]))
-#AC_SEARCH_LIBS(a_function_what?,[CGAL],[],AC_MSG_ERROR([CGAL libraries not found]))
-LDFLAGS+="-lCGAL -lgmp"
-CXXFLAGS+=" -frounding-math"
+AC_ARG_WITH([cgal],
+	    [AS_HELP_STRING([--with-cgal=yes/no],
+			    [link with CGAL for Delaunay triangulation for interpolation @<:@default=yes@:>@])],
+	    [cgal=$withval],
+	    [cgal=yes])
+if test "a$cgal" = "ayes" ; then
+	AC_CHECK_HEADERS([CGAL/Delaunay_triangulation_2.h],[],AC_MSG_ERROR([CGAL Delaunay headers not found]))
+	#AC_SEARCH_LIBS(a_function_what?,[CGAL],[],AC_MSG_ERROR([CGAL libraries not found]))
+	LDFLAGS+="-lCGAL -lgmp"
+	CXXFLAGS+=" -frounding-math"
+fi
 
 AC_ARG_WITH([tbb],
 	    [AS_HELP_STRING([--with-tbb=yes/no/PATH],
-			    [link with Intel Thread Building Block (TBB) for parallelisation @<:@default=yes@:>@])],
+			    [link with Intel Thread Building Block (TBB) for parallelisation of CGAL triangulation @<:@default=no@:>@])],
 	    [tbb=$withval],
-	    [tbb=yes])
+	    [tbb=no])
 HAVE_TBB=0
-AS_IF([test "a$tbb" != ano -a "$HAVE_TBB" -eq 0], 
+AS_IF([test "a$tbb" != ano -a "$HAVE_TBB" -eq 0 -a "a$cgal" = "ayes"], 
       # pkg_config did not find the TBB yet, it is probably in a special dir
       [
        AS_IF([test "a$tbb" = ayes],tbbdirs="/usr /usr/local /opt /opt/local",tbbdirs="$withval")
