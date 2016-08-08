@@ -1,4 +1,4 @@
-pro integrateemission,emission=emission,logt=logt,n_gridx=n_gridx,n_gridy=n_gridy,ngrid=ngrid,wave=wave,w0=w0,direction=direction,losvel=losvel,imaging=imaging,watom=watom,image=image, dl=dl, wayemi=wayemi
+pro integrateemission,emission=emission,logt=logt,n_gridx=n_gridx,n_gridy=n_gridy,ngrid=ngrid,wave=wave,w0=w0,direction=direction,losvel=losvel,imaging=imaging,watom=watom,image=image, dl=dl, wayemi=wayemi,aia=aia,silent=silent
 
 ; Calculates intensity by integrating emissivity along a given
 ; line-of-sight
@@ -11,20 +11,18 @@ pro integrateemission,emission=emission,logt=logt,n_gridx=n_gridx,n_gridy=n_grid
 ; losvel = (2d array) output of gridlos.pro, line-of-sight velocity (in km/s unit)
 
 ; OPTIONAL:
-; set keyword imaging for no doppler shift calculation (imaging
+; set keyword imaging (or aia) for no doppler shift calculation (imaging
 ; case) (default = 1)
 
 ; OUTPUT:
 ; image	= (2d float array) intensity along line-of-sight (n_elements(ngrid),nwave)
-
-if keyword_set(imaging) eq 0 then imaging = 0
 
 sizes=size(emission)
 dims = sizes[0]
 nx = sizes[1]
 ny = sizes[2]
 if dims eq 3 then nz = sizes[3] else nz = 1
-if imaging eq 0 then begin
+if ~keyword_set(imaging) and ~keyword_set(aia)  then begin
    nwave = n_elements(wave)
 endif else begin
    nwave = 1
@@ -35,7 +33,7 @@ c=299792000.d
 
 if dims eq 3 then doppleremission = fltarr(nx,ny,nz,nwave) else doppleremission = fltarr(nx,ny,nwave)
 
-if imaging eq 0 then begin
+if ~keyword_set(imaging) and ~keyword_set(aia) then begin
 
 ; calculate doppler shifts through binning of velocity matrix
    bsize = 0.5 ; bins of 0.5 km/s
@@ -105,9 +103,9 @@ endif else begin
                for j=0,nwave-1 do image[k,i,j] = total(interpolate(reform(doppleremission[k,*,*,j]),n_gridx[ngrid[i]:ngrid[i+1]-1],n_gridy[ngrid[i]:ngrid[i+1]-1]),/double)*dl
             endfor
          endif
-         print,string(13b)+' % finished: ',float(i)*100./(n_elements(ngrid)-2),format='(a,f4.0,$)'
+         if ~keyword_set(silent) then print,string(13b)+' % finished: ',float(i)*100./(n_elements(ngrid)-2),format='(a,f4.0,$)'
       endfor
-	print,' '
+      if ~keyword_set(silent) then print,' '
    endif else begin
       print,'direction for LOS integration higher than dimension'
    endelse

@@ -1,18 +1,19 @@
 
 
-PRO gridlos, gridx=gridx, gridy=gridy, mua_d=mua_d, velx=velx, vely=vely, dx=dx, dy=dy, n_gridx, n_gridy, ngrid, dl=dl, losvel
+PRO gridlos, gridx=gridx, gridy=gridy, mua_d=mua_d, velx=velx, vely=vely, dx=dx, dy=dy, n_gridx=n_gridx, n_gridy=n_gridy, ngrid=ngrid, dl=dl, losvel=losvel
 
 if keyword_set(gridx) eq 0 then begin
-   print,'gridlos, gridx=gridx, gridy=gridy, mua_d=mua_d, velx=velx, vely=vely, dx=dx, dy=dy, n_gridx, n_gridy, ngrid, dl=dl, losvel'
+   print,'gridlos, gridx=gridx, gridy=gridy, mua_d=mua_d, velx=velx, vely=vely, dx=dx, dy=dy, n_gridx=n_gridx, n_gridy=n_gridy, ngrid=ngrid, dl=dl, losvel=losvel'
    return
 endif
+
+; Calculates the LOS rays provided a LOS angle, and optionally outputs
+; the LOS velocity
 
 ; INPUT:
 ; gridx = (1d float array) grid along x axis
 ; gridy = (1d float array) grid along y axis
 ; mua_d = (float) angle between line-of-sight and y-axis
-; velx = (2d float) array of velocity along x
-; vely = (2d float) array of velocity along y
 ; dx = spatial resolution along gridx-axis
 ; dy = spatial resolution along gridy-axis
 
@@ -21,7 +22,11 @@ endif
 ; n_gridy = y-coordinates for points along rays
 ; ngrid = provides number and ordering of rays
 ; dl = distance between rays
-; losvel = line-of-sight velocity
+
+; OPTIONAL INPUT:
+; velx = (2d float) array of velocity along x
+; vely = (2d float) array of velocity along y
+; Then the following is ouput: losvel = line-of-sight velocity
 
 ; The returned arrays have the values ordered in the following way:
 ; (n_gridx_<num>[ngrid_<num>[i]:ngrid_<num>[i+1]-1] : x-coordinates for the i-th ray of the <num>-th angle (unscaled)
@@ -185,10 +190,6 @@ for i=0., dimx_n-1 do begin
 endfor
 
 ; calculate line-of-sight velocity array:
-losvel=vely*cos(mua_r)+velx*sin(mua_r)
-
-
-; construct triangulation of the given points in a plane:
-;triangulate, gridx, gridy, triangles, boundary
+if n_elements(velx) ne 0 and n_elements(vely) ne 0 then losvel=vely*cos(mua_r)+velx*sin(mua_r)
 
 end

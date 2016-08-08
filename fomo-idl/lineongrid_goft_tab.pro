@@ -1,7 +1,7 @@
-pro lineongrid_goft_tab, rh_s=rh_s, te_s=te_s, ne_s=ne_s, gotdir=gotdir,wave=wave,nwave=nwave,ion=ion, w0=w0, emission_goft=emission_goft, goft=goft, logt=logt, wayemi=wayemi, watom=watom,file_abund=file_abund,ext_abund=ext_abund
+pro lineongrid_goft_tab, rh_s=rh_s, te_s=te_s, ne_s=ne_s, gotdir=gotdir,wave=wave,nwave=nwave,ion=ion, w0=w0, emission_goft=emission_goft, goft=goft, logt=logt, wayemi=wayemi, watom=watom,file_abund=file_abund,ext_abund=ext_abund,silent=silent
 
 if arg_present(rh_s) lt 1 or arg_present(ne_s) lt 1 then begin
-   print,'lineongrid_goft_tab, rh_s=rh_s, te_s=te_s, ne_s=ne_s, gotdir=gotdir,wave=wave,nwave=nwave,ion=ion, w0=w0, emission_goft=emission_goft, goft=goft, logt=logt, wayemi=wayemi, watom=watom, file_abund=file_abund,ext_abund=ext_abund'
+   print,'lineongrid_goft_tab, rh_s=rh_s, te_s=te_s, ne_s=ne_s, gotdir=gotdir,wave=wave,nwave=nwave,ion=ion, w0=w0, emission_goft=emission_goft, goft=goft, logt=logt, wayemi=wayemi, watom=watom, file_abund=file_abund,ext_abund=ext_abund,silent=silent'
    return
 endif
 
@@ -10,8 +10,7 @@ endif
 ; Uses the chianti.eq ionization equilibrium values
 
 ; INPUT:
-; rh_s (or ne_s): 2D or 3D array of mass density in CGS. If SI and
-;                  normalized by 1.e10 then set keyword conv
+; rh_s (or ne_s): 2D or 3D array of mass density in CGS. 
 ; te_s: 2D or 3D array of temperature in K. If normalized by
 ;                 (protonmass/(2*kboltz)*1.e10) then set keyword conv
 ; ion = ion for which to calculate emissivities (default = fe_9)
@@ -25,8 +24,8 @@ endif
 ;	     the full path to the abundance file in the keyword 'ext_abund'.
 ; wayemi: (int) for different ways of calculating the emissivity in the
 ;        routine lineongrid_goft_tab.pro. The default is wayemi = 4
-;        If wayemi = 5 for imaging then this procedure should not
-;        be called 
+;        If wayemi = 5 and if keyword 'aia' is set then this procedure should not
+;        be called. 
 
 ; OPTIONAL:
 ; nwave: (float) number of points in wave array as set in routine
@@ -43,7 +42,7 @@ endif
 ; watom = get_atomic_weight(enum), where enum is the nuclear charge of element
 
 ; CALLS:
-; lookup_goft, elements, (if wayemi != 4 : make_chianti_spec, ch_synthetic)
+; lookup_goft, elements, (if wayemi < 4 : make_chianti_spec, ch_synthetic)
 
 if keyword_set(wayemi) eq 0 then begin 
    wayemi = 4
@@ -54,25 +53,48 @@ ioneq_name= concat_dir(concat_dir(!xuvtop,'ioneq'),'chianti.ioneq') ; !xuvtop+'/
 if keyword_set(file_abund) then begin
    if file_abund eq 'photospheric' then begin
       abund_name = concat_dir(concat_dir(!xuvtop,'abundance'),'sun_photospheric.abund');!xuvtop+'/abundance/sun_photospheric.abund'
-      print,'Assuming photospheric abundances'
+      if file_test(abund_name) eq 0 then begin
+         abund_name = concat_dir(concat_dir(!xuvtop,'abundance'),'sun_photospheric_1998_grevesse.abund')
+         if ~keyword_set(silent) then print,'Assuming photospheric abundances (file:"sun_photospheric_1998_grevesse.abund")'
+      endif else begin
+         if ~keyword_set(silent) then print,'Assuming photospheric abundances (file:"sun_photospheric.abund")'
+      endelse
+      nab = '_abph'
    endif
    if file_abund eq 'coronal' then begin
       abund_name = concat_dir(concat_dir(!xuvtop,'abundance'),'sun_coronal.abund') ;!xuvtop+'/abundance/sun_coronal.abund'
-      print,'Assuming coronal abundances'
+      if file_test(abund_name) eq 0 then begin
+         abund_name = concat_dir(concat_dir(!xuvtop,'abundance'),'sun_coronal_2012_schmelz.abund')
+         if ~keyword_set(silent) then print,'Assuming coronal abundances (file:"sun_coronal_1992_feldman.abund")'
+      endif else begin
+         if ~keyword_set(silent) then print,'Assuming coronal abundances (file:"sun_coronal.abund")'
+      endelse
+      nab = '_abco'
    endif
    if file_abund eq 'other' then begin
       if ~keyword_set(ext_abund) then begin
-         print,'Please provide the name and full path of the abundance file in the keyword "ext_abund"'
+         print,'Please provide the name and full path of the abundance file in the keyword "ext_abund". Also, modify the extension "nab" accordingly'
+         stop
       endif else begin
          abund_name = ext_abund
+         nab = '_abext'         
       endelse
    endif
 endif else begin
    abund_name = concat_dir(concat_dir(!xuvtop,'abundance'),'sun_coronal.abund')
-   print,'Assuming coronal abundances (file:"sun_coronal.abund")'
+   if file_test(abund_name) eq 0 then begin
+         abund_name = concat_dir(concat_dir(!xuvtop,'abundance'),'sun_coronal_2012_schmelz.abund')
+         if ~keyword_set(silent) then print,'Assuming coronal abundances (file:"sun_coronal_1992_feldman.abund")'
+      endif else begin
+         if ~keyword_set(silent) then print,'Assuming coronal abundances (file:"sun_coronal.abund")'
+      endelse
+      nab = '_abco'
 endelse
 
 abund_dflt = concat_dir(concat_dir(!xuvtop,'abundance'),'sun_coronal.abund')
+if file_test(abund_dflt) eq 0 then begin
+   abund_dflt = concat_dir(concat_dir(!xuvtop,'abundance'),'sun_coronal_1992_feldman.abund')
+endif
 
 proton=1.67262158*10^(-27.)
 kboltz = 1.380658*10^(-23.)
@@ -90,7 +112,7 @@ endelse
 
 logT = alog10(T>1.)
 
-sizes=size(rh)
+sizes=size(n_e)
 dims=sizes[0]
 if dims eq 3 then begin
    nx=sizes[1]
@@ -128,10 +150,10 @@ n_e_sorted = n_e[ne_sort]
 Tlg_sorted = logT[ne_sort]
 
 ; Read tabulated G(ne,T) values for given number density (n_e_lg) and temperature (t_lg) arrays
-lookup_goft, ion=ion, w0=w0, gotdir=gotdir,n_e_lg=n_e_lg, logt=t_lg, goft_mat=goft_mat, watom= watom
-elements, w0=w0, ion=ion, logTm=logTm, enum=enum, inum=inum, ind=ind
+lookup_goft, ion=ion, w0=w0, gotdir=gotdir,n_e_lg=n_e_lg, logt=t_lg, goft_mat=goft_mat, watom= watom,nab=nab,silent=silent
+elements, w0=w0, ion=ion, logTm=logTm, enum=enum, inum=inum
 
-if wayemi ne 3 and wayemi ne 4 then begin
+if wayemi ne 3 and wayemi ne 4 and wayemi ne 5 then begin
 ; create a ch_synthetic structure called "singleline"
    ch_synthetic,min(wave),max(wave),output=singleline,density=max(n_e),logt_isothermal=max(alog10(T)),ioneq_name=ioneq_name,sngl_ion=ion
 endif else begin
@@ -157,7 +179,7 @@ if wayemi eq 1 then begin
       if dims eq 1 then emission_goft[coords[0],*]=out.spectrum
       if dims eq 2 then emission_goft[coords[0],coords[1],*]=out.spectrum 
       if dims eq 3 then emission_goft[coords[0],coords[1],coords[2],*]=out.spectrum
-      print,string(13b)+' % finished: ',float(i)*100./(n_elements(t)-1),format='(a,f4.0,$)'
+      if ~keyword_set(silent) then print,string(13b)+' % finished: ',float(i)*100./(n_elements(t)-1),format='(a,f4.0,$)'
    endfor
 endif
 
@@ -169,7 +191,7 @@ if wayemi eq 2 then begin
       lc_te = ([min(abs(t_lg-tlg_sorted[i])),!c])[1]
       if tlg_sorted[i] lt min(t_lg) or tlg_sorted[i] gt max(t_lg) then goft[ne_sort[i]] = 0. else goft[ne_sort[i]] = interpol(goft_mat[lc_ne,*],t_lg,tlg_sorted[i])
       emi[ne_sort[i]] = goft[ne_sort[i]]*n_e_sorted[i]^2
-      print,string(13b)+' % finished: ',float(i)*100./(n_elements(n_e)-1),format='(a,f4.0,$)'
+      if ~keyword_set(silent) then print,string(13b)+' % finished: ',float(i)*100./(n_elements(n_e)-1),format='(a,f4.0,$)'
    endfor
 
    numemi = min([n_elements(uniq(emi)),10000]) ; 10000 pts are sufficient
@@ -192,7 +214,7 @@ if wayemi eq 2 then begin
          for j=0.,nRem-1 do emission_goft[Remn[Remn[i]+j:Remn[i+1]-1:nRem]] = out.spectrum
          if singleline.logt_isothermal[0] lt 5.1 then stop
       endif
-      print,string(13b)+' % finished: ',float(i)*100./(nhemi-1),format='(a,f4.0,$)'
+      if ~keyword_set(silent) then print,string(13b)+' % finished: ',float(i)*100./(nhemi-1),format='(a,f4.0,$)'
    endfor
 endif
 
@@ -203,7 +225,7 @@ if wayemi eq 3 then begin
       lc_te = ([min(abs(t_lg-tlg_sorted[i])),!c])[1]
       if tlg_sorted[i] lt min(t_lg) or tlg_sorted[i] gt max(t_lg) then goft[ne_sort[i]] = 0. else goft[ne_sort[i]] = interpol(goft_mat[lc_ne,*],t_lg,tlg_sorted[i])
       emi[ne_sort[i]] = goft[ne_sort[i]]*n_e_sorted[i]^2
-      print,string(13b)+' % finished: ',float(i)*100./(n_elements(n_e)-1),format='(a,f4.0,$)'
+      if ~keyword_set(silent) then print,string(13b)+' % finished: ',float(i)*100./(n_elements(n_e)-1),format='(a,f4.0,$)'
    endfor
 
    numemi = min([n_elements(uniq(emi)),10000]) ; 10000 pts are sufficient
@@ -226,18 +248,18 @@ if wayemi eq 3 then begin
          nRem = n_elements(Rem[Rem[i]:Rem[i+1]-1])
          for j=0.,nRem-1 do emission_goft[Remn[Remn[i]+j:Remn[i+1]-1:nRem]] = gaus
       endif
-      print,string(13b)+' % finished: ',float(i)*100./(nhemi-1),format='(a,f4.0,$)'
+      if ~keyword_set(silent) then print,string(13b)+' % finished: ',float(i)*100./(nhemi-1),format='(a,f4.0,$)'
    endfor
 endif
 
-if wayemi eq 4 then begin
+if wayemi eq 4 or wayemi eq 5 then begin
    emission_goft=n_e*0.d
    for i=0.,n_elements(n_e)-1 do begin
       lc_ne = ([min(abs(n_e_lg-alog10(n_e_sorted[i]))),!c])[1]
       lc_te = ([min(abs(t_lg-tlg_sorted[i])),!c])[1]
       if tlg_sorted[i] lt min(t_lg) or tlg_sorted[i] gt max(t_lg) then goft[ne_sort[i]] = 0. else goft[ne_sort[i]] = interpol(goft_mat[lc_ne,*],t_lg,tlg_sorted[i])
       emission_goft[ne_sort[i]] = goft[ne_sort[i]]*n_e_sorted[i]^2
-      print,string(13b)+' % finished: ',float(i)*100./(n_elements(n_e)-1),format='(a,f4.0,$)'
+      if ~keyword_set(silent) then print,string(13b)+' % finished: ',float(i)*100./(n_elements(n_e)-1),format='(a,f4.0,$)'
    endfor
 endif
 
