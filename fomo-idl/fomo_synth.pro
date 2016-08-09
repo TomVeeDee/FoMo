@@ -184,7 +184,7 @@ dimz = 50 ; total number
 
 for i=0,num-1 do begin
    sn = string(i,format="(i1)")
-   inum = STRING(i, FORMAT = "(I4.4)")
+   inm = STRING(i, FORMAT = "(I4.4)")
 ; location of your save files with numerical data. In this case it
 ; reads a 3D cube [512x512x50] corresponding to [x,y,z] for each time
 ; step:
@@ -193,9 +193,9 @@ for i=0,num-1 do begin
    gridx = x ; x-grid
    gridy = y ; y-grid
    for j=nz0,dimz-1 do begin
-      jnum = STRING(j, FORMAT = "(I5.5)")
+      jnm = STRING(j, FORMAT = "(I5.5)")
       lcx3 = j
-      if dimz gt 1 then checkfile = name+'_z='+jnum+'_t='+inum+'.done' else checkfile = name+'_z='+jnum+'_t='+inum+'.done'
+      if dimz gt 1 then checkfile = name+'_z='+jnm+'_t='+inm+'.done' else checkfile = name+'_z='+jnm+'_t='+inm+'.done'
       if (file_test(savedir+checkfile) eq 0) then begin
          OPENW, lun, savedir+checkfile, /get_lun
          free_lun, lun
@@ -208,14 +208,14 @@ for i=0,num-1 do begin
          time = t ; t is scalar indicating time step in sec
 
          ; CALCULATE INTENSITIES
-         synthemi,rho=rho,nem=nem,tem=tem,v1m=v1m,v2m=v2m,ion=ion,mua_d=mua_d,gridx=gridx,gridy=gridy,emission_goft=emission_goft,wave=wave,nwave=nwave,w0=w0,n_gridx_1=n_gridx_1,n_gridy_1=n_gridy_1,ngrid_1=ngrid_1,n_gridx_2=n_gridx_2,n_gridy_2=n_gridy_2,ngrid_2=ngrid_2,n_gridx_3=n_gridx_3,n_gridy_3=n_gridy_3,ngrid_3=ngrid_3,n_gridx_4=n_gridx_4,n_gridy_4=n_gridy_4,ngrid_4=ngrid_4,n_gridx_5=n_gridx_5,n_gridy_5=n_gridy_5,ngrid_5=ngrid_5,n_gridx_6=n_gridx_6,n_gridy_6=n_gridy_6,ngrid_6=ngrid_6,n_gridx_7=n_gridx_7,n_gridy_7=n_gridy_7,ngrid_7=ngrid_7,dl_1=dl_1,dl_2=dl_2,dl_3=dl_3,dl_4=dl_4,dl_5=dl_5,dl_6=dl_6,dl_7=dl_7,line_1=line_1,line_2=line_2,line_3=line_3,line_4=line_4,line_5=line_5,line_6=line_6,line_7=line_7,wayemi=wayemi,filenm=filenm,gotdir=gotdir,file_abund=file_abund,imaging=imaging,aia=aia,silent=silent
+         synthemi,rho=rho,nem=nem,tem=tem,v1m=v1m,v2m=v2m,ion=ion,mua_d=mua_d,gridx=gridx,gridy=gridy,emission_goft=emission_goft,wave=wave,nwave=nwave,w0=w0,n_gridx_1=n_gridx_1,n_gridy_1=n_gridy_1,ngrid_1=ngrid_1,n_gridx_2=n_gridx_2,n_gridy_2=n_gridy_2,ngrid_2=ngrid_2,n_gridx_3=n_gridx_3,n_gridy_3=n_gridy_3,ngrid_3=ngrid_3,n_gridx_4=n_gridx_4,n_gridy_4=n_gridy_4,ngrid_4=ngrid_4,n_gridx_5=n_gridx_5,n_gridy_5=n_gridy_5,ngrid_5=ngrid_5,n_gridx_6=n_gridx_6,n_gridy_6=n_gridy_6,ngrid_6=ngrid_6,n_gridx_7=n_gridx_7,n_gridy_7=n_gridy_7,ngrid_7=ngrid_7,dl_1=dl_1,dl_2=dl_2,dl_3=dl_3,dl_4=dl_4,dl_5=dl_5,dl_6=dl_6,dl_7=dl_7,line_1=line_1,line_2=line_2,line_3=line_3,line_4=line_4,line_5=line_5,line_6=line_6,line_7=line_7,wayemi=wayemi,filenm=filenm,gotdir=gotdir,file_abund=file_abund,imaging=imaging,aia=aia,nab=nab,abund_name=abund_name,enum=enum,inum=inum,abund_fact=abund_fact,silent=silent
 
          if keyword_set(save) then begin
             if i eq 0 and j eq nz0 then begin
                exp = 'save,gridx,gridy,wave,w0,ion,mua_d,'+dllin+','+nglin+','+ngxlin+','+ngylin+',filename=savedir+"params_"+name+".sav"'
                void = execute(exp)
             endif
-            exs = 'save,time,'+savlin+',filename=savedir+name+"_z="+jnum+"_t="+inum+".sav"'
+            exs = 'save,time,'+savlin+',filename=savedir+name+"_z="+jnm+"_t="+inm+".sav"'
             void = execute(exs)
          endif
       endif

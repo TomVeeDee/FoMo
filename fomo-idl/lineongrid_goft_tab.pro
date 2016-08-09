@@ -1,7 +1,7 @@
-pro lineongrid_goft_tab, rh_s=rh_s, te_s=te_s, ne_s=ne_s, gotdir=gotdir,wave=wave,nwave=nwave,ion=ion, w0=w0, emission_goft=emission_goft, goft=goft, logt=logt, wayemi=wayemi, watom=watom,file_abund=file_abund,ext_abund=ext_abund,silent=silent
+pro lineongrid_goft_tab, rh_s=rh_s, te_s=te_s, ne_s=ne_s, gotdir=gotdir,wave=wave,nwave=nwave,ion=ion, w0=w0, emission_goft=emission_goft, goft=goft, logt=logt, wayemi=wayemi, watom=watom,file_abund=file_abund,ext_abund=ext_abund,nab=nab,abund_name=abund_name,enum=enum,inum=inum,abund_fact=abund_fact,silent=silent
 
 if arg_present(rh_s) lt 1 or arg_present(ne_s) lt 1 then begin
-   print,'lineongrid_goft_tab, rh_s=rh_s, te_s=te_s, ne_s=ne_s, gotdir=gotdir,wave=wave,nwave=nwave,ion=ion, w0=w0, emission_goft=emission_goft, goft=goft, logt=logt, wayemi=wayemi, watom=watom, file_abund=file_abund,ext_abund=ext_abund,silent=silent'
+   print,'lineongrid_goft_tab, rh_s=rh_s, te_s=te_s, ne_s=ne_s, gotdir=gotdir,wave=wave,nwave=nwave,ion=ion, w0=w0, emission_goft=emission_goft, goft=goft, logt=logt, wayemi=wayemi, watom=watom, file_abund=file_abund,ext_abund=ext_abund,nab=nab,abund_name=abund_name,enum=enum,inum=inum,abund_fact=abund_fact,silent=silent'
    return
 endif
 
@@ -39,6 +39,11 @@ endif
 ; emission_goft = array of emissivities G(T,n)*ne^2 (x, y, (z), (lambda))
 ; goft = array of contribution function G(T,n)
 ; logt = logarithmic values of temperature array
+; enum = nuclear charge of element
+; inum = ionisation stage of element
+; nab = indicates abundance package '_abph', '_abco' or '_abext'
+; abund_name = full path to selected abundance package
+; abund_fact = factor for multiplication with abundance
 ; watom = get_atomic_weight(enum), where enum is the nuclear charge of element
 
 ; CALLS:
@@ -50,7 +55,7 @@ endif
 
 ; set ionization and abundance packages from CHIANTI:
 ioneq_name= concat_dir(concat_dir(!xuvtop,'ioneq'),'chianti.ioneq') ; !xuvtop+'/ioneq/chianti.ioneq'
-if keyword_set(file_abund) then begin
+if keyword_set(file_abund) and n_elements(nab) eq 0 and n_elements(abund_name) eq 0 then begin
    if file_abund eq 'photospheric' then begin
       abund_name = concat_dir(concat_dir(!xuvtop,'abundance'),'sun_photospheric.abund');!xuvtop+'/abundance/sun_photospheric.abund'
       if file_test(abund_name) eq 0 then begin
@@ -91,9 +96,11 @@ endif else begin
       nab = '_abco'
 endelse
 
-abund_dflt = concat_dir(concat_dir(!xuvtop,'abundance'),'sun_coronal.abund')
-if file_test(abund_dflt) eq 0 then begin
-   abund_dflt = concat_dir(concat_dir(!xuvtop,'abundance'),'sun_coronal_1992_feldman.abund')
+if n_elements(abund_dflt) eq 0 then begin
+   abund_dflt = concat_dir(concat_dir(!xuvtop,'abundance'),'sun_coronal.abund')
+   if file_test(abund_dflt) eq 0 then begin
+      abund_dflt = concat_dir(concat_dir(!xuvtop,'abundance'),'sun_coronal_1992_feldman.abund')
+   endif
 endif
 
 proton=1.67262158*10^(-27.)
@@ -151,17 +158,22 @@ Tlg_sorted = logT[ne_sort]
 
 ; Read tabulated G(ne,T) values for given number density (n_e_lg) and temperature (t_lg) arrays
 lookup_goft, ion=ion, w0=w0, gotdir=gotdir,n_e_lg=n_e_lg, logt=t_lg, goft_mat=goft_mat, watom= watom,nab=nab,silent=silent
-elements, w0=w0, ion=ion, logTm=logTm, enum=enum, inum=inum
+if n_elements(enum) eq 0 or n_elements(inum) eq 0 then begin
+   elements, w0=w0, ion=ion, enum=enum, inum=inum
+endif
 
 if wayemi ne 3 and wayemi ne 4 and wayemi ne 5 then begin
 ; create a ch_synthetic structure called "singleline"
    ch_synthetic,min(wave),max(wave),output=singleline,density=max(n_e),logt_isothermal=max(alog10(T)),ioneq_name=ioneq_name,sngl_ion=ion
-endif else begin
+endif
+
+if n_elements(abund_fact) eq 0 then begin
    read_abund,abund_name,abund,abund_ref
    line_abunds = abund[enum-1]
    read_abund,abund_dflt,ab_dflt,abund_ref_dflt
    line_abunds_dflt = ab_dflt[enum-1]
-endelse
+   abund_fact = line_abunds/line_abunds_dflt
+endif
 
 goft=n_e*0.
 ; calculate emission point by point:
@@ -263,6 +275,6 @@ if wayemi eq 4 or wayemi eq 5 then begin
    endfor
 endif
 
-emission_goft = emission_goft/line_abunds_dflt*line_abunds
+emission_goft = emission_goft*abund_fact
       
 end

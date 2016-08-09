@@ -1,9 +1,9 @@
 
 
-pro goft_table,w0=w0,ion=ion,gotdir=gotdir,file_abund=file_abund,vers=vers,silent=silent
+pro goft_table,w0=w0,ion=ion,gotdir=gotdir,file_abund=file_abund,silent=silent
 
 if keyword_set(w0) eq 0 or keyword_set(ion) eq 0 then begin
-   print,'goft_table, w0=w0, ion=ion,gotdir=gotdir,file_abund=file_abund,vers=vers,silent=silent'
+   print,'goft_table, w0=w0, ion=ion,gotdir=gotdir,file_abund=file_abund,silent=silent'
    return
 endif
 
@@ -15,8 +15,6 @@ endif
 ; ion = (string) acronym of ion (see elements.pro)
 ; gotdir = (string) directory path where to save the generated table
 ;          (don't forget '/' at end of path) 
-; vers = (single integer 6, 7 or 8). Chianti version. Read from
-; installed Chianti package if not known
 ; file_abund: (string) file for abundance abundance. 2 kinds are implemented:
 ;            'photospheric' or 'coronal' corresponding, respectively, to the
 ;            CHIANTI packages: sun_coronal.abund and sun_photospheric.abund
@@ -69,7 +67,13 @@ endif else begin
 endelse
 
   ; determine wavelength transition:
-elements, w0=w0, ion=ion, logTm=logTm, enum=enum, inum=inum, ind=ind, vers=vers
+elements, w0=w0, ion=ion, enum=enum, inum=inum, ind=ind
+
+ne_lg = 9
+goft0=g_of_t(enum,inum,dens=ne_lg,ioneq_file=concat_dir(concat_dir(!xuvtop,'ioneq'),'chianti.ioneq'),abund_file=abund_name,index=ind,/quiet)
+alogt0 = findgen(101)/20+4. ; same range as that defined by Chianti
+lclgtm = ([max(goft0),!c])[1]
+logTm = alogt0[lclgtm]
 
 if ~keyword_set(ind) then begin
    emiss = emiss_calc(enum,inum)
@@ -82,11 +86,11 @@ endif
   watom = get_atomic_weight(enum)
 
   n_e_min = 1.e8
-;  n_e_max = 1.e11
-  n_e_max = 1.e12
+  n_e_max = 1.e11
+;  n_e_max = 1.e12
 
-;steplg = 0.001
-steplg = 0.002
+steplg = 0.001
+;steplg = 0.002
 
 numn = alog10(n_e_max/n_e_min)/steplg
 
