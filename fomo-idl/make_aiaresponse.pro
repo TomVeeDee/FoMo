@@ -38,17 +38,32 @@ endif
 if ~keyword_set(extname) then extname = ''
 if ~keyword_set(file_abund) then begin
    abund_file = concat_dir(concat_dir(!xuvtop,'abundance'),'sun_coronal.abund')
-   print,'Assuming coronal abundances'
+   if file_test(abund_file) eq 0 then begin
+      abund_file = concat_dir(concat_dir(!xuvtop,'abundance'),'sun_coronal_2012_schmelz.abund')
+      if ~keyword_set(silent) then print,'Assuming coronal abundances (file:"sun_coronal_2012_schmelz.abund")'
+   endif else begin
+      if ~keyword_set(silent) then print,'Assuming coronal abundances (file:"sun_coronal.abund")'
+   endelse
    nab = 'abco'
 endif else begin
    if file_abund eq 'coronal' then begin
-      abund_file = concat_dir(concat_dir(!xuvtop,'abundance'),'sun_coronal.abund')
-      print,'Assuming coronal abundances'
+      abund_file = concat_dir(concat_dir(!xuvtop,'abundance'),'sun_coronal.abund') ;!xuvtop+'/abundance/sun_coronal.abund'
+      if file_test(abund_file) eq 0 then begin
+         abund_file = concat_dir(concat_dir(!xuvtop,'abundance'),'sun_coronal_2012_schmelz.abund')
+         if ~keyword_set(silent) then print,'Assuming coronal abundances (file:"sun_coronal_2012_schmelz.abund")'
+      endif else begin
+         if ~keyword_set(silent) then print,'Assuming coronal abundances (file:"sun_coronal.abund")'
+      endelse
       nab = 'abco'
    endif
    if file_abund eq 'photospheric' then begin
-      abund_file = concat_dir(concat_dir(!xuvtop,'abundance'),'sun_photospheric.abund')
-      print,'Assuming photospheric abundances' 
+      abund_file = concat_dir(concat_dir(!xuvtop,'abundance'),'sun_photospheric.abund');!xuvtop+'/abundance/sun_photospheric.abund'
+      if file_test(abund_file) eq 0 then begin
+         abund_file = concat_dir(concat_dir(!xuvtop,'abundance'),'sun_photospheric_1998_grevesse.abund')
+         if ~keyword_set(silent) then print,'Assuming photospheric abundances (file:"sun_photospheric_1998_grevesse.abund")'
+      endif else begin
+         if ~keyword_set(silent) then print,'Assuming photospheric abundances (file:"sun_photospheric.abund")'
+      endelse
       nab = 'abph'
    endif
 endelse
