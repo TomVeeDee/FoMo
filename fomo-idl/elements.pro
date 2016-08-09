@@ -12,6 +12,7 @@ pro elements,ion=ion,w0=w0,enum=enum,inum=inum,ind=ind
 ; ion: Ion of interest (string, eg:'fe_9')
 
 ; OUTPUT:
+; w0: w0 is updated to the wavelength as found by CHIANTI
 ; enum: nuclear charge of element
 ; inum: Ionization number
 ; ind: index for wavelength of transition (given by emiss_calc &
@@ -178,5 +179,6 @@ pro elements,ion=ion,w0=w0,enum=enum,inum=inum,ind=ind
         emiss=emiss_calc(enum,inum,/no_calc,/quiet) ; calculates all possible lines
         wavels=emiss.lambda
         ind = ([min(abs(wavels - w0)),!c])[1]
+	w0=wavels[ind]
         
 end

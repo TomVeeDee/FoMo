@@ -34,7 +34,7 @@ if keyword_set(file_abund) then begin
       endif else begin
          if ~keyword_set(silent) then print,'Assuming photospheric abundances (file:"sun_photospheric.abund")'
       endelse
-      nab = '_abph'
+      nab = 'abph'
    endif
    if file_abund eq 'coronal' then begin
       abund_name = concat_dir(concat_dir(!xuvtop,'abundance'),'sun_coronal.abund') ;!xuvtop+'/abundance/sun_coronal.abund'
@@ -44,7 +44,7 @@ if keyword_set(file_abund) then begin
       endif else begin
          if ~keyword_set(silent) then print,'Assuming coronal abundances (file:"sun_coronal.abund")'
       endelse
-      nab = '_abco'
+      nab = 'abco'
    endif
    if file_abund eq 'other' then begin
       if ~keyword_set(ext_abund) then begin
@@ -115,6 +115,7 @@ alogt2 = findgen(numt)/(numt-1)*2*wte+tmin
 printf,unit,numn,numt
 printf,unit,alogt2
 for i=0,numn do begin
+   if ~keyword_set(silent) then print,'doing density ', i, ' of ',numn
    goft0=g_of_t(enum,inum,dens=n_e_lg[i],ioneq_file=concat_dir(concat_dir(!xuvtop,'ioneq'),'chianti.ioneq'),abund_file=abund_name,index=ind,/quiet)
 
 ;   goft1 = goft0[pts]
