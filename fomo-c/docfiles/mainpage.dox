@@ -266,8 +266,7 @@ This rendermethod is independent of CGAL, instead it relies on Boost.rtree (from
 constructed from the data points. Then, the nearest points are found via the rtree.query() function. 
 
 The advantage of this method (compared to CGAL) is that the triangulation does not need to be constructed. It turns out that this method
-is much faster than CGAL (160s for test problem in Frontiers article, table 2, compared to 1400s with CGAL) and uses less memory. However, 
-it is less precise.
+is much faster than CGAL (160s for test problem in Frontiers article, table 2, compared to 1400s with CGAL) and uses less memory. 
 
 \subsection Projection
 
