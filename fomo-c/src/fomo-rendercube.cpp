@@ -1,6 +1,10 @@
 #include "../config.h"
 #include "FoMo.h"
 #include "FoMo-internal.h"
+#include <iostream>
+#include <gsl/gsl_const_mksa.h>
+
+const double speedoflight=GSL_CONST_MKSA_SPEED_OF_LIGHT; // speed of light
 
 /**
  * @brief The default constructor for a RenderCube.
@@ -10,7 +14,7 @@
  * Spectroscopic.\n
  * The resolution is also set to initial values of 101 (x resolution), 102 (y resolution), 300
  * (resolution along LOS). The number of pixels in the wavelength direction is set to 30, and the width
- * of the spectral window to \f$.13\AA{}\f$.
+ * of the spectral window to \f$200000m/s=200km/s\f$.
  * @param goftcube The GoftCube from which the RenderCube must be constructed.
  */
 FoMo::RenderCube::RenderCube(FoMo::GoftCube goftcube)
@@ -24,7 +28,7 @@ FoMo::RenderCube::RenderCube(FoMo::GoftCube goftcube)
 	y_pixel=102;
 	z_pixel=300;
 	lambda_pixel=30;
-	lambda_width=.13;
+	lambda_width=200000; // spectral window width in m/s
 	rendermethod="NearestNeighbour";
 	observationtype=Spectroscopic;
 }
@@ -38,7 +42,7 @@ FoMo::RenderCube::RenderCube(FoMo::GoftCube goftcube)
  * @param ny This is the resolution in the y direction (POS).
  * @param nz This is the resolution along the LOS.
  * @param nlambda This is the number of wavelength pixels.
- * @param lambdawidth This is the width of the spectral window. It is given in \f$\AA{}\f$.
+ * @param lambdawidth This is the width of the spectral window. It is given in \f$m/s\f$.
  */
 void FoMo::RenderCube::readresolution(int & nx, int & ny, int & nz, int & nlambda, double & lambdawidth)
 {
@@ -57,7 +61,7 @@ void FoMo::RenderCube::readresolution(int & nx, int & ny, int & nz, int & nlambd
  * @param ny The resolution in the y direction (POS).
  * @param nz The resolution along the LOS.
  * @param nlambda The number of wavelength points.
- * @param lambdawidth The width of the spectral window in \f$\AA{}\f$.
+ * @param lambdawidth The width of the spectral window in \f$m/s\f$.
  */
 void FoMo::RenderCube::setresolution(const int & nx, const int & ny, const int & nz, const int & nlambda, const double & lambdawidth)
 {
@@ -66,6 +70,17 @@ void FoMo::RenderCube::setresolution(const int & nx, const int & ny, const int &
 	z_pixel=nz;
 	lambda_pixel=nlambda;
 	lambda_width=lambdawidth;
+	if (lambdawidth<1.)
+	{
+		std::cout << "******Warning! In newer versions of FoMo, the spectral window is given in m/s, rather than Angstrom." << std::endl;
+		lambda_width=lambdawidth*speedoflight/lambda0;
+		std::cout << "******The input value of " << lambdawidth << " was converted to " << lambda_width << "m/s" << std::endl << std::flush;
+	}
+	else if (lambdawidth<1000.)
+	{
+		std::cout << "******Warning! Your spectral window width was set to a small value. Are you sure it is in m/s?" << std::endl << std::flush;
+	}
+	
 }
 
 /**

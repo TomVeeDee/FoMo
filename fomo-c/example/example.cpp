@@ -67,7 +67,7 @@ int main(int argc, char* argv[])
 	// data is in structure, now start the rendering
 	
 	/// [Set rendering options]
-	Object.setchiantifile("/users/cpa/tomvd/data/idl/FoMo/chiantitables/goft_table_fe_12_0194_abco.dat"); // the default value is "../chiantitables/goft_table_fe_12_0194small_abco.dat"
+	Object.setchiantifile("../chiantitables/goft_table_fe_12_0194_abco.dat"); // the default value is "../chiantitables/goft_table_fe_12_0194small_abco.dat"
 	Object.setabundfile("/empty"); //use "/empty" or do not set it at all for the default sun_coronal.abund file
 	Object.setrendermethod("NearestNeighbour"); // NearestNeighbour is the default rendermethod
 	Object.setobservationtype(FoMo::Spectroscopic);
@@ -76,7 +76,7 @@ int main(int argc, char* argv[])
 	int y_pixel=302;
 	int z_pixel=500;
 	int lambda_pixel=30;
-	double lambda_width=.13;
+	double lambda_width=200000; // in m/s
 	Object.setresolution(x_pixel,y_pixel,z_pixel,lambda_pixel,lambda_width);
 	// determine where the output will be written
 	Object.setoutfile("fomo-example-out.");
@@ -95,7 +95,7 @@ int main(int argc, char* argv[])
 	double lambdawidth;
 	rendercube.readresolution(nx,ny,nz,nlambda,lambdawidth);
 	cout << "The rendering has resolution of x and y " << nx << " " << ny << ".\n";
-	cout << "and " << nlambda << " pixels in the wavelength." << endl;
+	cout << "and " << nlambda << " pixels in the wavelength in a window of width " << lambdawidth << "m/s" << endl;
 	cout << "It was done using the rendermethod " << rendercube.readrendermethod() << endl;
 	cout << "with a resolution of " << nz << " along the line-of-sight." << endl;
 	// This writes out the rendering results to the file fomo-output.txt.

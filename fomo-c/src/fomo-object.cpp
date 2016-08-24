@@ -170,7 +170,7 @@ FoMo::FoMoObservationType FoMo::FoMoObject::readobservationtype()
  * @param z_pixel This specifies how many points there are along the LOS. It should 
  * probably be around the finest resolution of the datacube grid, to achieve the optimum rendering.
  * @param lambda_pixel This specifies how many wavelength points are required.
- * @param lambda_width This sets the width of the wavelength window. Currently it is in \f$\AA{}\f$, but we will transform it to km/s.
+ * @param lambda_width This sets the width of the wavelength window. It is in \f$m/s\f$.
  */
 void FoMo::FoMoObject::setresolution(const int & x_pixel, const int & y_pixel, const int & z_pixel, const int & lambda_pixel, const double & lambda_width)
 {

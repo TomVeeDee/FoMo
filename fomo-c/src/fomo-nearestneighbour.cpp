@@ -105,7 +105,8 @@ FoMo::RenderCube nearestneighbourinterpolation(FoMo::GoftCube goftcube, const do
 
 	std::string chiantifile=goftcube.readchiantifile();
 	double lambda0=goftcube.readlambda0();// lambda0=AIA bandpass for AIA imaging
-       	
+	double lambda_width_in_A=lambda_width*lambda0/speedoflight;
+	   	
 	if (commrank==0) std::cout << "Building frame: " << std::flush;
 	double x,y,z,intpolpeak,intpolfwhm,intpollosvel,lambdaval,tempintens;
 	int ind;
@@ -179,7 +180,7 @@ FoMo::RenderCube nearestneighbourinterpolation(FoMo::GoftCube goftcube, const do
 					for (int il=0; il<lambda_pixel; il++) // changed index from global variable l into il [D.Y. 17 Nov 2014]
 					{
 						// lambda the relative wavelength around lambda0, with a width of lambda_width
-						lambdaval=double(il)/(lambda_pixel-1)*lambda_width-lambda_width/2.;
+						lambdaval=double(il)/(lambda_pixel-1)*lambda_width_in_A-lambda_width_in_A/2.;
 						// here a ternary operator may be used
 						// if intpolpeak is not zero then the correct expression is used. otherwise, the intensity is just 0
 						// it remains to be tested if this is faster than just the direct computation
