@@ -269,4 +269,19 @@ The advantage of this method (compared to CGAL) is that the triangulation does n
 is much faster than CGAL (160s for test problem in Frontiers article, table 2, compared to 1400s with CGAL) and uses less memory. However, 
 it is less precise.
 
+\subsection Projection
+
+This rendermethod is independent of any library. It steps through the data points, and projects them onto the rendering plane. This assumes
+that all data points (or voxels) have an equal volume (or near enough). Thus, this method does not work for AMR data.
+
+The Projection method is slightly faster than the NearestNeighbour method. For the Frontiers test problem, it takes around 130s.
+
+The user needs to be aware of possible pixelation effects for certain viewing angles (think about driving past a vineyard) if the target 
+resolution is taken too fine. Still, the method has some uses when looking along an axis of the simulation box.
+
+Moreover, since the code has no control over the number of pixels along the line-of-sight, it is impossible to guess how long the LOS path
+spends in each voxel. Therefore, the rendering returns an intensity, assuming that the z_pixel variable estimates appropriately how many voxels
+there are along the LOS. To obtain the correct absolute intensity values, the user should multiply with the length (along the LOS) of 
+each voxel (in Mm) and dividing by the (length of datacube along the LOS)/(z_pixel -1) (in Mm).
+
 */

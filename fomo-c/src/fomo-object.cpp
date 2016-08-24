@@ -238,6 +238,7 @@ enum FoMoRenderValue
 	CGAL2D,
 #endif
 	NearestNeighbour,
+	Projection,
 	// add more methods here
 	LastVirtualRenderMethod
 };
@@ -251,6 +252,7 @@ static const std::map<std::string, FoMoRenderValue>::value_type RenderMapEntries
 	std::map<std::string, FoMoRenderValue>::value_type("CGAL2D",CGAL2D),
 #endif
 	std::map<std::string, FoMoRenderValue>::value_type("NearestNeighbour",NearestNeighbour),
+	std::map<std::string, FoMoRenderValue>::value_type("Projection",Projection),
 	/// [Rendermethods]
 	std::map<std::string, FoMoRenderValue>::value_type("ThisIsNotARealRenderMethod",LastVirtualRenderMethod)
 };
@@ -312,6 +314,10 @@ void FoMo::FoMoObject::render(const std::vector<double> lvec, const std::vector<
 		case NearestNeighbour:
 			std::cout << "Using nearest-neighbour rendering." << std::endl << std::flush;
 			tmprender=FoMo::RenderWithNearestNeighbour(this->goftcube,x_pixel, y_pixel, z_pixel, lambda_pixel, lambda_width, lvec, bvec, this->outfile);
+			break;
+		case Projection:
+			std::cout << "Using projection for rendering." << std::endl << std::flush;
+			tmprender=FoMo::RenderWithProjection(this->goftcube,x_pixel,y_pixel,z_pixel,lambda_pixel,lambda_width,lvec,bvec, this->outfile);
 			break;
 		case LastVirtualRenderMethod: // this should not be reached, since it is excluded from the map
 		default:
