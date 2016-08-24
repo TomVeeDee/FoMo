@@ -72,10 +72,10 @@ int main(int argc, char* argv[])
 	Object.setrendermethod("NearestNeighbour"); // NearestNeighbour is the default rendermethod
 	Object.setobservationtype(FoMo::Spectroscopic);
 	// adjust the resolution with these parameters
-	int x_pixel=301;
-	int y_pixel=302;
+	int x_pixel=149;
+	int y_pixel=148;
 	int z_pixel=500;
-	int lambda_pixel=30;
+	int lambda_pixel=100;
 	double lambda_width=200000; // in m/s
 	Object.setresolution(x_pixel,y_pixel,z_pixel,lambda_pixel,lambda_width);
 	// determine where the output will be written
