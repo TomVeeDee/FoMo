@@ -84,7 +84,7 @@ FoMo::tphysvar goft(const FoMo::tphysvar logT, const FoMo::tphysvar logrho, cons
 	double res, x1, x2, y1, y2;
 
 #ifdef _OPENMP
-#pragma omp parallel for schedule(dynamic)
+#pragma omp parallel for schedule(dynamic) private(floortemp,ceiltemp,rhoindex,goftindex,res,x1,x2,y1,y2) shared(g)
 #endif
 	for (int i=0; i<ng; i++)
 	{
