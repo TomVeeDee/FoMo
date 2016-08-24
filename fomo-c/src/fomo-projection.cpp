@@ -135,7 +135,7 @@ FoMo::RenderCube projectioninterpolation(FoMo::GoftCube goftcube, const double l
 			for (int il=0; il<lambda_pixel; il++) // changed index from global variable l into il [D.Y. 17 Nov 2014]
 			{
 				// lambda the relative wavelength around lambda0, with a width of lambda_width
-				lambdaval=static_cast<double>(il)/(lambda_pixel-1)*lambda_width-lambda_width/2.;
+				lambdaval=static_cast<double>(il)/(lambda_pixel-1)*lambda_width_in_A-lambda_width_in_A/2.;
 				tempintens=peakvec.at(k)*exp(-pow(lambdaval-losvel.at(k)/speedoflight*lambda0,2)/pow(fwhmvec.at(k),2)*4.*log(2.));
 				ind=(i*(x_pixel)+j)*lambda_pixel+il;// 
 #ifdef _OPENMP
