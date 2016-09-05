@@ -1,6 +1,6 @@
 pro make_aiaresponse, sngfilter=sngfilter, wvlmin=wvlmin, wvlmax=wvlmax, gotdir=gotdir, file_abund=file_abund,extname=extname
 
-if arg_present(sngfilter) lt 1 then begin
+if ~keyword_set(sngfilter) then begin
    print,'make_aiaresponse, sngfilter=sngfilter, wvlmin=wvlmin, wvlmax=wvlmax, gotdir=gotdir, file_abund=file_abund'
    return
 endif
@@ -37,22 +37,22 @@ endif
 
 if ~keyword_set(extname) then extname = ''
 if ~keyword_set(file_abund) then begin
-   abund_file = concat_dir(concat_dir(!xuvtop,'abundance'),'sun_coronal.abund')
+   abund_file = concat_dir(concat_dir(!xuvtop,'abundance'),'sun_coronal_2012_schmelz.abund')
    if file_test(abund_file) eq 0 then begin
-      abund_file = concat_dir(concat_dir(!xuvtop,'abundance'),'sun_coronal_2012_schmelz.abund')
-      if ~keyword_set(silent) then print,'Assuming coronal abundances (file:"sun_coronal_2012_schmelz.abund")'
-   endif else begin
+      abund_file = concat_dir(concat_dir(!xuvtop,'abundance'),'sun_coronal.abund')
       if ~keyword_set(silent) then print,'Assuming coronal abundances (file:"sun_coronal.abund")'
+   endif else begin
+      if ~keyword_set(silent) then print,'Assuming coronal abundances (file:"sun_coronal_2012_schmelz.abund")'
    endelse
    nab = 'abco'
 endif else begin
    if file_abund eq 'coronal' then begin
-      abund_file = concat_dir(concat_dir(!xuvtop,'abundance'),'sun_coronal.abund') ;!xuvtop+'/abundance/sun_coronal.abund'
+      abund_file = concat_dir(concat_dir(!xuvtop,'abundance'),'sun_coronal_2012_schmelz.abund') ;!xuvtop+'/abundance/sun_coronal.abund'
       if file_test(abund_file) eq 0 then begin
-         abund_file = concat_dir(concat_dir(!xuvtop,'abundance'),'sun_coronal_2012_schmelz.abund')
-         if ~keyword_set(silent) then print,'Assuming coronal abundances (file:"sun_coronal_2012_schmelz.abund")'
-      endif else begin
+         abund_file = concat_dir(concat_dir(!xuvtop,'abundance'),'sun_coronal.abund')
          if ~keyword_set(silent) then print,'Assuming coronal abundances (file:"sun_coronal.abund")'
+      endif else begin
+         if ~keyword_set(silent) then print,'Assuming coronal abundances (file:"sun_coronal_2012_schmelz.abund")'
       endelse
       nab = 'abco'
    endif
@@ -67,6 +67,9 @@ endif else begin
       nab = 'abph'
    endif
 endelse
+
+; this is needed for the correct execution of CHIANTI's idl/utilities/proton_dens.pro
+!abund_file = abund_file
 
 ioneq_name = concat_dir(concat_dir(!xuvtop,'ioneq'),'chianti.ioneq')
 
@@ -174,19 +177,19 @@ if sngfilter eq 'all' or sngfilter eq '131' then begin
 endif
 
 for i=0,numn-1 do begin
-
+   print,'doing density ',i,' of ',numn
    isothermal, wvlmin, wvlmax, 0.1, temp, lambda, spectrum, list_wvl,list_ident, edensity=n_e[i] ,/photons,/cont,/all,ioneq_name=ioneq_name,abund_name=abund_file
 
-   if sngfilter eq 'all' or sngfilter eq '304' then eff_304=interpol(aia_resp.a304.ea,aia_resp.a304.wave,lambda)
-   if sngfilter eq 'uv' or sngfilter eq '1600' then eff_1600=interpol(aia_resp_uv.a1600.ea,aia_resp.a1600.wave,lambda)
-   if sngfilter eq 'uv' or sngfilter eq '1700' then eff_1700=interpol(aia_resp_uv.a1700.ea,aia_resp.a1700.wave,lambda)
-   if sngfilter eq 'uv' or sngfilter eq '4500' then eff_4500=interpol(aia_resp_uv.a4500.ea,aia_resp.a4500.wave,lambda)
-   if sngfilter eq 'all' or sngfilter eq '171' then eff_171=interpol(aia_resp.a171.ea,aia_resp.a171.wave,lambda)
-   if sngfilter eq 'all' or sngfilter eq '193' then eff_193=interpol(aia_resp.a193.ea,aia_resp.a193.wave,lambda)
-   if sngfilter eq 'all' or sngfilter eq '211' then eff_211=interpol(aia_resp.a211.ea,aia_resp.a211.wave,lambda)
-   if sngfilter eq 'all' or sngfilter eq '335' then eff_335=interpol(aia_resp.a335.ea,aia_resp.a335.wave,lambda)
-   if sngfilter eq 'all' or sngfilter eq '094' then eff_094=interpol(aia_resp.a94.ea,aia_resp.a94.wave,lambda)
-   if sngfilter eq 'all' or sngfilter eq '131' then eff_131=interpol(aia_resp.a131.ea,aia_resp.a131.wave,lambda)
+   if sngfilter eq 'all' or sngfilter eq '304' then eff_304=interpol(aia_resp.a304.ea,aia_resp.a304.wave,lambda,/spline)
+   if sngfilter eq 'uv' or sngfilter eq '1600' then eff_1600=interpol(aia_resp_uv.a1600.ea,aia_resp.a1600.wave,lambda,/spline)
+   if sngfilter eq 'uv' or sngfilter eq '1700' then eff_1700=interpol(aia_resp_uv.a1700.ea,aia_resp.a1700.wave,lambda,/spline)
+   if sngfilter eq 'uv' or sngfilter eq '4500' then eff_4500=interpol(aia_resp_uv.a4500.ea,aia_resp.a4500.wave,lambda,/spline)
+   if sngfilter eq 'all' or sngfilter eq '171' then eff_171=interpol(aia_resp.a171.ea,aia_resp.a171.wave,lambda,/spline)
+   if sngfilter eq 'all' or sngfilter eq '193' then eff_193=interpol(aia_resp.a193.ea,aia_resp.a193.wave,lambda,/spline)
+   if sngfilter eq 'all' or sngfilter eq '211' then eff_211=interpol(aia_resp.a211.ea,aia_resp.a211.wave,lambda,/spline)
+   if sngfilter eq 'all' or sngfilter eq '335' then eff_335=interpol(aia_resp.a335.ea,aia_resp.a335.wave,lambda,/spline)
+   if sngfilter eq 'all' or sngfilter eq '094' then eff_094=interpol(aia_resp.a94.ea,aia_resp.a94.wave,lambda,/spline)
+   if sngfilter eq 'all' or sngfilter eq '131' then eff_131=interpol(aia_resp.a131.ea,aia_resp.a131.wave,lambda,/spline)
    
    if sngfilter eq 'all' or sngfilter eq '304' then begin sp_conv_304 = spectrum & sp_conv_304[*,*]=0. & endif
    if sngfilter eq 'uv' or sngfilter eq '1600' then begin sp_conv_1600 = spectrum & sp_conv_1600[*,*]=0. & endif

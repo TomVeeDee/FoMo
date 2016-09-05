@@ -8,7 +8,7 @@ if keyword_set(w0) eq 0 or keyword_set(ion) eq 0 then begin
 endif
 
 ; Generates a G(T,n) table (200 pts in temperature, 3000 points in density) for a given line transition.
-; A coronal abundance is included by default ('sun_coronal.abund').
+; A coronal abundance is included by default ('sun_coronal_2012_schmelz.abund').
 
 ; INPUT:
 ; w0 = (float) line center wavelength of line transition in Angstroms
@@ -37,12 +37,12 @@ if keyword_set(file_abund) then begin
       nab = 'abph'
    endif
    if file_abund eq 'coronal' then begin
-      abund_name = concat_dir(concat_dir(!xuvtop,'abundance'),'sun_coronal.abund') ;!xuvtop+'/abundance/sun_coronal.abund'
+      abund_name = concat_dir(concat_dir(!xuvtop,'abundance'),'sun_coronal_2012_schmelz.abund') ;!xuvtop+'/abundance/sun_coronal.abund'
       if file_test(abund_name) eq 0 then begin
-         abund_name = concat_dir(concat_dir(!xuvtop,'abundance'),'sun_coronal_2012_schmelz.abund')
-         if ~keyword_set(silent) then print,'Assuming coronal abundances (file:"sun_coronal_2012_schmelz.abund")'
-      endif else begin
+         abund_name = concat_dir(concat_dir(!xuvtop,'abundance'),'sun_coronal.abund')
          if ~keyword_set(silent) then print,'Assuming coronal abundances (file:"sun_coronal.abund")'
+      endif else begin
+         if ~keyword_set(silent) then print,'Assuming coronal abundances (file:"sun_coronal_2012_schmelz.abund")'
       endelse
       nab = 'abco'
    endif
@@ -56,12 +56,12 @@ if keyword_set(file_abund) then begin
       endelse
    endif
 endif else begin
-   abund_name = concat_dir(concat_dir(!xuvtop,'abundance'),'sun_coronal.abund')
+   abund_name = concat_dir(concat_dir(!xuvtop,'abundance'),'sun_coronal_2012_schmelz.abund')
    if file_test(abund_name) eq 0 then begin
-         abund_name = concat_dir(concat_dir(!xuvtop,'abundance'),'sun_coronal_2012_schmelz.abund')
-         if ~keyword_set(silent) then print,'Assuming coronal abundances (file:"sun_coronal_2012_schmelz.abund")'
-      endif else begin
+         abund_name = concat_dir(concat_dir(!xuvtop,'abundance'),'sun_coronal.abund')
          if ~keyword_set(silent) then print,'Assuming coronal abundances (file:"sun_coronal.abund")'
+      endif else begin
+         if ~keyword_set(silent) then print,'Assuming coronal abundances (file:"sun_coronal_2012_schmelz.abund")'
       endelse
       nab = 'abco'
 endelse
@@ -120,7 +120,7 @@ for i=0,numn do begin
 
 ;   goft1 = goft0[pts]
 ;   ion_interp,alogt1,goft1,alogt2,goft2
-   goft2 = (interpol(goft0,alogt0,alogt2))>0.
+   goft2 = (interpol(goft0,alogt0,alogt2,/spline))>0.
 
    printf,unit,n_e_lg[i]
    printf,unit,goft2

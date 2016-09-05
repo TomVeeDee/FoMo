@@ -66,7 +66,7 @@ FoMo::GoftCube FoMo::FoMoObject::readgoftcube()
  * @brief This sets the abundance file to be used for the CHIANTI conversion to emissivity.
  * 
  * The abundance file is set to the string argument. The string argument should 
- * point to a valid abundance file: these are the CHIANTI abundance files (such as sun_coronal.abund).
+ * point to a valid abundance file: these are the CHIANTI abundance files (such as sun_coronal_2012_schmelz.abund).
  * The latter is available internally in the code, and is the standard used by the code. 
  * @param inabund A string with the path to a CHIANTI abundance file.
  */
@@ -80,7 +80,7 @@ void FoMo::FoMoObject::setabundfile(const std::string inabund)
  * @brief This function returns the abundance file currently used.
  * 
  * If the abundance file has not been set previously, the default value "/empty" is returned. In this case,
- * it means that the built-in sun_coronal.abund is being used. 
+ * it means that the built-in sun_coronal_2012_schmelz.abund is being used. 
  * @return This returns the path to the abundance file currently in use. 
  */
 std::string FoMo::FoMoObject::readabundfile()
@@ -108,7 +108,7 @@ void FoMo::FoMoObject::setchiantifile(const std::string inchianti)
  * @brief This returns the currently used chiantifile.
  * 
  * If chiantifile has not been set before with setchiantifile, then the default 
- * value "../chiantitables/goft_table_fe_12_0194small_abco.dat" is returned.
+ * value "../chiantitables/goft_table_fe_12_0194_abco.dat" is returned.
  * @return The return string is the path to the currently used chiantifile.
  */
 std::string FoMo::FoMoObject::readchiantifile()

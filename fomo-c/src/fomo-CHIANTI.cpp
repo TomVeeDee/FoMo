@@ -240,7 +240,7 @@ FoMo::GoftCube FoMo::emissionfromdatacube(FoMo::DataCube datacube, std::string c
 	FoMo::tphysvar fittedwidth=linefwhm(T,lambda0,atweight);
 
 // calculate the maximum of the emission profile at each grid point
-// The emission in the CHIANTItables is calculated with the sun_coronal.abund file
+// The emission in the CHIANTItables is calculated with the sun_coronal_2012_schmelz.abund file
 // There are 2 cases:
 // 	- we are doing spectroscopic calculations: the fittedemission should normalised with the alphaconst, and if a different abundance is used, we should renormalise to the new abundance
 // 	- we are doing intensity calculations (for e.g. AIA): the tables are already in the correct units, and the fittedemission needs to only be multiplied with 1. 

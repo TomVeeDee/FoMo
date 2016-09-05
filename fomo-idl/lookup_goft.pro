@@ -50,8 +50,8 @@ if ~keyword_set(silent) then print,'G(n,T) table: '+filegot
   readf,unit,numn,numt
   logt = fltarr(numt)
   readf,unit,logt
-  goft_mat = fltarr(numn+1,numt)
-  n_e_lg = dblarr(numn+1)
+  goft_mat = fltarr(numn,numt)
+  n_e_lg = dblarr(numn)
   g_t = fltarr(numt)
   i = 0
 

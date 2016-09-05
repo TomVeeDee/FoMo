@@ -67,12 +67,12 @@ if keyword_set(file_abund) and n_elements(nab) eq 0 and n_elements(abund_name) e
       nab = '_abph'
    endif
    if file_abund eq 'coronal' then begin
-      abund_name = concat_dir(concat_dir(!xuvtop,'abundance'),'sun_coronal.abund') ;!xuvtop+'/abundance/sun_coronal.abund'
+      abund_name = concat_dir(concat_dir(!xuvtop,'abundance'),'sun_coronal_2012_schmelz.abund') ;!xuvtop+'/abundance/sun_coronal.abund'
       if file_test(abund_name) eq 0 then begin
-         abund_name = concat_dir(concat_dir(!xuvtop,'abundance'),'sun_coronal_2012_schmelz.abund')
-         if ~keyword_set(silent) then print,'Assuming coronal abundances (file:"sun_coronal_2012_schmelz.abund")'
-      endif else begin
+         abund_name = concat_dir(concat_dir(!xuvtop,'abundance'),'sun_coronal.abund')
          if ~keyword_set(silent) then print,'Assuming coronal abundances (file:"sun_coronal.abund")'
+      endif else begin
+         if ~keyword_set(silent) then print,'Assuming coronal abundances (file:"sun_coronal_2012_schmelz.abund")'
       endelse
       nab = '_abco'
    endif
@@ -86,20 +86,20 @@ if keyword_set(file_abund) and n_elements(nab) eq 0 and n_elements(abund_name) e
       endelse
    endif
 endif else begin
-   abund_name = concat_dir(concat_dir(!xuvtop,'abundance'),'sun_coronal.abund')
+   abund_name = concat_dir(concat_dir(!xuvtop,'abundance'),'sun_coronal_2012_schmelz.abund')
    if file_test(abund_name) eq 0 then begin
-         abund_name = concat_dir(concat_dir(!xuvtop,'abundance'),'sun_coronal_2012_schmelz.abund')
-         if ~keyword_set(silent) then print,'Assuming coronal abundances (file:"sun_coronal_2012_schmelz.abund")'
-      endif else begin
+         abund_name = concat_dir(concat_dir(!xuvtop,'abundance'),'sun_coronal.abund')
          if ~keyword_set(silent) then print,'Assuming coronal abundances (file:"sun_coronal.abund")'
+      endif else begin
+         if ~keyword_set(silent) then print,'Assuming coronal abundances (file:"sun_coronal_2012_schmelz.abund")'
       endelse
       nab = '_abco'
 endelse
 
 if n_elements(abund_dflt) eq 0 then begin
-   abund_dflt = concat_dir(concat_dir(!xuvtop,'abundance'),'sun_coronal.abund')
+   abund_dflt = concat_dir(concat_dir('..','chiantitables'),'sun_coronal_2012_schmelz.abund')
    if file_test(abund_dflt) eq 0 then begin
-      abund_dflt = concat_dir(concat_dir(!xuvtop,'abundance'),'sun_coronal_1992_feldman.abund')
+	   print,'No default abundance file found at',abund_dflt
    endif
 endif
 

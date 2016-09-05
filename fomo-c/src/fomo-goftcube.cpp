@@ -6,8 +6,8 @@
  * @brief The default constructor for the GoftCube object.
  * 
  * A tgrid is created with length indim. The number of grid points and variables is set to 0. The default
- * chiantifile is "../chiantitables/goft_table_fe_12_0194small_abco.dat", and the default abundance
- * file is "sun_coronal.abund" (which is available as internal variable in the code). The wavelength
+ * chiantifile is "../chiantitables/goft_table_fe_12_0194_abco.dat", and the default abundance
+ * file is "sun_coronal_2012_schmelz.abund" (which is available as internal variable in the code). The wavelength
  * for this spectral line is set accordingly.
  * @param indim The dimension of the GoftCube is set to indim. It defaults to 3.
  */
@@ -17,7 +17,7 @@ FoMo::GoftCube::GoftCube(const int indim)
 	grid.resize(indim);
 	ng=0;
 	nvars=0;
-	chiantifile="../chiantitables/goft_table_fe_12_0194small_abco.dat";
+	chiantifile="../chiantitables/goft_table_fe_12_0194_abco.dat";
 	abundfile="/empty";
 //	ion="fe_12";
 	lambda0=193.509;
@@ -29,8 +29,8 @@ FoMo::GoftCube::GoftCube(const int indim)
  * The specialised constructor loads the dimension and corresponding grid from the DataCube. The
  * dimension, number of grid points and grid is set from the information in the argument.
  * The number of variables is set to 0. The default
- * chiantifile is "../chiantitables/goft_table_fe_12_0194small_abco.dat", and the default abundance
- * file is "sun_coronal.abund" (which is available as internal variable in the code). The wavelength
+ * chiantifile is "../chiantitables/goft_table_fe_12_0194_abco.dat", and the default abundance
+ * file is "sun_coronal_2012_schmelz.abund" (which is available as internal variable in the code). The wavelength
  * for this spectral line is set accordingly.
  * @param incube The datacube from which the GoftCube must be constructed.
  */
@@ -40,7 +40,7 @@ FoMo::GoftCube::GoftCube(FoMo::DataCube incube)
 	ng=incube.readngrid();
 	grid=incube.readgrid();
 	nvars=0;
-	chiantifile="../chiantitables/goft_table_fe_12_0194small_abco.dat";
+	chiantifile="../chiantitables/goft_table_fe_12_0194_abco.dat";
 	abundfile="/empty";
 //	ion="fe_12";
 	lambda0=193.509;
@@ -50,7 +50,7 @@ FoMo::GoftCube::GoftCube(FoMo::DataCube incube)
  * @brief This displays the currently set abundance file.
  * 
  * In case it has not been set before by setabundfile(), then the default value of "/empty" is 
- * returned. In this case, the built-in sun_coronal.abund is being used.
+ * returned. In this case, the built-in sun_coronal_2012_schmelz.abund is being used.
  * @return It returns the path and filename to the abundance file.
  */
 std::string FoMo::GoftCube::readabundfile()
@@ -62,7 +62,7 @@ std::string FoMo::GoftCube::readabundfile()
  * @brief This returns the chiantifile in use.
  * 
  * In case the chiantifile has not been set with setchiantifile(), the default value
- * "../chiantitables/goft_table_fe_12_0194small_abco.dat" will be returned.
+ * "../chiantitables/goft_table_fe_12_0194_abco.dat" will be returned.
  * @return The path to the chiantifile being used.
  */
 std::string FoMo::GoftCube::readchiantifile()

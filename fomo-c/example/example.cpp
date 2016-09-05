@@ -68,7 +68,7 @@ int main(int argc, char* argv[])
 	
 	/// [Set rendering options]
 	Object.setchiantifile("/users/cpa/tomvd/data/idl/FoMo/chiantitables/goft_table_fe_12_0194_abco.dat"); // the default value is "../chiantitables/goft_table_fe_12_0194small_abco.dat"
-	Object.setabundfile("/empty"); //use "/empty" or do not set it at all for the default sun_coronal.abund file
+	Object.setabundfile("/empty"); //use "/empty" or do not set it at all for the default sun_coronal_2012_schmelz.abund file
 	Object.setrendermethod("NearestNeighbour"); // NearestNeighbour is the default rendermethod
 	Object.setobservationtype(FoMo::Spectroscopic);
 	// adjust the resolution with these parameters

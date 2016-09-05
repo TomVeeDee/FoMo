@@ -17,7 +17,7 @@ void printusage(const char* programname){
 	printf("  --help        Print this message\n\n");
 	printf("CHIANTI parameters:\n");
 	printf("  --goftfile    Filename containing the table with the G(T) written by CHIANTI\n");
-	printf("  --abundfile   Filename containing the table with the abundances (standard sun_coronal.abund is used)\n\n");
+	printf("  --abundfile   Filename containing the table with the abundances (standard sun_coronal_2012_schmelz.abund is used)\n\n");
 	printf("IO parameters:\n");
         printf("  --infileini   input data cube initials\n");
         printf("  --outfileini  output data cube initials\n");
