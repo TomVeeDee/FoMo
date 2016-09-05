@@ -140,7 +140,7 @@ int main(int argc, char* argv[])
 			int y_pixel=1;
 			int z_pixel=500;
 			int lambda_pixel=1;
-			double lambda_width=.13;
+			double lambda_width=200000;
 			Object.setresolution(x_pixel, y_pixel, z_pixel, lambda_pixel, lambda_width);
 			Object.setrendermethod("CGAL");
 			Object.setobservationtype(FoMo::Imaging);

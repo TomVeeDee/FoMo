@@ -127,6 +127,7 @@ FoMo::RenderCube CGAL2D(FoMo::GoftCube goftcube, const double l, const int x_pix
 
 	std::string chiantifile=goftcube.readchiantifile();
 	double lambda0=goftcube.readlambda0();// lambda0=AIA bandpass for AIA imaging
+	double lambda_width_in_A=lambda_width*lambda0/speedoflight;
 	Delaunay_triangulation_2 DT=triangulationfrom2Ddatacube(goftcube);
 	Delaunay_triangulation_2 * DTpointer=&DT;
        	
@@ -190,7 +191,7 @@ FoMo::RenderCube CGAL2D(FoMo::GoftCube goftcube, const double l, const int x_pix
 						for (int il=0; il<lambda_pixel; il++) // changed index from global variable l into il [D.Y. 17 Nov 2014]
 						{
 				// lambda is made around lambda0, with a width of lambda_width 
-							lambdaval=double(il)/(lambda_pixel-1)*lambda_width-lambda_width/2.;
+							lambdaval=double(il)/(lambda_pixel-1)*lambda_width_in_A-lambda_width_in_A/2.;
 							tempintens=intpolpeak*exp(-pow(lambdaval-intpollosvel/speedoflight*lambda0,2)/pow(intpolfwhm,2)*4.*log(2.));
 							ind=j*lambda_pixel+il;// 
 							newgrid[0][ind]=x;

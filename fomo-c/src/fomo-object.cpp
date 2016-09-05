@@ -170,7 +170,7 @@ FoMo::FoMoObservationType FoMo::FoMoObject::readobservationtype()
  * @param z_pixel This specifies how many points there are along the LOS. It should 
  * probably be around the finest resolution of the datacube grid, to achieve the optimum rendering.
  * @param lambda_pixel This specifies how many wavelength points are required.
- * @param lambda_width This sets the width of the wavelength window. Currently it is in \f$\AA{}\f$, but we will transform it to km/s.
+ * @param lambda_width This sets the width of the wavelength window. It is in \f$m/s\f$.
  */
 void FoMo::FoMoObject::setresolution(const int & x_pixel, const int & y_pixel, const int & z_pixel, const int & lambda_pixel, const double & lambda_width)
 {
@@ -238,6 +238,7 @@ enum FoMoRenderValue
 	CGAL2D,
 #endif
 	NearestNeighbour,
+	Projection,
 	// add more methods here
 	LastVirtualRenderMethod
 };
@@ -251,6 +252,7 @@ static const std::map<std::string, FoMoRenderValue>::value_type RenderMapEntries
 	std::map<std::string, FoMoRenderValue>::value_type("CGAL2D",CGAL2D),
 #endif
 	std::map<std::string, FoMoRenderValue>::value_type("NearestNeighbour",NearestNeighbour),
+	std::map<std::string, FoMoRenderValue>::value_type("Projection",Projection),
 	/// [Rendermethods]
 	std::map<std::string, FoMoRenderValue>::value_type("ThisIsNotARealRenderMethod",LastVirtualRenderMethod)
 };
@@ -312,6 +314,10 @@ void FoMo::FoMoObject::render(const std::vector<double> lvec, const std::vector<
 		case NearestNeighbour:
 			std::cout << "Using nearest-neighbour rendering." << std::endl << std::flush;
 			tmprender=FoMo::RenderWithNearestNeighbour(this->goftcube,x_pixel, y_pixel, z_pixel, lambda_pixel, lambda_width, lvec, bvec, this->outfile);
+			break;
+		case Projection:
+			std::cout << "Using projection for rendering." << std::endl << std::flush;
+			tmprender=FoMo::RenderWithProjection(this->goftcube,x_pixel,y_pixel,z_pixel,lambda_pixel,lambda_width,lvec,bvec, this->outfile);
 			break;
 		case LastVirtualRenderMethod: // this should not be reached, since it is excluded from the map
 		default:

@@ -135,7 +135,7 @@ int main(int argc, char* argv[])
 		int y_pixel=102;
 		int z_pixel=300;
 		int lambda_pixel=30;
-		double lambda_width=.13;
+		double lambda_width=200000;
 		Object.setresolution(x_pixel,y_pixel,z_pixel,lambda_pixel,lambda_width);
 
 		if (t==tstart)

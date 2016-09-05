@@ -246,7 +246,7 @@ int main (void)
     int y_pixel=200;
     int z_pixel=200;
     int lambda_pixel=1;
-    double lambda_width=.13;
+    double lambda_width=200000;
     Object.setresolution(x_pixel,y_pixel,z_pixel,lambda_pixel,lambda_width);
     // determine where the output will be written
     Object.setoutfile("fomo-hdf5-example-out.");
