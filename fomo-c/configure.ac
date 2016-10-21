@@ -172,4 +172,4 @@ DX_PDF_FEATURE(ON)
 DX_INIT_DOXYGEN($PACKAGE_NAME,docfiles/fomo-doxygen.cfg,doc)
 
 # write the Makefiles
-AC_OUTPUT(Makefile src/Makefile example/Makefile example/example_FLASH/Makefile)
+AC_OUTPUT(Makefile src/Makefile example/Makefile example/example_FLASH/Makefile example/example_mpi_amrvac/Makefile)
