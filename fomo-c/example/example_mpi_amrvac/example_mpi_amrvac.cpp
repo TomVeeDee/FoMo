@@ -24,7 +24,7 @@ double p_unit = rho_unit*pow(V_unit,2); //              pressure
 void loopthroughleafs(vector<bool> forest, int & forestposition, int & level, const int ndim, vector<vector<int>> & block_info, vector<int> index)
 {
 	forestposition++;
-	if (forestposition<50) cout << forest.at(forestposition) << " " << forestposition << " " << level << endl;
+	// if (forestposition<50) cout << forest.at(forestposition) << " " << forestposition << " " << level << endl;
 	if (forest.at(forestposition))
 	{
 		// now we are a leaf
@@ -33,17 +33,19 @@ void loopthroughleafs(vector<bool> forest, int & forestposition, int & level, co
 		for (int i=0; i<ndim; i++)
 			tempblockinfo.at(i+1)=index.at(i);
 		block_info.push_back(tempblockinfo);
+		if (forestposition<50) cout << "leaf " << forest.at(forestposition) << " " << level << " " << index.at(0) << " " << index.at(1) << " " << index.at(2) << endl;
 	}
 	else
 	{
 		// we are a parent, loop through the children
-		level++;
 		vector<int> newindex(ndim);
+		if (forestposition<50) cout << "pare " << forest.at(forestposition) << " " << level << " " << index.at(0) << " " << index.at(1) << " " << index.at(2) << endl;
 		for (int i=0; i<pow(2,ndim); i++)
 		{
 			if (ndim==2) newindex = {2*(index.at(0)-1) + 1 + i%2,2*(index.at(1)-1) + 1 + i/2,1};
 			if (ndim==3) newindex = {2*(index.at(0)-1) + 1 + i%2,2*(index.at(1)-1) + 1 + (i/2)%2,2*(index.at(2)-1) + 1 + i/4};
-			loopthroughleafs(forest, forestposition, level, ndim, block_info, newindex);
+			int tempint=level+1;
+			loopthroughleafs(forest, forestposition, tempint, ndim, block_info, newindex);
 		}
 	}
 }
@@ -128,7 +130,6 @@ int main(int argc, char* argv[])
 		for (unsigned int i=0; i<forest.size(); i++)
 		{
 			file.read(reinterpret_cast<char*>(&tempint), sizeof(int));
-			if (i<50) cout << tempint << endl;
 			forest.at(i)=tempint;
 		}
 		file.close();
@@ -313,7 +314,7 @@ int main(int argc, char* argv[])
 	// alternatively, you could add different angles in radians as argument, e.g. Object.render(1.57/2.,1.57/2.) to obtain some nice Doppler shifts.
 	/// [Render]
 	
-	//FoMo::GoftCube goftcube=Object.readgoftcube();
-	//string outfile("goftcube.txt");
-	//goftcube.writegoftcube(outfile);
+	FoMo::GoftCube goftcube=Object.readgoftcube();
+	string outfile("goftcube.txt");
+	goftcube.writegoftcube(outfile);
 }
