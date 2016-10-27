@@ -8,6 +8,8 @@
 
 using namespace std;
 
+int gamma_eqparposition = 0; // provide the index of the eqpar vector in which the gamma value is contained
+
 double L_unit = 1e8; // length normalisation value
 double L_unitFoMo = 1e6; // (express length unit in Mm for FoMo)
 
@@ -19,12 +21,10 @@ double R_spec = kboltz/(0.5e0*mhydro);
 double n_unit = rho_unit * 1.204 * 1.e21;
 double V_unit = sqrt(R_spec*Teunit); //         velocity
 double p_unit = rho_unit*pow(V_unit,2); //              pressure
-// p = R_spec * rho * T -> T = p/R_spec/rho 
 
 void loopthroughleafs(vector<bool> forest, int & forestposition, int & level, const int ndim, vector<vector<int>> & block_info, vector<int> index)
 {
 	forestposition++;
-	// if (forestposition<50) cout << forest.at(forestposition) << " " << forestposition << " " << level << endl;
 	if (forest.at(forestposition))
 	{
 		// now we are a leaf
@@ -33,13 +33,11 @@ void loopthroughleafs(vector<bool> forest, int & forestposition, int & level, co
 		for (int i=0; i<ndim; i++)
 			tempblockinfo.at(i+1)=index.at(i);
 		block_info.push_back(tempblockinfo);
-		if (forestposition<50) cout << "leaf " << forest.at(forestposition) << " " << level << " " << index.at(0) << " " << index.at(1) << " " << index.at(2) << endl;
 	}
 	else
 	{
 		// we are a parent, loop through the children
 		vector<int> newindex(ndim);
-		if (forestposition<50) cout << "pare " << forest.at(forestposition) << " " << level << " " << index.at(0) << " " << index.at(1) << " " << index.at(2) << endl;
 		for (int i=0; i<pow(2,ndim); i++)
 		{
 			if (ndim==2) newindex = {2*(index.at(0)-1) + 1 + i%2,2*(index.at(1)-1) + 1 + i/2,1};
@@ -85,9 +83,9 @@ int main(int argc, char* argv[])
 		//go back to where we started reading
 		file.seekg(-7*sizeof(int)-sizeof(double),ios_base::cur);
 		// before this information, a vector of length neqpar+nspecialpar was written, and the number of points in each dimension 
-		// we can just read neqpar times a double, since we do not need to store it
-		double tmpeqpar;
+		double tmpeqpar, gamma;
 		vector<int> nx(ndim);
+		vector<double> eqpar(neqpar);
 		// nglev1 contains the number of cells per block
 		int nglev1=1;
 		file.seekg(-neqpar*sizeof(double)-ndim*sizeof(int),ios_base::cur);
@@ -101,7 +99,9 @@ int main(int argc, char* argv[])
 		for (int i=0; i<neqpar; i++)
 		{
 			file.read(reinterpret_cast<char*>(&tmpeqpar), sizeof(double));
+			eqpar.at(i)=tmpeqpar;
 		}
+		gamma = eqpar.at(gamma_eqparposition);
 		
 		// let's read the data blocks, they are at the beginning of the file
 		file.seekg(0,ios_base::beg);
@@ -239,7 +239,6 @@ int main(int argc, char* argv[])
 			{
 				bottomleft.push_back(xprobmin.at(j)+(block_info.at(i).at(1+j) - 1)*cellsize.at(j)*nx.at(j)/pow(2,(block_info.at(i).at(0)-1)));
 				localcellsize.push_back(cellsize.at(j)/pow(2,(block_info.at(i).at(0)-1)));
-				//if (i<200 && j==0) cout << block_info.at(i).at(0) << " " << block_info.at(i).at(j+1) << " " << bottomleft.at(j) << " " << cellsize.at(j)*nx.at(j)/pow(2,(block_info.at(i).at(0)-1)) << endl;
 			}
 			
 			// loop over nglev1 cells in block
@@ -255,9 +254,6 @@ int main(int argc, char* argv[])
 				{
 					coordinates.push_back(bottomleft.at(j)+(localcoord.at(j)-.5)*localcellsize.at(j));
 					coordinates.at(j)*=L_unit/L_unitFoMo; // convert all lengths to Mm 
-					//if (k==0 && i==0) cout << localcellsize.at(j) << " " << bottomleft.at(j) << " " ;
-					//cout << coordinates.at(j) << " ";
-					//if (j==ndim-1) cout << endl;
 				}
 				
 				vector<double> variables;
@@ -265,20 +261,23 @@ int main(int argc, char* argv[])
 				variables.push_back(leafs.at(i).at(0+k*nw)); // 0 here corresponds to which variable needs to be loaded into FoMo
 				variables.at(0)*=n_unit;
 				// T
-				variables.push_back(leafs.at(i).at(4+k*nw)/leafs.at(i).at(0+k*nw));
-				//variables.at(1)*=p_unit/R_spec/rho_unit; 
-				variables.at(1)*=1e4;
-				// vx
-				variables.push_back(leafs.at(i).at(1+k*nw));
+				// first we calculate the pressure from the internal energy 
+				// p = (5/3 -1)*(e- K-B), with K = 0.5*rho *(vi^2), and B = 0.5*(bi^2)
+				double kineticenergy = inner_product(&leafs.at(i).at(1+k*nw), &leafs.at(i).at(3+k*nw), &leafs.at(i).at(1+k*nw), 0.)/leafs.at(i).at(0+k*nw)/2.;
+				double magneticenergy = inner_product(&leafs.at(i).at(5+k*nw), &leafs.at(i).at(7+k*nw), &leafs.at(i).at(5+k*nw), 0.)/2.;
+				double p = (gamma-1)*(leafs.at(i).at(4+k*nw)-kineticenergy - magneticenergy);
+				// then T = p/rho*Teunit
+				variables.push_back(p/leafs.at(i).at(0+k*nw));
+				variables.at(1)*=Teunit; 
+				// vx = m1/rho
+				variables.push_back(leafs.at(i).at(1+k*nw)/leafs.at(i).at(0+k*nw));
 				variables.at(2)*=V_unit;
-				// vy
-				variables.push_back(leafs.at(i).at(2+k*nw));
+				// vy = m2/rho
+				variables.push_back(leafs.at(i).at(2+k*nw)/leafs.at(i).at(0+k*nw));
 				variables.at(3)*=V_unit;
-				// vz
-				variables.push_back(leafs.at(i).at(3+k*nw));
+				// vz = m3/rho
+				variables.push_back(leafs.at(i).at(3+k*nw)/leafs.at(i).at(0+k*nw));
 				variables.at(4)*=V_unit;
-				//if (k==0 && i==0) cout << R_spec << " " <<  p_unit/R_spec/rho_unit << " " << variables.at(1) << endl;
-				// cout << "rho " << variables.at(0) << " T " << variables.at(1) << " v " << variables.at(2) << " " << variables.at(3) << " " << variables.at(4) << endl; 
 				
 				// load data into FoMo
 				Object.push_back_datapoint(coordinates, variables);
@@ -294,13 +293,13 @@ int main(int argc, char* argv[])
 	// data is in structure, now start the rendering
 	
 	/// [Set rendering options]
-	Object.setchiantifile("../../../chiantitables/goft_table_fe_12_0194_abco.dat"); // the default value is "../chiantitables/goft_table_fe_12_0194small_abco.dat"
+	Object.setchiantifile("../chiantitables/goft_table_fe_12_0194_abco.dat"); // the default value is "../chiantitables/goft_table_fe_12_0194_abco.dat"
 	Object.setabundfile("/empty"); //use "/empty" or do not set it at all for the default sun_coronal_2012_schmelz.abund file
 	Object.setrendermethod("NearestNeighbour"); // NearestNeighbour is the default rendermethod
 	Object.setobservationtype(FoMo::Spectroscopic);
 	// adjust the resolution with these parameters
 	int x_pixel=149;
-	int y_pixel=148;
+	int y_pixel=64;
 	int z_pixel=500;
 	int lambda_pixel=100;
 	double lambda_width=200000; // in m/s
@@ -310,11 +309,6 @@ int main(int argc, char* argv[])
 	/// [Set rendering options]
 	
 	/// [Render]
-	Object.render(2*atan(1.),2*atan(1.));
-	// alternatively, you could add different angles in radians as argument, e.g. Object.render(1.57/2.,1.57/2.) to obtain some nice Doppler shifts.
+	Object.render(2*atan(1.),4*atan(1.)/6.);
 	/// [Render]
-	
-	FoMo::GoftCube goftcube=Object.readgoftcube();
-	string outfile("goftcube.txt");
-	goftcube.writegoftcube(outfile);
 }

@@ -110,7 +110,6 @@ FoMo::RenderCube nearestneighbourinterpolation(FoMo::GoftCube goftcube, const do
 	if (commrank==0) std::cout << "Building frame: " << std::flush;
 	double x,y,z,intpolpeak,intpolfwhm,intpollosvel,lambdaval,tempintens;
 	int ind;
-	boost::progress_display show_progress(x_pixel*y_pixel*z_pixel);
 	
 	//initialize grids
 	FoMo::tgrid newgrid;
@@ -127,6 +126,9 @@ FoMo::RenderCube nearestneighbourinterpolation(FoMo::GoftCube goftcube, const do
 	maxdistance = std::sqrt(std::pow((maxx-minx)/(x_pixel-1),2)+std::pow((maxy-miny)/(y_pixel-1),2))/2.;
 	// However, it is better to just take the minimum of the pixel size in either direction, because it is then used in the maxdistancebox
 	maxdistance = std::max((maxx-minx)/(x_pixel-1),(maxy-miny)/(y_pixel-1))/2.;
+	if ((maxx-minx)/std::pow(ng,1./3.)>maxdistance || (maxy-miny)/std::pow(ng,1./3.)>maxdistance) std::cout << std::endl << "Warning: maximum distance to interpolated point set to " << maxdistance << "Mm. If it is too small, you have too many interpolating rays and you will have dark stripes in the image plane. Reduce x-resolution or y-resolution." << std::endl;
+
+	boost::progress_display show_progress(x_pixel*y_pixel*z_pixel);
 	
 #ifdef _OPENMP
 #pragma omp parallel for schedule(dynamic) collapse(2) shared (rtree) private (x,y,z,intpolpeak,intpolfwhm,intpollosvel,lambdaval,tempintens,ind,returned_values,targetpoint,maxdistancebox)
@@ -161,6 +163,8 @@ FoMo::RenderCube nearestneighbourinterpolation(FoMo::GoftCube goftcube, const do
 				// - half the y-resolution in the y-direction
 				// - the maximum of both the previous numbers in the z-direction (sort of improvising a convex hull approach)
 				maxdistancebox=box(point(p.at(0)-(maxx-minx)/(x_pixel-1)/2.,p.at(1)-(maxy-miny)/(y_pixel-1)/2.,p.at(2)-maxdistance),point(p.at(0)+(maxx-minx)/(x_pixel-1)/2.,p.at(1)+(maxy-miny)/(y_pixel-1)/2.,p.at(2)+maxdistance));
+				// it seems the expression above is the culprit for simulations with very stretched grids producing striped emissions, let's make the box of size maxdistance
+				maxdistancebox=box(point(p.at(0)-maxdistance,p.at(1)-maxdistance,p.at(2)-maxdistance),point(p.at(0)+maxdistance,p.at(1)+maxdistance,p.at(2)+maxdistance));
 				//numberofpoints=
 				rtree.query(bgi::nearest(targetpoint, 1) && bgi::within(maxdistancebox), std::back_inserter(returned_values));
 				if (returned_values.size() >= 1)
