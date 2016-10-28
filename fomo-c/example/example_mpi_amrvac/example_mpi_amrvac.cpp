@@ -5,8 +5,11 @@
 #include <cmath>
 #include <algorithm>
 #include <sstream>
+#include <climits>
 
 using namespace std;
+
+string amrvac_version("gitlab"); // provide the version of the AMRVAC code. It can be "old" or "gitlab".
 
 int gamma_eqparposition = 0; // provide the index of the eqpar vector in which the gamma value is contained
 
@@ -22,6 +25,35 @@ double n_unit = rho_unit * 1.204 * 1.e21;
 double V_unit = sqrt(R_spec*Teunit); //         velocity
 double p_unit = rho_unit*pow(V_unit,2); //              pressure
 
+// Morton curve using a simple for loop
+inline uint64_t mortonEncode_for(unsigned int x, unsigned int y, unsigned int z){
+    uint64_t answer = 0;
+    for (uint64_t i = 0; i < (sizeof(uint64_t)* CHAR_BIT)/3; ++i) {
+        answer |= ((x & ((uint64_t)1 << i)) << 2*i) | ((y & ((uint64_t)1 << i)) << (2*i + 1)) | ((z & ((uint64_t)1 << i)) << (2*i + 2));
+    }
+    return answer;
+}
+
+// Morton curve doing magicbits: it is faster, but more difficult to understand
+// method to seperate bits from a given integer 3 positions apart
+inline uint64_t splitBy3(unsigned int a){
+    uint64_t x = a & 0x1fffff; // we only look at the first 21 bits
+    x = (x | x << 32) & 0x1f00000000ffff;  // shift left 32 bits, OR with self, and 00011111000000000000000000000000000000001111111111111111
+    x = (x | x << 16) & 0x1f0000ff0000ff;  // shift left 32 bits, OR with self, and 00011111000000000000000011111111000000000000000011111111
+    x = (x | x << 8) & 0x100f00f00f00f00f; // shift left 32 bits, OR with self, and 0001000000001111000000001111000000001111000000001111000000000000
+    x = (x | x << 4) & 0x10c30c30c30c30c3; // shift left 32 bits, OR with self, and 0001000011000011000011000011000011000011000011000011000100000000
+    x = (x | x << 2) & 0x1249249249249249;
+    return x;
+}
+ 
+inline uint64_t mortonEncode_magicbits(unsigned int x, unsigned int y, unsigned int z){
+    uint64_t answer = 0;
+    answer |= splitBy3(x) | splitBy3(y) << 1 | splitBy3(z) << 2;
+    return answer;
+}
+
+// this recursive procedure loops through the forest and calculates the indices of each leaf block
+// the implementation is a carbon copy of the python code of Oliver Porth (included in AMRVAC)
 void loopthroughleafs(vector<bool> forest, int & forestposition, int & level, const int ndim, vector<vector<int>> & block_info, vector<int> index)
 {
 	forestposition++;
@@ -214,14 +246,53 @@ int main(int argc, char* argv[])
 		
 		// now go through the forest and put the correct leaf blocks in the FoMoObject
 		vector<vector<int>> block_info;
+		vector<vector<int>> mortoncurve;
+		// begin the loop through the leafs at forestposition 0 (forestposition++ at start of loopthroughleafs!)
 		int forestposition = -1;
-		for (int k=0; k<nblocks.at(2); k++)
-		for (int j=0; j<nblocks.at(1); j++)
-		for (int i=0; i<nblocks.at(0); i++)
+		// make sure the code is also working for 2D data!
+		if (ndim<3) nblocks.push_back(1);
+		if (amrvac_version.compare("old")==0)
 		{
-			int level = 1;
-			loopthroughleafs(forest, forestposition, level, ndim, block_info, {i+1,j+1,k+1});
+			for (int k=0; k<nblocks.at(2); k++)
+			for (int j=0; j<nblocks.at(1); j++)
+			for (int i=0; i<nblocks.at(0); i++)
+			{
+				int level = 1;
+				loopthroughleafs(forest, forestposition, level, ndim, block_info, {i+1,j+1,k+1});
+			}
 		}
+		else if (amrvac_version.compare("gitlab")==0)
+		{
+			// compute the maximum length of the morton curve
+			int maxgridlength = *(max_element(nblocks.begin(),nblocks.end()));
+			// resize the morton curve to the length of a hypothetic cube with sides maxgridlength
+			// later on, we will prune simulation points from the mortoncurve
+			// can this be optimized for 2D data?
+			mortoncurve.resize(pow(maxgridlength,3));
+			for (int k=0; k<maxgridlength; k++)
+			for (int j=0; j<maxgridlength; j++)
+			for (int i=0; i<maxgridlength; i++)
+			{
+				mortoncurve.at(mortonEncode_for(i,j,k))={i+1,j+1,k+1};
+			}
+			// loop through mortoncurve
+			// at each block within the domain, store the leafs from that parent into block_info
+			for (unsigned int i=0; i<mortoncurve.size(); i++)
+			{
+				// check if the block is within the domain. If not, just skip it and go to the next block
+				if (mortoncurve.at(i).at(0)<=nblocks.at(0) && mortoncurve.at(i).at(1)<=nblocks.at(1) && mortoncurve.at(i).at(2)<=nblocks.at(2))
+				{
+					int level = 1;
+					loopthroughleafs(forest, forestposition, level, ndim, block_info, mortoncurve.at(i));
+				}
+			}
+		}
+		else
+		{
+			cerr << "The stated AMRVAC implementation " << amrvac_version << " is not know." << endl;
+			exit(EXIT_FAILURE);
+		}
+		// check if the resulting blocks correspond to the expected number of leafs
 		if (block_info.size() != nleafs)
 		{
 			cerr << "block_info.size() is " << block_info.size() << " and does not match nleafs=" << nleafs << endl;
