@@ -45,7 +45,7 @@ void loopthroughleafs(vector<bool> forest, int & forestposition, int & level, co
 // to convert the forest to physical units, we need some data from the amrvac.par file
 // this is the routine to read it in
 // the relevant information is stored in nxlone, xprobmin, xprobmax, vectors of length ndim
-void read_amrvac_par_file(char* amrvacpar, const int ndim, vector<int> & nxlone, vector<double> & xprobmin, vector<double> & xprobmax)
+void read_amrvac_par_file(const char* amrvacpar, const int ndim, vector<int> & nxlone, vector<double> & xprobmin, vector<double> & xprobmax)
 {
 		nxlone.resize(ndim);
 		xprobmin.resize(ndim);
@@ -110,7 +110,7 @@ void read_amrvac_par_file(char* amrvacpar, const int ndim, vector<int> & nxlone,
 		}
 }
 
-FoMo::FoMoObject read_amrvac_dat_file(char* datfile, char* amrvacpar, string amrvac_version, const int gamma_eqparposition, const double n_unit, const double Teunit, const double L_unit)
+FoMo::FoMoObject read_amrvac_dat_file(const char* datfile, const char* amrvacpar, string amrvac_version, const int gamma_eqparposition, const double n_unit, const double Teunit, const double L_unit)
 {
 	// Initialize the FoMo object
 	FoMo::FoMoObject Object;
@@ -263,6 +263,7 @@ FoMo::FoMoObject read_amrvac_dat_file(char* datfile, char* amrvacpar, string amr
 			exit (EXIT_FAILURE);
 		}
 		
+		double V_unit = sqrt(R_spec*Teunit); //         velocity
 		// loop through nleafs blocks and load into FoMoObject
 		for (int i=0; i<nleafs; i++)
 		{
@@ -276,7 +277,6 @@ FoMo::FoMoObject read_amrvac_dat_file(char* datfile, char* amrvacpar, string amr
 				localcellsize.push_back(cellsize.at(j)/pow(2,(block_info.at(i).at(0)-1)));
 			}
 			
-			double V_unit = sqrt(R_spec*Teunit); //         velocity
 			// loop over nglev1 cells in block
 			for (int k=0; k<nglev1; k++)
 			{

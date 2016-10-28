@@ -4,8 +4,8 @@
 #include <vector>
 
 // definitions from read_amrvac_files.cpp
-void read_amrvac_par_file(char* amrvacpar, const int ndim, std::vector<int> &nxlone, std::vector<double> &xprobmin, std::vector<double> &xprobmax);
-FoMo::FoMoObject read_amrvac_dat_file(char* datfile, char* amrvacpar, std::string amrvac_version, const int gamma_eqparposition, const double n_unit, const double Teunit, const double L_unit);
+void read_amrvac_par_file(const char* amrvacpar, const int ndim, std::vector<int> &nxlone, std::vector<double> &xprobmin, std::vector<double> &xprobmax);
+FoMo::FoMoObject read_amrvac_dat_file(const char* datfile, const char* amrvacpar, std::string amrvac_version, const int gamma_eqparposition, const double n_unit, const double Teunit, const double L_unit);
 
 // definitions for Morton curves
 // Morton curve using a simple for loop
