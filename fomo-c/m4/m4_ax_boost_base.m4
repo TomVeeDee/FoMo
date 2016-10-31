@@ -107,7 +107,7 @@ if test "x$want_boost" = "xyes"; then
                 fi
         done
 	if test -d "$ac_boost_path"/stage/lib ; then
-		BOOST_LDFLAGS="-L$ac_boost_path/stage/lib"
+		BOOST_LDFLAGS="-L$ac_boost_path/stage/lib -Wl,-rpath -Wl,$ac_boost_path/stage/lib"
 	fi
     elif test "$cross_compiling" != yes; then
         for ac_boost_path_tmp in /usr /usr/local /opt /opt/local ; do
