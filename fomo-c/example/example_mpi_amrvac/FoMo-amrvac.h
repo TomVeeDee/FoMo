@@ -8,6 +8,7 @@ void read_amrvac_par_file(const char* amrvacpar, const int ndim, std::vector<int
 FoMo::FoMoObject read_amrvac_dat_file(const char* datfile, const char* amrvacpar, std::string amrvac_version, const int gamma_eqparposition, const double n_unit, const double Teunit, const double L_unit);
 
 // definitions for Morton curves
+// implementations copied from http://www.forceflow.be/2013/10/07/morton-encodingdecoding-through-bit-interleaving-implementations/
 // Morton curve using a simple for loop
 inline uint64_t mortonEncode_for(unsigned int x, unsigned int y, unsigned int z){
     uint64_t answer = 0;

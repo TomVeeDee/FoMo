@@ -75,11 +75,17 @@ AC_CHECK_HEADERS([cstdlib])
 AC_CHECK_HEADERS([iomanip])
 AC_CHECK_HEADERS([map])
 AC_CHECK_HEADERS([cassert])
+AC_CHECK_HEADERS([climits])
 
 AX_BOOST_BASE([1.54])
+CPPFLAGS="$CPPFLAGS $BOOST_CPPFLAGS"
+LDFLAGS="$LDFLAGS $BOOST_LDFLAGS"
 AC_CHECK_HEADER(boost/progress.hpp,[],[AC_MSG_ERROR(Boost progress header not found)])
 AC_CHECK_HEADER(boost/geometry.hpp,[],[AC_MSG_ERROR(Boost geometry header not found)])
 AC_CHECK_HEADER(boost/geometry/index/rtree.hpp,[],[AC_MSG_ERROR(Boost rtree header not found)],[#include <iostream>])
+AC_CHECK_HEADER(boost/regex.hpp,[],[AC_MSG_ERROR(Boost regex header not found)])
+AC_CHECK_HEADER(boost/algorithm/string/replace.hpp,[],[AC_MSG_ERROR(Boost replace header not found)])
+AC_CHECK_HEADER(boost/filesystem/path.hpp,[],[AC_MSG_ERROR(Boost path header not found)])
 PKG_PROG_PKG_CONFIG
 #check if MPI is available
 if test "a$mpi" = "ayes" ; then
@@ -92,7 +98,7 @@ AC_ARG_WITH([cgal],
 	    [AS_HELP_STRING([--with-cgal=yes/no],
 			    [link with CGAL for Delaunay triangulation for interpolation @<:@default=yes@:>@])],
 	    [cgal=$withval],
-	    [cgal=yes])
+	    [cgal=no])
 if test "a$cgal" = "ayes" ; then
 	AC_CHECK_HEADERS([CGAL/Delaunay_triangulation_2.h],[],AC_MSG_ERROR([CGAL Delaunay headers not found]))
 	#AC_SEARCH_LIBS(a_function_what?,[CGAL],[],AC_MSG_ERROR([CGAL libraries not found]))
