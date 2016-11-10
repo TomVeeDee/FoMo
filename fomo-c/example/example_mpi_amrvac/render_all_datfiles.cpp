@@ -51,6 +51,10 @@ int main(int argc, char* argv[])
 	string amrvac_version, compstring, parstring;
 	int gamma_eqparposition;
 	double n_unit, Teunit, L_unit;
+	
+	double pi=4*atan(1.);
+	vector<double> bangles,langles;
+
 	// parse options to the program
 	po::options_description desc("Allowed options");
 	desc.add_options()
@@ -62,6 +66,8 @@ int main(int argc, char* argv[])
 		("n_unit,n", po::value<double>(&n_unit)->default_value(1.),"set value for de-normalisation of density to number density (code units to cm^-3)")
 		("T_unit,T", po::value<double>(&Teunit)->default_value(1.),"set value for de-normalisation of temperature (code units to K)")
 		("L_unit,L", po::value<double>(&L_unit)->default_value(1.),"set value for de-normalisation of distances (code units to Mm)")
+		("langles,l", po::value<vector<double>>(&langles)->multitoken(),"set l angles to rotate around z-axis (radians), multiple values possible")
+		("bangles,b", po::value<vector<double>>(&bangles)->multitoken(),"set b angles to rotate around y-axis (radians), multiple values possible")
 		;
 		
 	po::variables_map vm;
@@ -72,22 +78,27 @@ int main(int argc, char* argv[])
 		cout << desc << "\n";
 		return 1;
 	}
+
+	if (bangles.size()==0 || langles.size()==0)
+	{
+		if (langles.size()==0) cout << "No l angles specified! No rendering will be performed." << endl;
+		if (bangles.size()==0) cout << "No b angles specified! No rendering will be performed." << endl;
+	}
 	
 	// search for files that contain string compstring
 	// first find the path of the files
 	// split compstring into path + "/" + regex
-	string pathstring, regexstring;
+	string pathstring;
 	size_t lastslash = compstring.find_last_of("/");
 	if (lastslash == string::npos)
 	{
 		// there is no slash in the compstring
 		pathstring=".";
-		regexstring=compstring;
+		compstring="./"+compstring;
 	}
 	else
 	{
 		pathstring = compstring.substr(0,lastslash);
-		regexstring = compstring.substr(lastslash+1);
 	}
 	
 	boost::filesystem::directory_iterator end_itr; // default construction yields past-the-end
@@ -98,14 +109,10 @@ int main(int argc, char* argv[])
 		{
 			string filename=itr->path().string();
 			filelist.push_back( filename );
-			// cout << "frame " << filelist.size() << " read from " << filename << endl;
 		}
 	}
 	int nframes=filelist.size();
-	
-	double pi=4*atan(1.);
-	vector<double> bangles={0.,pi/4,pi/2};
-	vector<double> langles={pi/2};
+	if (nframes==0) cout << "No files found." << endl;
 	
 	// Initialize the FoMo object
 	FoMo::FoMoObject Object;
