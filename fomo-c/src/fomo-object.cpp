@@ -325,7 +325,9 @@ void FoMo::FoMoObject::render(const std::vector<double> lvec, const std::vector<
 			exit(EXIT_FAILURE);
 			break;
 	}
-	
+
+	tmprender.setrendermethod(rendering.readrendermethod());
+	tmprender.setobservationtype(rendering.readobservationtype());
 	this->rendering=tmprender;
 }
 
