@@ -74,7 +74,7 @@ for i=0,num_arrte-1 do arr_te[lgne_sort[i]] = interpol(arr_gte,g_logte,logte_sor
 
 for i=0,num_arrne-1 do begin
    interp_goft[lgne_sort[i]] = interpolate(goft_mat,arr_ne[lgne_sort[i]],arr_te[lgne_sort[i]],/grid)
-   print,string(13b)+' % finished: ',float(i)*100./(num_arrne-1),format='(a,f4.0,$)'
+;   print,string(13b)+' % finished: ',float(i)*100./(num_arrne-1),format='(a,f4.0,$)'
 endfor
 emission_goft[lgne_sort] = interp_goft[lgne_sort] * ne_s[lgne_sort]^2
 
