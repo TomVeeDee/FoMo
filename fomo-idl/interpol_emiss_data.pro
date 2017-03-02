@@ -62,21 +62,14 @@ lookup_goft,ion=ion,w0=w0,gotdir=gotdir,n_e_lg=g_logne,logt=g_logte,goft_mat=gof
 
 logne = alog10(ne_s)
 logte = alog10(te)
-lgne_sort = sort(logne)
-logne_sorted = logne[lgne_sort] 
-logte_sorted = logte[lgne_sort] 
-arr_ne = logne_sorted*0. & num_arrne = n_elements(arr_ne)
-arr_gne = findgen(n_elements(g_logne))
-arr_te = logte_sorted*0. & num_arrte = n_elements(arr_te)
-arr_gte = findgen(n_elements(g_logte))
-for i=0,num_arrne-1 do arr_ne[lgne_sort[i]] = interpol(arr_gne,g_logne,logne_sorted[i])
-for i=0,num_arrte-1 do arr_te[lgne_sort[i]] = interpol(arr_gte,g_logte,logte_sorted[i])
 
-for i=0,num_arrne-1 do begin
-   interp_goft[lgne_sort[i]] = interpolate(goft_mat,arr_ne[lgne_sort[i]],arr_te[lgne_sort[i]],/grid)
-;   print,string(13b)+' % finished: ',float(i)*100./(num_arrne-1),format='(a,f4.0,$)'
-endfor
-emission_goft[lgne_sort] = interp_goft[lgne_sort] * ne_s[lgne_sort]^2
+;interpolation
+goft_mat_size = size(goft_mat)
+logne_ind = interpol(findgen(goft_mat_size(1)), g_logne, logne)
+logte_ind = interpol(findgen(goft_mat_size(2)), g_logte, logte)
+emission_goft =  interpolate(goft_mat,logne_ind,logte_ind, cubic = -0.5) * ne_s^2
+;end of interpolation
+
 
 if keyword_set(sav) eq 1 then begin
    ntstep = string(tstep,"(i4)")
