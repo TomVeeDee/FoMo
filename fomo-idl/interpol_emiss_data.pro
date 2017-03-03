@@ -6,7 +6,7 @@ if keyword_set(ion) eq 0 then begin
    return
 endif
 
-; Performs bilinear interpolation to given temperature and density
+; Performs bicubic interpolation to given temperature and density
 ; points based on a given G(T,n) contribution function for a specific
 ; line transition (or AIA filter), and returns emissivity function (G(t,n)*ne^2). 
 
