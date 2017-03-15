@@ -124,6 +124,8 @@ void FoMo::GoftCube::writegoftcube(const std::string filename)
 	// write out goftcube to file "filename"
 	int commrank;
 	std::string space=" ";
+	size_t chiantisize=chiantifile.size();
+	size_t abundsize=abundfile.size();
 #ifdef HAVEMPI
         MPI_Comm_rank(MPI_COMM_WORLD,&commrank);
 #else
@@ -137,22 +139,24 @@ void FoMo::GoftCube::writegoftcube(const std::string filename)
 			int nvars = this->readnvars();
 			int dim = this->readdim();
 			int ng = this->readngrid();
-			out << dim << std::endl;
-			out << ng << std::endl;
-			out << nvars << std::endl;
-			out << this->readchiantifile() << std::endl;
-			out << this->readabundfile() << std::endl;
+			out.write(reinterpret_cast<const char*>(&dim),sizeof(dim));
+			out.write(reinterpret_cast<const char*>(&ng),sizeof(ng));
+			out.write(reinterpret_cast<const char*>(&nvars),sizeof(nvars));
+			out.write(reinterpret_cast<const char*>(&chiantisize),sizeof(chiantisize));
+			out.write(chiantifile.c_str(),chiantisize);
+			out.write(reinterpret_cast<const char*>(&abundsize),sizeof(abundsize));
+			out.write(abundfile.c_str(),abundsize);
+			
 			for (int j=0; j<ng; j++)
 			{
 				for (int i=0; i<dim; i++)
 				{ 
-					out << grid[i][j] << space;
+					out.write(reinterpret_cast<const char*>(&grid[i][j]),sizeof(grid[i][j]));
 				}
 				for (int i=0; i<nvars; i++)
 				{
-					out << vars[i][j] << space;
+					out.write(reinterpret_cast<const char*>(&vars[i][j]),sizeof(vars[i][j]));
 				}
-				out << std::endl;
 			}
 		}
 		else std::cerr << "Unable to write to " << filename << std::endl;
