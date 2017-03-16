@@ -7,4 +7,5 @@ autoconf
 autoheader 
 automake --add-missing 
 CXXFLAGS="-O2 -g -Wall -march=core2 -fopenmp" ./configure --prefix=`pwd` --libdir=`pwd` --includedir=`pwd` --bindir=`pwd`
+# on ESAT machines, it may be necessary to add --with-boost=/users/cpa/tomvd/extrasoft/boost/boost_1_61_0
 

@@ -80,7 +80,7 @@ FoMo::tphysvar goft(const FoMo::tphysvar logT, const FoMo::tphysvar logrho, cons
 	g.resize(ng);
 	std::cout << "Doing G(T) interpolation... " << std::flush;
 
-	unsigned int floortemp, ceiltemp, rhoindex,goftindex;
+	int floortemp, ceiltemp, rhoindex,goftindex;
 	double res, x1, x2, y1, y2;
 
 #ifdef _OPENMP

@@ -99,13 +99,16 @@ if test "x$want_boost" = "xyes"; then
     dnl this location ist chosen if boost libraries are installed with the --layout=system option
     dnl or if you install boost with RPM
     if test "$ac_boost_path" != ""; then
-        BOOST_CPPFLAGS="-I$ac_boost_path/include"
+        BOOST_CPPFLAGS="-I$ac_boost_path/"
         for ac_boost_path_tmp in $libsubdirs; do
                 if test -d "$ac_boost_path"/"$ac_boost_path_tmp" ; then
                         BOOST_LDFLAGS="-L$ac_boost_path/$ac_boost_path_tmp"
                         break
                 fi
         done
+	if test -d "$ac_boost_path"/stage/lib ; then
+		BOOST_LDFLAGS="-L$ac_boost_path/stage/lib -Wl,-rpath -Wl,$ac_boost_path/stage/lib"
+	fi
     elif test "$cross_compiling" != yes; then
         for ac_boost_path_tmp in /usr /usr/local /opt /opt/local ; do
             if test -d "$ac_boost_path_tmp/include/boost" && test -r "$ac_boost_path_tmp/include/boost"; then
