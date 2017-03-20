@@ -99,10 +99,10 @@ if test "x$want_boost" = "xyes"; then
     dnl this location ist chosen if boost libraries are installed with the --layout=system option
     dnl or if you install boost with RPM
     if test "$ac_boost_path" != ""; then
-        BOOST_CPPFLAGS="-I$ac_boost_path/"
+        BOOST_CPPFLAGS="-I$ac_boost_path/ -I$ac_boost_path/include"
         for ac_boost_path_tmp in $libsubdirs; do
                 if test -d "$ac_boost_path"/"$ac_boost_path_tmp" ; then
-                        BOOST_LDFLAGS="-L$ac_boost_path/$ac_boost_path_tmp"
+                        BOOST_LDFLAGS="-L$ac_boost_path/$ac_boost_path_tmp -Wl,-rpath -Wl,$ac_boost_path/$ac_boost_path_tmp"
                         break
                 fi
         done
