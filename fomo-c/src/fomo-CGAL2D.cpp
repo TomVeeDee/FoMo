@@ -250,6 +250,7 @@ namespace FoMo
 				ss << outfile;
 				ss << "l";
 				ss << std::setfill('0') << std::setw(3) << *lit/pi*180.;
+				ss << ".txt";
 				rendercube.writegoftcube(ss.str());
 				ss.str("");
 			}

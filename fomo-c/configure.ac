@@ -76,6 +76,7 @@ AC_CHECK_HEADERS([iomanip])
 AC_CHECK_HEADERS([map])
 AC_CHECK_HEADERS([cassert])
 AC_CHECK_HEADERS([climits])
+AC_CHECK_HEADERS([bitset])
 
 AX_BOOST_BASE([1.54])
 CPPFLAGS="$CPPFLAGS $BOOST_CPPFLAGS"
@@ -86,6 +87,10 @@ AC_CHECK_HEADER(boost/geometry/index/rtree.hpp,[],[AC_MSG_ERROR(Boost rtree head
 AC_CHECK_HEADER(boost/regex.hpp,[],[AC_MSG_ERROR(Boost regex header not found)])
 AC_CHECK_HEADER(boost/algorithm/string/replace.hpp,[],[AC_MSG_ERROR(Boost replace header not found)])
 AC_CHECK_HEADER(boost/filesystem/path.hpp,[],[AC_MSG_ERROR(Boost path header not found)])
+AC_CHECK_HEADER(boost/iostreams/filtering_streambuf.hpp,[],[AC_MSG_ERROR(Boost filtering_streambuf header not found)])
+AC_CHECK_HEADER(boost/iostreams/copy.hpp,[],[AC_MSG_ERROR(Boost copy header not found)])
+AC_CHECK_HEADER(boost/iostreams/filter/gzip.hpp,[],[AC_MSG_ERROR(Boost zlib header not found)])
+
 PKG_PROG_PKG_CONFIG
 #check if MPI is available
 if test "a$mpi" = "ayes" ; then

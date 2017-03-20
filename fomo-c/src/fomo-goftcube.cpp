@@ -8,7 +8,7 @@
  * A tgrid is created with length indim. The number of grid points and variables is set to 0. The default
  * chiantifile is "../chiantitables/goft_table_fe_12_0194_abco.dat", and the default abundance
  * file is "sun_coronal_2012_schmelz.abund" (which is available as internal variable in the code). The wavelength
- * for this spectral line is set accordingly.
+ * for this spectral line is set accordingly. The writeout options are set to text file only. 
  * @param indim The dimension of the GoftCube is set to indim. It defaults to 3.
  */
 FoMo::GoftCube::GoftCube(const int indim)
@@ -21,6 +21,7 @@ FoMo::GoftCube::GoftCube(const int indim)
 	abundfile="/empty";
 //	ion="fe_12";
 	lambda0=193.509;
+	writeoptions=std::bitset<noptions>(std::string("0010"));
 }
 
 /**

@@ -1,5 +1,6 @@
 #include <vector>
 #include <string>
+#include <bitset>
 #ifndef FOMO_H
 #define FOMO_H 
 /**
@@ -16,7 +17,7 @@ namespace FoMo
 	/**
 	 * The type tcoord is defined as a vector of doubles. It has length DataCube.ng.
 	 */
-	typedef std::vector<double> tcoord;
+	typedef std::vector<float> tcoord;
 	/**
 	 * The type tgrid is the type of a grid. It is a vector of ::tcoord. It has length DataCube.dim.
 	 */
@@ -24,7 +25,7 @@ namespace FoMo
 	/**
 	 * The type tphysvar stores the physical variables in the datapoints in a ::tcoord. It has length DataCube.ng.
 	 */
-	typedef std::vector<double> tphysvar;
+	typedef std::vector<float> tphysvar;
 	/**
 	 * The type tvars is a vector of ::tphysvar. It has length DataCube.nvars.
 	 */
@@ -72,6 +73,8 @@ namespace FoMo
 		void push_back(std::vector<double> coordinate, std::vector<double> variables);
 	};
 	
+	const int noptions=4; // the number of write options for a goftcube
+	
 	/**
 	 * @brief GoftCube contains the processed data, ready for rendering.
 	 * 
@@ -83,9 +86,8 @@ namespace FoMo
 	protected:
 		std::string chiantifile;
 		std::string abundfile;
-//		std::string ion;
 		double lambda0;
-//		void setion(const std::string ion);
+		std::bitset<noptions> writeoptions;
 	public:
 		GoftCube(const int = 3);
 		GoftCube(DataCube datacube);
@@ -95,12 +97,16 @@ namespace FoMo
 		std::string readabundfile();
 		double readlambda0();
 		void setlambda0(const double lambda0);
-//		std::string readion();
 		// keep the legacy ability to write Delaunay_triangulation
 //		void writegoftcube(const std::string, const Delaunay_triangulation_3 *);
 //		void readgoftcube(const std::string, Delaunay_triangulation_3*);
 		void writegoftcube(const std::string);
 		void readgoftcube(const std::string);
+		void setwriteoptions(std::bitset<noptions> options);
+		void setwriteoutbinary(const bool = true);
+		void setwriteouttext(const bool = true);
+		void setwriteoutzip(const bool = true);
+		void setwriteoutdeletefiles(const bool = true);
 	};
 	
 	/**

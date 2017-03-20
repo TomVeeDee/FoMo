@@ -252,6 +252,7 @@ namespace FoMo
 				ss << std::setfill('0') << std::setw(3) << *lit/pi*180.;
 				ss << "b";
 				ss << std::setfill('0') << std::setw(3) << *bit/pi*180.;
+				ss << ".txt";
 				rendercube.writegoftcube(ss.str());
 				ss.str("");
 			}
