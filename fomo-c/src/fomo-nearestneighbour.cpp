@@ -78,6 +78,8 @@ FoMo::RenderCube nearestneighbourinterpolation(FoMo::GoftCube goftcube, const do
 	for (int i=0; i<ng; i++)
 	{
 		for (int j=0; j<dim; j++)	gridpoint[j]=grid[j][i];
+		// if dim==2, then set all z-coordinates to 0. 
+		if (dim==2) gridpoint.push_back(0.);
 		xacc[i]=gridpoint[0]*cos(b)*cos(l)-gridpoint[1]*cos(b)*sin(l)-gridpoint[2]*sin(b);// rotated grid
 		yacc[i]=gridpoint[0]*sin(l)+gridpoint[1]*cos(l);
 		zacc[i]=gridpoint[0]*sin(b)*cos(l)-gridpoint[1]*sin(b)*sin(l)+gridpoint[2]*cos(b);
