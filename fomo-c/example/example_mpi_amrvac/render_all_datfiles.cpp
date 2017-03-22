@@ -135,8 +135,11 @@ int main(int argc, char* argv[])
 		Object.setobservationtype(FoMo::Spectroscopic);
 		Object.setchiantifile("../chiantitables/goft_table_fe_12_0194_abco.dat");
 		stringstream ss;
-		ss << filename << ".fomo";
+		ss << filename << ".fomo.";
 		Object.setoutfile(ss.str());
+		Object.setwriteoutbinary();
+		Object.setwriteoutzip();
+		Object.setwriteoutdeletefiles();
 		Object.render(langles,bangles);
 	}
 }
