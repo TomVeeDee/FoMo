@@ -24,6 +24,7 @@ FoMo::RenderCube::RenderCube(FoMo::GoftCube goftcube)
 //	ion=goftcube.readion();
 	lambda0=goftcube.readlambda0();
 	grid=goftcube.readgrid();
+	writeoptions=goftcube.getwriteoptions();
 	x_pixel=101;
 	y_pixel=102;
 	z_pixel=300;

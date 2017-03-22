@@ -1,19 +1,18 @@
 function readgoftcube,emissionsave,data
 
-; reads the data in emissionsave files, not the triangulation
-; invoke as data=readgoftcube('fileyouwanttoread')
-; data will be a 4xn array, with n the number of grid points in x,y,\lambda
+fileparts=strsplit(emissionsave,'.',/extract)
 
-openr,lun,emissionsave,/get_lun
-header=lonarr(3)
-readf,lun,header
-stringheader=strarr(2)
-readf,lun,stringheader
-data=fltarr(header[0]+header[2],header[1])
-readf,lun,data
+compress=0
+if (fileparts[-1] eq 'gz') then begin
+	compress=1
+endif
 
-close,lun
-free_lun,lun
+case fileparts[-1-compress] of 
+	'txt': data=readgoftcube_txt(emissionsave,compress=compress)
+	'dat': data=readgoftcube_dat(emissionsave,compress=compress)
+	else: print, 'Extension ', fileparts[-1-compress],' not recognised'
+endcase
+
 return,data
 
 end

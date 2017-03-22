@@ -102,6 +102,7 @@ namespace FoMo
 //		void readgoftcube(const std::string, Delaunay_triangulation_3*);
 		void writegoftcube(const std::string);
 		void readgoftcube(const std::string);
+		std::bitset<noptions> getwriteoptions();
 		void setwriteoptions(std::bitset<noptions> options);
 		void setwriteoutbinary(const bool = true);
 		void setwriteouttext(const bool = true);
@@ -206,6 +207,11 @@ namespace FoMo
 		FoMoObservationType readobservationtype();
 		void setresolution(const int & x_pixel, const int & y_pixel, const int & z_pixel, const int & lambda_pixel, const double & lambda_width);
 		void readresolution(int & x_pixel, int & y_pixel, int & z_pixel, int & lambda_pixel, double & lambda_width);
+		void setwriteoptions(std::bitset<noptions> options);
+		void setwriteoutbinary(const bool = true);
+		void setwriteouttext(const bool = true);
+		void setwriteoutzip(const bool = true);
+		void setwriteoutdeletefiles(const bool = true);
 	};
 }
 

@@ -247,6 +247,17 @@ void zipfile(std::bitset<FoMo::noptions> woptions, std::string root)
 }
 
 /**
+ * @brief This member returns the current writeoptions
+ * 
+ * The current writeoptions are returned as a std::bitset<FoMo::noptions>.
+ * @return The current writeoptions.
+ */
+std::bitset<FoMo::noptions> FoMo::GoftCube::getwriteoptions()
+{
+	return writeoptions;
+}
+
+/**
  * @brief This members sets the output options
  * 
  * The valid options are given as a std::bitset<4>. The options are bits, which can be combined if needed, e.g. to zip a binary output file. 

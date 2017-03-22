@@ -99,6 +99,7 @@ int main(int argc, char* argv[])
 	cout << "It was done using the rendermethod " << rendercube.readrendermethod() << endl;
 	cout << "with a resolution of " << nz << " along the line-of-sight." << endl;
 	// This writes out the rendering results to the file fomo-output.dat.gz.
+	// These options could be set before Object.render(), too. Then the output would have been written to fomo-example-out.l90b90.dat.gz
 	// This option turns on binary writeout.
 	rendercube.setwriteoutbinary();
 	// This says that it needs to be zipped.

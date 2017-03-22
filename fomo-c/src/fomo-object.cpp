@@ -226,6 +226,68 @@ void FoMo::FoMoObject::setoutfile(const std::string instring)
 	outfile=instring;
 }
 
+/**
+ * @brief This members sets the output options
+ * 
+ * The valid options are given as a std::bitset<4>. The options are bits, which can be combined if needed, e.g. to zip a binary output file. 
+ * options[0] says if a binary file should be written, options[1] states if a text file should be written, options[2] declares if the 
+ * previous output files should be zipped. Options[4] says if the non-zipped files should be deleted. 
+ * @param options A bitset<4> of options to be set. 
+ */
+void FoMo::FoMoObject::setwriteoptions(std::bitset<FoMo::noptions> woptions)
+{
+	rendering.setwriteoptions(woptions);
+	goftcube.setwriteoptions(woptions);
+}
+
+/**
+ * @brief This member forces the writeout of a binary output
+ * 
+ * If writebinary is true, the output will be written to a binary file (with extension .dat)
+ * @param writebinary If true, a binary output will be written. If false, it will not be written. 
+ */
+void FoMo::FoMoObject::setwriteoutbinary(const bool writebinary)
+{
+	rendering.setwriteoutbinary(writebinary);
+	goftcube.setwriteoutbinary(writebinary);
+}
+
+/**
+ * @brief This member forces the writeout of a text output
+ * 
+ * If writetext is true (default), the output will be written to a text file (with extension .txt)
+ * @param writetext If true, a text output will be written. If false, it will not be written.
+ */
+void FoMo::FoMoObject::setwriteouttext(const bool writetext)
+{
+	rendering.setwriteouttext(writetext);
+	goftcube.setwriteouttext(writetext);
+}
+
+/**
+ * @brief This member forces the zipping of the output files
+ * 
+ * If writezip is true, the output files (in binary .dat or text .txt) will be zipped. 
+ * @param writezip If true, the output files will be zipped. If false, they remain in their original form.
+ */
+void FoMo::FoMoObject::setwriteoutzip(const bool writezip)
+{
+	rendering.setwriteoutzip(writezip);
+	goftcube.setwriteoutzip(writezip);
+}
+
+/**
+ * @brief This member forces the deletion of files that were previously zipped
+ * 
+ * If deletefiles is true, the previous output files (binary .dat or text .txt) will be removed after a .dat.zip or .txt.zip will have been created. 
+ * @param deletefiles If true, previous files will be removed. If false, they will be kept. 
+ */
+void FoMo::FoMoObject::setwriteoutdeletefiles(const bool deletefiles)
+{
+	rendering.setwriteoutdeletefiles(deletefiles);
+	goftcube.setwriteoutdeletefiles(deletefiles);
+}
+
 /** 
  * I think it would be great if we could document these in the manual. I'm not sure how to do  that.
  */
@@ -292,8 +354,10 @@ void FoMo::FoMoObject::render(const std::vector<double> lvec, const std::vector<
 	double lambda_width;
 	this->rendering.readresolution(x_pixel,y_pixel,z_pixel,lambda_pixel,lambda_width);
 	
+	std::bitset<FoMo::noptions> woptions=this->goftcube.getwriteoptions();
 	tmpgoft=FoMo::emissionfromdatacube(this->datacube,this->rendering.readchiantifile(),this->rendering.readabundfile(),this->rendering.readobservationtype());
 	this->goftcube=tmpgoft;
+	this->goftcube.setwriteoptions(woptions);
 	
 	switch (RenderMap[rendering.readrendermethod()])
 	{
