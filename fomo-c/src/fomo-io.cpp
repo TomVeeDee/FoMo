@@ -2,6 +2,7 @@
 #include "FoMo-internal.h"
 #include <fstream>
 #include <iostream>
+#include <iomanip>
 #include <cstdlib>
 #include <boost/iostreams/filtering_streambuf.hpp>
 #include <boost/iostreams/copy.hpp>
@@ -151,6 +152,7 @@ void writegoftcube_txt(FoMo::GoftCube goftcube, const std::string filename)
 						{
 							vars.push_back(goftcube.readvar(i));
 						}
+						out << std::setprecision(8);
                         for (int j=0; j<ng; j++)
                         {
                                 for (int i=0; i<dim; i++)

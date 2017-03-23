@@ -45,6 +45,7 @@ FoMo::GoftCube::GoftCube(FoMo::DataCube incube)
 	abundfile="/empty";
 //	ion="fe_12";
 	lambda0=193.509;
+	writeoptions=std::bitset<noptions>(std::string("0010"));
 }
 
 /**
