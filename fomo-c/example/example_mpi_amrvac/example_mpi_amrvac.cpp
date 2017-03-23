@@ -50,6 +50,10 @@ int main(int argc, char* argv[])
 	Object.setresolution(x_pixel,y_pixel,z_pixel,lambda_pixel,lambda_width);
 	// determine where the output will be written
 	Object.setoutfile("fomo-example-out.");
+	
+	Object.setwriteoutbinary();
+	Object.setwriteoutzip();
+	Object.setwriteoutdeletefiles();
 	/// [Set rendering options]
 	
 	/// [Render]

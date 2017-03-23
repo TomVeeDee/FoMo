@@ -48,9 +48,9 @@ bool MatchTextWithWildcards(const string &text, string wildcardPattern, bool cas
 
 int main(int argc, char* argv[])
 {
-	string amrvac_version, compstring, parstring;
-	int gamma_eqparposition;
-	double n_unit, Teunit, L_unit;
+	string amrvac_version, compstring, parstring, chiantifile;
+	int gamma_eqparposition, x_pixel, y_pixel, z_pixel, lambda_pixel;
+	double n_unit, Teunit, L_unit, lambda_width;
 	
 	double pi=4*atan(1.);
 	vector<double> bangles,langles;
@@ -59,8 +59,8 @@ int main(int argc, char* argv[])
 	po::options_description desc("Allowed options");
 	desc.add_options()
 		("help,h", "produce help message")
-		("file,f", po::value<string>(&compstring)->default_value("\\*.dat"),"search pattern for .dat files (e.g. directory/prefix\\*.dat")
-		("par,p", po::value<string>(&parstring)->default_value("amrvac.par"),"name of amrvac.par file")
+		("file,f", po::value<string>(&compstring)->default_value("\\*.dat"),"search pattern for .dat files (e.g. directory/prefix\\*.dat)")
+		("par,p", po::value<string>(&parstring)->default_value("amrvac.par"),"name and location of amrvac.par file")
 		("version,V", po::value<string>(&amrvac_version)->default_value("gitlab"), "set amrvac version (gitlab or old)")
 		("gamma,g", po::value<int>(&gamma_eqparposition)->default_value(0), "set position of gamma in eqpar vector")
 		("n_unit,n", po::value<double>(&n_unit)->default_value(1.),"set value for de-normalisation of density to number density (code units to cm^-3)")
@@ -68,6 +68,12 @@ int main(int argc, char* argv[])
 		("L_unit,L", po::value<double>(&L_unit)->default_value(1.),"set value for de-normalisation of distances (code units to Mm)")
 		("langles,l", po::value<vector<double>>(&langles)->multitoken(),"set l angles to rotate around z-axis (radians), multiple values possible")
 		("bangles,b", po::value<vector<double>>(&bangles)->multitoken(),"set b angles to rotate around y-axis (radians), multiple values possible")
+		("chiantifile,c", po::value<string>(&chiantifile)->default_value("../chiantitables/goft_table_fe_12_0194_abco.dat"), "set path to emissivity tables of Chianti")
+		("x_pixel,x", po::value<int>(&x_pixel)->default_value(10),"set x resolution of rendering")
+		("y_pixel,y", po::value<int>(&y_pixel)->default_value(10),"set y resolution of rendering")
+		("z_pixel,z", po::value<int>(&z_pixel)->default_value(500),"set z resolution of rendering, i.e. along the line-of-sight")
+		("lambda_pixel", po::value<int>(&lambda_pixel)->default_value(50),"set lambda resolution of rendering for spectroscopic data")
+		("lambda_width", po::value<double>(&lambda_width)->default_value(200000),"set width of wavelength window (in m/s)")
 		;
 		
 	po::variables_map vm;
@@ -83,6 +89,11 @@ int main(int argc, char* argv[])
 	{
 		if (langles.size()==0) cout << "No l angles specified! No rendering will be performed." << endl;
 		if (bangles.size()==0) cout << "No b angles specified! No rendering will be performed." << endl;
+	}
+	
+	if (x_pixel==10 || y_pixel==10 || z_pixel==500)
+	{
+		cout << "Resolutions of renderings have not changed from the default values. They should be set to a value close to the resolution in the input simulation." << endl;
 	}
 	
 	// search for files that contain string compstring
@@ -125,15 +136,8 @@ int main(int argc, char* argv[])
 		Object = read_amrvac_dat_file(filename.c_str(), parstring.c_str(), amrvac_version, gamma_eqparposition, n_unit, Teunit, L_unit);
 		
 		// data is in structure, now start the rendering
-		int x_pixel=149;
-		int y_pixel=64;
-		int z_pixel=500;
-		int lambda_pixel=100;
-		double lambda_width=200000;
 		Object.setresolution(x_pixel, y_pixel, z_pixel, lambda_pixel, lambda_width);
-		Object.setrendermethod("NearestNeighbour");
-		Object.setobservationtype(FoMo::Spectroscopic);
-		Object.setchiantifile("../chiantitables/goft_table_fe_12_0194_abco.dat");
+		Object.setchiantifile(chiantifile);
 		stringstream ss;
 		ss << filename << ".fomo.";
 		Object.setoutfile(ss.str());
