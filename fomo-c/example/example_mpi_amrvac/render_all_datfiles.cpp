@@ -141,6 +141,7 @@ int main(int argc, char* argv[])
 		stringstream ss;
 		ss << filename << ".fomo.";
 		Object.setoutfile(ss.str());
+		Object.setwriteouttext(false);
 		Object.setwriteoutbinary();
 		Object.setwriteoutzip();
 		Object.setwriteoutdeletefiles();

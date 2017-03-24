@@ -51,6 +51,7 @@ int main(int argc, char* argv[])
 	// determine where the output will be written
 	Object.setoutfile("fomo-example-out.");
 	
+	Object.setwriteouttext(false);
 	Object.setwriteoutbinary();
 	Object.setwriteoutzip();
 	Object.setwriteoutdeletefiles();
