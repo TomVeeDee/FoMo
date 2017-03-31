@@ -244,6 +244,32 @@ IDL> gaussfitgoftcube,emiss,lvec,peak=peak,doppler=doppler,sigma=sigma,chisq=chi
 
 Then the peak, int, doppler, sigma, chisq variables are 2D arrays with peak intensity, total intensity, Doppler shift, Doppler width, and chi-squared values. They can be easily visualised with tvscl or surface.
 
+\subsection python How to read in the data from the example into python
+
+Python routines are provided in the python subdirectory to read in FoMo output. Reading in the data from the example can be done with
+
+\code{python}
+>>> from python.readfomo import readgoftcube, regulargoftcube, gaussfitgoftcube
+>>> txtdata=readgoftcube('fomo-output.dat.gz')
+>>> emiss,xvec,yvec,lvec=regulargoftcube(txtdata)
+>>> peak,doppler,sigma,chisq,intens=gaussfitgoftcube(emiss,lvec)
+\endcode
+
+The results are returned as ndarray. peak is the peak intensity, doppler is the Doppler shift (in km/s), sigma is the line width (in \f$\AA{}\f$), chisq is the sum of squares of differences with the Gauss fit, and intens is the integrated line intensity. 
+
+A possible road to visualisation of the result could be
+\code{python}
+>>> import matplotlib.pyplot as pl
+>>> import numpy as np
+>>> import matplotlib.cm as cm
+>>> pl.imshow(peak,extent=(np.amin(xvec),np.amax(xvec),np.amin(yvec),np.amax(yvec)),cmap=cm.hot,aspect='auto')
+>>> pl.title('peak intensity')
+>>> cb=pl.colorbar()
+>>> cb.set_label(r'$ergs\ cm^{-2} s^{-1} sr^{-1} \AA{}^{-1}$')
+>>> pl.show()
+\endcode
+
+\page RenderMethods Documentation on RenderMethods
 \section RenderMethods
 
 The list of currently implemented RenderMethods (to be set with FoMo::FoMoObject.setrendermethod()) can be found in src/fomo-object.cpp.
