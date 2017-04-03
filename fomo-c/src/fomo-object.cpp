@@ -364,6 +364,10 @@ void FoMo::FoMoObject::render(const std::vector<double> lvec, const std::vector<
 	int x_pixel, y_pixel, z_pixel, lambda_pixel;
 	double lambda_width;
 	this->rendering.readresolution(x_pixel,y_pixel,z_pixel,lambda_pixel,lambda_width);
+	if (lambda_pixel <= 1)
+		this->rendering.setobservationtype(Imaging);
+	else
+		this->rendering.setobservationtype(Spectroscopic);
 	
 	std::bitset<FoMo::noptions> woptions=this->goftcube.getwriteoptions();
 	tmpgoft=FoMo::emissionfromdatacube(this->datacube,this->rendering.readchiantifile(),this->rendering.readabundfile(),this->rendering.readobservationtype());

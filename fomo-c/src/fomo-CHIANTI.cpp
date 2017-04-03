@@ -265,13 +265,14 @@ FoMo::GoftCube FoMo::emissionfromdatacube(FoMo::DataCube datacube, std::string c
         if (observationtype == Imaging) // for imaging study 
         {
         
-        if (atoi(ion.c_str())!=int(lambda0+0.5)) 
-          {// check if it is AIA GOFT table
-           std::cerr << "GOFT table is not correct!" << std::endl; 
-           exit(EXIT_FAILURE);
-         }
+        	if (atoi(ion.c_str())!=int(lambda0+0.5)) 
+	        {// check if it is AIA GOFT table
+	                std::cerr << "GOFT table is not correct!" << std::endl; 
+	                exit(EXIT_FAILURE);
+		} 
  
-          fittedwidth=FoMo::operator /(T,T);// =1.0
+	  	for (int i=0; i<fittedwidth.size(); i++)
+			fittedwidth.at(i)=1.;
         }
 
 // Spectral modelling: ne^2 [cm^-3] * G(ne,Te) [erg cm^3 s^1] = emis [erg cm^-3 s^-1] 
