@@ -17,7 +17,7 @@ namespace FoMo
 	/**
 	 * The type tcoord is defined as a vector of doubles. It has length DataCube.ng.
 	 */
-	typedef std::vector<float> tcoord;
+	typedef std::vector<double> tcoord;
 	/**
 	 * The type tgrid is the type of a grid. It is a vector of ::tcoord. It has length DataCube.dim.
 	 */
@@ -25,7 +25,7 @@ namespace FoMo
 	/**
 	 * The type tphysvar stores the physical variables in the datapoints in a ::tcoord. It has length DataCube.ng.
 	 */
-	typedef std::vector<float> tphysvar;
+	typedef std::vector<double> tphysvar;
 	/**
 	 * The type tvars is a vector of ::tphysvar. It has length DataCube.nvars.
 	 */
@@ -192,6 +192,7 @@ namespace FoMo
 		void render(const double = 0, const double = 0); // l and b are arguments
 		void render(const std::vector<double> lvec, const std::vector<double> bvec);
 		void setrenderingdata(tgrid ingrid, tvars invars);
+		FoMo::DataCube readdatacube();
 		FoMo::RenderCube readrendering();
 		FoMo::GoftCube readgoftcube();
 		void setrendermethod(const std::string inrendermethod);

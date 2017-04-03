@@ -51,6 +51,17 @@ std::string FoMo::FoMoObject::readrendermethod()
 }
 
 /**
+ * @brief This routine returns the DataCube of the FoMoObject.
+ * 
+ * FoMoObject.datacube is a private member, thus its access can only be done through this function.
+ * @return The return value is the datacube of the FoMoObject and is of type DataCube. It contains the input simulation.
+ */
+FoMo::DataCube FoMo::FoMoObject::readdatacube()
+{
+	 return datacube;
+}
+
+/**
  * @brief This routine returns the GoftCube of the FoMoObject.
  * 
  * FoMoObject.goftcube is a private member, thus its access can only be done through this function.
