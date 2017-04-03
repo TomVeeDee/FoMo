@@ -13,8 +13,14 @@ nx=N/count
 temp=where(data[1,*] eq data[1,0],count)
 ny=N/count
 
-temp=where(data[2,*] eq data[2,0],count)
-nlambda=N/count
+if (N/nx/ny eq 1) then begin
+	dim=2
+	nlambda=1
+endif else begin
+	dim=3
+	temp=where(data[2,*] eq data[2,0],count)
+	nlambda=N/count
+endelse
 
 xvec=dblarr(nx)
 yvec=dblarr(ny)
@@ -35,8 +41,8 @@ for i=0,N-1 do begin
 	;if ((j eq 0) and (k eq 0)) then lvec[l]=data[2,i]
 	xvec[j]=data[0,i]
 	yvec[k]=data[1,i]
-	lvec[l]=data[2,i]
-	emiss[j,k,l]=data[3,i]
+	if (dim eq 3) then lvec[l]=data[2,i]
+	emiss[j,k,l]=data[dim,i]
 endfor
 
 end
