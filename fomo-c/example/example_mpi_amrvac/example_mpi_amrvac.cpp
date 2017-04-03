@@ -17,9 +17,9 @@ int gamma_eqparposition = 0; // provide the index of the eqpar vector in which t
 double L_unit = 1e8; // length normalisation value
 double L_unitFoMo = 1e6; // (express length unit in Mm for FoMo)
 
-double rho_unit = 1e-12;
-double Teunit = 1e+6;
-double n_unit = rho_unit * 1.204 * 1.e21;
+double rho_unit = 1e-12; // density as kg/m^3
+double Teunit = 1e+6; // temperature to K
+double n_unit = rho_unit * 1.204 * 1.e21; // convert density to number density (in cm^{-3})
 
 int main(int argc, char* argv[])
 {

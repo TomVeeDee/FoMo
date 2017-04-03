@@ -269,6 +269,8 @@ A possible road to visualisation of the result could be
 >>> pl.show()
 \endcode
 
+Code to display the other variables can be found in the python script python/example.py.
+
 \page RenderMethods Documentation on RenderMethods
 \section RenderMethods
 
