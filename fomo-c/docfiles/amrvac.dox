@@ -1,0 +1,101 @@
+/**
+\page amrvac Documentation for AMRVAC usage
+
+\section prereq Prerequisites
+
+In this documentation page, I will assume that FoMo has been compiled using the instructions in \ref Installation. It has been built and installed into
+/path/to/fomo-c. Please move to this directory and do not forget to make install:
+\code{.sh}
+	cd /path/to/fomo-c
+	make -j4 install
+\endcode
+
+To start the rendering of the AMRVAC output, you will need the location of the AMRVAC output files (so-called .dat files). For this example, I am assuming
+they are in /path/to/datfiles. For the sake of simplicity, I will assume that these files are called file0000.dat, file0001.dat, file0002.dat, etc. 
+Moreover, the FoMo code will need some information from the amrvac.par file. Here I assume that this is also in /path/to/datfiles.
+
+\section vacrendering Rendering of datfiles 
+
+The example/example_mpi_amrvac/ directory of the FoMo-tree contains several files to make your life easy. The most basic file is example_mpi_amrvac.cpp. 
+After being compiled (with make install), that program takes two arguments:
+\code{.sh}
+	example/example_mpi_amrvac/example_mpi_amrvac file0000.dat amrvac.par
+\endcode
+The file shows the most simple usage of FoMo on AMRVAC output files. There are a lot of customization options in the file, which the reader can explore
+at their own leasure. 
+
+The more powerful program is example/example_mpi_amrvac/render_all_datfiles.cpp. From the name of this program, you can guess that it will render all datfiles in a given directory.
+Moreover, it has many options, which you can check with:
+\code{.sh}
+	example/example_mpi_amrvac/render_all_datfiles -h
+\endcode
+In that program, all options which were hidden in the example_mpi_amrvac.cpp file are now moved to be parsed as command line options. This allows great
+flexibility and removes the need for compilation after each change of option. 
+
+For rendering the AMRVAC files with the AIA 193 filter and putting the results in a separate directory /path/to/datfiles/aia193, I would run the following
+command
+\code{.sh}
+	example/example_mpi_amrvac/render_all_datfiles -f /path/to/datfiles/file\*.dat -p /path/to/datfiles/amrvac.par -n 1e9 -T 1e6 -L 1e1 -o /path/to/datfiles/aia193 -c ../chiantitables/goft_tables_aia193_abco.dat -x 400 -y 400 -z 600 --lambda_pixel 1 -l 0.524 -b 1.047
+\endcode
+Let me explain these options separately. The first option 
+\code{.sh}
+	-f /path/to/datfiles/file\*.dat
+\endcode 
+tells FoMo that it should render all files matching the given file filter. Please remember to escape file system wildcards such as * or ?, 
+with a preceding \\. Otherwise, you shell may expand the * for you and only one file will be rendered (or worse).\n
+The second option 
+\code{.sh}
+	-p /path/to/datfiles/amrvac.par
+\endcode
+points FoMo to the correct amrvac.par file. \n
+Then there is a list of options which convert the AMRVAC simulation to physical units:
+\code{.sh}
+-n 1e9 -T 1e6 -L 1e1
+\endcode
+The option -n 1e9 says that a density in the simulation of 1 would correspond to \f$1e9 cm^{-3}\f$. The same is true for -T 1e6, which says that a temperature
+of 1 corresponds to 1MK. The length scales are denormalised with -L 1e1, which says that a code unit of 1 corresponds to 10Mm. \n
+The next option
+\code{.sh}
+	-o /path/to/datfiles/aia193
+\endcode
+specifies where the FoMo output should be written. render_all_datfiles will append the filenames with ".fomo.lxxxbxxx.dat.gz", but if the -o or --outpath
+option is given, the resulting files will be written in that path (here /path/to/datfiles/aia193), rather than the path of the AMRVAC datfiles 
+(/path/to/datfiles, which is the default).\n
+The next option 
+\code{.sh}
+	-c ../chiantitables/goft_tables_aia193_abco.dat
+\endcode
+determines which spectral line or passband is used for the rendering. In this example, I am using the AIA 193 passband. If this parameter is not provided, the default FeXII 193.509\f$\AA{}\f$ will be used 
+(../chiantitables/goft_table_fe_12_0194_abco.dat). \n
+The following options determine the quality and resolution of the rendering:
+\code{.sh}
+	-x 400 -y 400 -z 600 --lambda_pixel 1
+\endcode
+This specifies that the resulting rendering should have a resolution of 400 pixels in the x-direction, 400 pixels in the y-direction (both in the imaging
+plane). The -z 600 parameter specifies that the rendering should have 600 discretisations along the line-of-sight. It is recommend to have these parameters
+close to the numerical resolution, to pick up the finest features of the simulation as well. The last parameter --lambda-pixel 1 states that we do not need
+spectral resolution, because we are using the AIA passband for rendering anyway. If a spectral line is chosen instead, I would use --lambda-pixel 30 or 
+--lambda-pixel 100. The width of the spectral window may be adjusted with --lambda-width, which sets the width in m/s (perhaps 200000 would be a good value).\n
+Finally, the angles for rendering are specified:
+\code{.sh}
+-l 0.524 -b 1.047
+\endcode
+These are the angles that are used in formula 2 of the main documentation page. They should be specified in radians. The values here correspond to 
+l=30 degrees and b=60 degrees. These last values are used to complete the output filenames. In this case, they would be file0000.dat.fomo.l030b060.dat.gz.
+With these last options, it is also possible to set a list of values with -l {0.52, 1.04, 1.56} -b {1.04,2.08}, to generate the rendering from 3x2 pairs
+of viewing angles at once.
+
+\section vacpython Processing output to movie
+
+Python scripts are provided to convert the FoMo output into a movie. The script is quite generic, but it allows for customization. The standard code
+will automatically use the correct AIA colour scales for displaying the results. For that, <a href="http://sunpy.org">sunpy</a> is needed. Once you have 
+installed that you can run the movie generator with
+\code{.sh}
+	cd python
+	python amrvac_animation.py /path/to/datfiles/aia193/file\*.fomo.l030b060.dat.gz
+\endcode
+Once again, do not forget to escape the wildcard in the filenames. The script will write the movie to demo.mp4. Let me repeat that this script can be
+customized to each user's needs.
+
+
+*/

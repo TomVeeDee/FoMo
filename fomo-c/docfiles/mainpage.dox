@@ -109,6 +109,10 @@ Alternatively, you may extract the FoMo tarball (<a href='https://github.com/Tom
 \code{.sh}
 	tar -xvf FoMo-VERSION.tar.gz
 \endcode
+After this, move to the fomo-c subdirectory.
+\code{.sh}
+	cd fomo-c
+\endcode
 
 
 \subsection compilation Compilation
