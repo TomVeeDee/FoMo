@@ -29,7 +29,7 @@ def readgoftcube_txt(filename,compress=0):
     # data[:][3] = intensity
     
     f.close()
-    return np.array(data)
+    return np.array(data),chiantifile
     
 def readgoftcube_dat(filename,compress=0):
     if (compress):
@@ -63,34 +63,48 @@ def readgoftcube_dat(filename,compress=0):
             data[i][j]=struct.unpack('f',float_in)[0]
     
     f.close()
-    return np.array(data)
+    return np.array(data),chiantifile
     
-def readgoftcube(filename):
+def readgoftcubechianti(filename):
     parts=filename.split(".")
     compress=0
     if parts[-1]=="gz":
         compress=1
     
     if parts[-1-compress]=="txt":
-        data=readgoftcube_txt(filename,compress=compress)
+        data,chiantifile=readgoftcube_txt(filename,compress=compress)
     
     if parts[-1-compress]=="dat":
-        data=readgoftcube_dat(filename,compress=compress)
+        data,chiantifile=readgoftcube_dat(filename,compress=compress)
         
     # print len(data), len(data[:][0])
         
+    return data,chiantifile
+
+def readgoftcube(filename):
+    data,chiantifile=readgoftcubechianti(filename)
     return data
     
 def regulargoftcube(data):
     ng = len(data)
     nx = ng/np.shape(np.where(data[:,0]==data[0,0]))[1]
     ny = ng/np.shape(np.where(data[:,1]==data[0,1]))[1]
-    nl = ng/np.shape(np.where(data[:,2]==data[0,2]))[1]
+    if (ng/nx/ny == 1):
+	    nl=1
+	    dim=2
+    else:
+            nl = ng/np.shape(np.where(data[:,2]==data[0,2]))[1]
+	    dim=3
     
     xvec=np.empty(nx)
     yvec=np.empty(ny)
-    lvec=np.empty(nl)
-    emiss=np.empty([nx,ny,nl])
+    emiss=np.empty([nx,ny])
+    lvec=1.
+
+    if (dim == 3):
+            lvec=np.empty(nl)
+            emiss=np.empty([nx,ny,nl])
+
     for i in range(ng):
         j=i/nl
         k=i/nl/nx
@@ -98,11 +112,14 @@ def regulargoftcube(data):
         l=i%nl
         xvec[j]=data[i,0]
         yvec[k]=data[i,1]
-        lvec[l]=data[i,2]
-        emiss[j,k,l]=data[i,3]
+	if (dim == 3):
+		lvec[l]=data[i,2]
+		emiss[j,k,l]=data[i,dim]
+	if (dim == 2):
+		emiss[j,k]=data[i,dim]
     
     # there's a very weird ordering of the indices, it seems x needs to come last, in order to have an intuitive access with matplotlib
-    emiss=np.swapaxes(emiss,0,2)
+    emiss=np.swapaxes(emiss,0,dim-1)
     return emiss,xvec,yvec,lvec
     
 def fit_gauss(x, a0, a1, a2):

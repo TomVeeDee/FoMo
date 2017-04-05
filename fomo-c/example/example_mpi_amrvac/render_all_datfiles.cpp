@@ -48,7 +48,7 @@ bool MatchTextWithWildcards(const string &text, string wildcardPattern, bool cas
 
 int main(int argc, char* argv[])
 {
-	string amrvac_version, compstring, parstring, chiantifile;
+	string amrvac_version, compstring, parstring, chiantifile, outpath;
 	int gamma_eqparposition, x_pixel, y_pixel, z_pixel, lambda_pixel;
 	double n_unit, Teunit, L_unit, lambda_width;
 	
@@ -74,6 +74,7 @@ int main(int argc, char* argv[])
 		("z_pixel,z", po::value<int>(&z_pixel)->default_value(500),"set z resolution of rendering, i.e. along the line-of-sight")
 		("lambda_pixel", po::value<int>(&lambda_pixel)->default_value(50),"set lambda resolution of rendering for spectroscopic data")
 		("lambda_width", po::value<double>(&lambda_width)->default_value(200000),"set width of wavelength window (in m/s)")
+		("outpath,o", po::value<string>(&outpath)->default_value(""),"directory for output of fomo-renderings")
 		;
 		
 	po::variables_map vm;
@@ -127,19 +128,37 @@ int main(int argc, char* argv[])
 	
 	// Initialize the FoMo object
 	FoMo::FoMoObject Object;
-	
+
 	for (int t=0; t<nframes; t++)
 	{
 		string filename=filelist[t];
 		cout << "Doing file " << t+1 << " of " << nframes << ": read from " << filename << endl << flush;
 		
 		Object = read_amrvac_dat_file(filename.c_str(), parstring.c_str(), amrvac_version, gamma_eqparposition, n_unit, Teunit, L_unit);
+		FoMo::DataCube datacube=Object.readdatacube();
+		for (int i=0; i<datacube.readnvars(); i++)
+		{
+			FoMo::tphysvar tempvar=datacube.readvar(i);
+			auto bounds=minmax_element(tempvar.begin(),tempvar.end());
+			cout << "Min value of variable " << i << " is " << *bounds.first << endl << flush;
+			cout << "Max value of variable " << i << " is " << *bounds.second << endl << flush;
+		}
 		
 		// data is in structure, now start the rendering
 		Object.setresolution(x_pixel, y_pixel, z_pixel, lambda_pixel, lambda_width);
 		Object.setchiantifile(chiantifile);
 		stringstream ss;
-		ss << filename << ".fomo.";
+		string outfile;
+		if (outpath.size() == 0)
+		{
+			outfile=filename;
+		}
+		else
+		{
+			outfile=outpath+boost::filesystem::path(filename).filename().string();
+		}
+	
+		ss << outfile << ".fomo.";
 		Object.setoutfile(ss.str());
 		Object.setwriteouttext(false);
 		Object.setwriteoutbinary();
