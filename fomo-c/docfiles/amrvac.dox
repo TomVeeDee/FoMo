@@ -83,7 +83,12 @@ Finally, the angles for rendering are specified:
 These are the angles that are used in formula 2 of the main documentation page. They should be specified in radians. The values here correspond to 
 l=30 degrees and b=60 degrees. These last values are used to complete the output filenames. In this case, they would be file0000.dat.fomo.l030b060.dat.gz.
 With these last options, it is also possible to set a list of values with -l {0.52, 1.04, 1.56} -b {1.04,2.08}, to generate the rendering from 3x2 pairs
-of viewing angles at once.
+of viewing angles at once.\n
+The standard render_all_datfiles assumes that you are using the latest version of AMRVAC, which is using the Morton curve. If you are using an older version
+of AMRVAC, you should switch to reading in the old format of the data by adding the switch
+\code{.sh}
+	-V old
+\endcode
 
 \section vacpython Processing output to movie
 
