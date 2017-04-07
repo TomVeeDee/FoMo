@@ -62,7 +62,7 @@ def update_img(filename):
     return im,annotation
 
 # animate the frames
-dpi=100
+dpi=300
 ani = animation.FuncAnimation(fig,update_img,frames=len(filelist),interval=30,blit=False,init_func=init)
 writer = animation.writers['ffmpeg'](fps=5)
 ani.save('demo.mp4',writer=writer,dpi=dpi)
