@@ -116,11 +116,17 @@ FoMo::FoMoObject read_amrvac_dat_file(const char* datfile, const char* amrvacpar
 	FoMo::FoMoObject Object;
 	
 	// Open the file in the argument as ifstream
-	// it is a binary file, and we open it at the end (because we first read the end)
-	ifstream file(datfile,ios::in|ios::binary|ios::ate);
+	// it is a binary file
+	ifstream filehandle(datfile,ios::in|ios::binary);
 	
-	if (file.is_open())
+	if (filehandle.is_open())
 	{
+		// read the filehandle into a buffer, this saves around 10s for each 2GB file
+	        stringstream file;
+        	file << filehandle.rdbuf();
+		// go to the end of the file to start reading
+        	file.seekg(0,std::ios::end);
+
 		// the end of the AMRVAC dat file has nleafs, levmax, ndim, ndir, nw, neqpar+nspecialpar, it, t
 		int nleafs, levmax, ndim, ndir, nw, neqpar, it;
 		double t;
@@ -186,7 +192,7 @@ FoMo::FoMoObject read_amrvac_dat_file(const char* datfile, const char* amrvacpar
 			file.read(reinterpret_cast<char*>(&tempint), sizeof(int));
 			forest.at(i)=tempint;
 		}
-		file.close();
+		filehandle.close();
 		
 		vector<int> nxlone;
 		vector<double> xprobmin, xprobmax;
