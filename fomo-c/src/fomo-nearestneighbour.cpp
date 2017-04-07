@@ -55,10 +55,6 @@ FoMo::RenderCube nearestneighbourinterpolation(FoMo::GoftCube goftcube, const do
 	yacc.resize(ng);
 	zacc.resize(ng);
 	losvel.resize(ng);
-	std::vector<double> gridpoint;
-	gridpoint.resize(dim);
-	// Define the unit vector along the line-of-sight
-	std::vector<double> unit = {sin(b)*cos(l), -sin(b)*sin(l), cos(b)};
 	// Read the physical variables
 	FoMo::tphysvar peakvec=goftcube.readvar(0);//Peak intensity 
 	FoMo::tphysvar fwhmvec=goftcube.readvar(1);// line width, =1 for AIA imaging
@@ -67,20 +63,26 @@ FoMo::RenderCube nearestneighbourinterpolation(FoMo::GoftCube goftcube, const do
 	FoMo::tphysvar vz=goftcube.readvar(4);
 	
 	// initialisations for boost nearest neighbour
-	bgi::rtree< value, bgi::quadratic<16> > rtree;
 	point boostpoint, targetpoint;
 	value boostpair;
-	std::vector<value> returned_values;
+	std::vector<value> input_values(ng),returned_values;
 	box maxdistancebox;
 	
 // No openmp possible here
 // Because of the insertions at the end of the loop, we get segfaults :(
+#ifdef _OPENMP
+#pragma omp parallel for schedule(dynamic) private (boostpoint, boostpair)
+#endif
 	for (int i=0; i<ng; i++)
 	{
-		for (int j=0; j<dim; j++)	gridpoint[j]=grid[j][i];
-		xacc[i]=gridpoint[0]*cos(b)*cos(l)-gridpoint[1]*cos(b)*sin(l)-gridpoint[2]*sin(b);// rotated grid
-		yacc[i]=gridpoint[0]*sin(l)+gridpoint[1]*cos(l);
-		zacc[i]=gridpoint[0]*sin(b)*cos(l)-gridpoint[1]*sin(b)*sin(l)+gridpoint[2]*cos(b);
+		std::vector<double> gridpoint;
+		gridpoint.resize(dim);
+		for (int j=0; j<dim; j++)	gridpoint.at(j)=grid[j][i];
+		xacc.at(i)=gridpoint.at(0)*cos(b)*cos(l)-gridpoint.at(1)*cos(b)*sin(l)-gridpoint.at(2)*sin(b);// rotated grid
+		yacc.at(i)=gridpoint.at(0)*sin(l)+gridpoint.at(1)*cos(l);
+		zacc.at(i)=gridpoint.at(0)*sin(b)*cos(l)-gridpoint.at(1)*sin(b)*sin(l)+gridpoint.at(2)*cos(b);
+		// Define the unit vector along the line-of-sight
+		std::vector<double> unit = {sin(b)*cos(l), -sin(b)*sin(l), cos(b)};
 		std::vector<double> velvec = {vx[i], vy[i], vz[i]};// velocity vector
 		double losvelval = inner_product(unit.begin(),unit.end(),velvec.begin(),0.0);//velocity along line of sight for position [i]/[ng]
 		losvel.at(i)=losvelval;
@@ -88,8 +90,12 @@ FoMo::RenderCube nearestneighbourinterpolation(FoMo::GoftCube goftcube, const do
 		// build r-tree from gridpoints, this part is not parallel
 		boostpoint = point(gridpoint.at(0), gridpoint.at(1), gridpoint.at(2));
 		boostpair=std::make_pair(boostpoint,i);
-		rtree.insert(boostpair);
+		input_values.at(i)=boostpair;
 	}
+	if (commrank==0) std::cout << "Done!" << std::endl;
+	if (commrank==0) std::cout << "Building R-tree... " << std::flush;
+	// take an rtree with the quadratic packing algorithm, it takes (slightly) more time to build, but queries are faster for large renderings
+	bgi::rtree< value, bgi::quadratic<16> > rtree(input_values.begin(),input_values.end());
 	
 	// compute the bounds of the input data points, so that we can equidistantly distribute the target pixels
 	double minz=*(min_element(zacc.begin(),zacc.end()));
@@ -101,7 +107,7 @@ FoMo::RenderCube nearestneighbourinterpolation(FoMo::GoftCube goftcube, const do
 	xacc.clear(); // release the memory
 	yacc.clear();
 	zacc.clear();
-	if (commrank==0) std::cout << "Done!" << std::endl;
+	if (commrank==0) std::cout << "Done!" << std::endl << std::flush;
 
 	std::string chiantifile=goftcube.readchiantifile();
 	double lambda0=goftcube.readlambda0();// lambda0=AIA bandpass for AIA imaging
