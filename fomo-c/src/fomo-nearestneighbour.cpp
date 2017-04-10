@@ -228,6 +228,13 @@ FoMo::RenderCube nearestneighbourinterpolation(FoMo::GoftCube goftcube, const do
 	FoMo::RenderCube rendercube(goftcube);
 	FoMo::tvars newdata;
 	double pathlength=(maxz-minz)/(z_pixel-1);
+	// this does not work if only one z_pixel is given (e.g. for a 2D simulation), or the maxz and minz are equal (face-on on 2D simulation)
+	// assume that the thickness of the slab is 1Mm. 
+	if ((maxz==minz) || (z_pixel==1))
+	{
+		pathlength=1.;
+		std::cout << "Assuming that this is a 2D simulations: setting thickness of simulation to " << pathlength << "Mm." << std::endl << std::flush;
+	}
 	intens=FoMo::operator*(pathlength*1e8,intens); // assume that the coordinates are given in Mm, and convert to cm
 	newdata.push_back(intens);
 	rendercube.setdata(newgrid,newdata);
