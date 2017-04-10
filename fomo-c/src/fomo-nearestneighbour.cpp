@@ -78,6 +78,8 @@ FoMo::RenderCube nearestneighbourinterpolation(FoMo::GoftCube goftcube, const do
 		std::vector<double> gridpoint;
 		gridpoint.resize(dim);
 		for (int j=0; j<dim; j++)	gridpoint.at(j)=grid[j][i];
+		// if dim==2, then set all z-coordinates to 0. 
+		if (dim==2) gridpoint.push_back(0.);
 		xacc.at(i)=gridpoint.at(0)*cos(b)*cos(l)-gridpoint.at(1)*cos(b)*sin(l)-gridpoint.at(2)*sin(b);// rotated grid
 		yacc.at(i)=gridpoint.at(0)*sin(l)+gridpoint.at(1)*cos(l);
 		zacc.at(i)=gridpoint.at(0)*sin(b)*cos(l)-gridpoint.at(1)*sin(b)*sin(l)+gridpoint.at(2)*cos(b);
