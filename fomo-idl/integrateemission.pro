@@ -33,7 +33,7 @@ c=299792000.d
 
 if dims eq 3 then doppleremission = fltarr(nx,ny,nz,nwave) else doppleremission = fltarr(nx,ny,nwave)
 
-if wayemi ne 5 and ~keyword_set(aia) then begin
+if wayemi ne 5 and ~keyword_set(aia) and ~keyword_set(imaging) then begin
 
 ; calculate doppler shifts through binning of velocity matrix
    bsize = 0.5 ; bins of 0.5 km/s
