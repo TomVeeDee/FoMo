@@ -11,8 +11,8 @@ pro integrateemission,emission=emission,logt=logt,n_gridx=n_gridx,n_gridy=n_grid
 ; losvel = (2d array) output of gridlos.pro, line-of-sight velocity (in km/s unit)
 
 ; OPTIONAL:
-; set keyword imaging (or aia) for no doppler shift calculation (imaging
-; case) (default = 1)
+; set keyword imaging or aia (or wayemi = 5) for no doppler shift calculation (imaging
+; case) (default = 1).  
 
 ; OUTPUT:
 ; image	= (2d float array) intensity along line-of-sight (n_elements(ngrid),nwave)
@@ -33,7 +33,7 @@ c=299792000.d
 
 if dims eq 3 then doppleremission = fltarr(nx,ny,nz,nwave) else doppleremission = fltarr(nx,ny,nwave)
 
-if ~keyword_set(imaging) and ~keyword_set(aia) then begin
+if wayemi ne 5 and ~keyword_set(aia) then begin
 
 ; calculate doppler shifts through binning of velocity matrix
    bsize = 0.5 ; bins of 0.5 km/s
@@ -109,7 +109,6 @@ endif else begin
    endif else begin
       print,'direction for LOS integration higher than dimension'
    endelse
-
 endelse
 
 end
