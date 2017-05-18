@@ -139,6 +139,8 @@ FoMo::RenderCube nearestneighbourinterpolation(FoMo::GoftCube goftcube, const do
 	if ((maxx-minx)/std::pow(ng,1./3.)>maxdistance || (maxy-miny)/std::pow(ng,1./3.)>maxdistance) std::cout << std::endl << "Warning: maximum distance to interpolated point set to " << maxdistance << "Mm. If it is too small, you have too many interpolating rays and you will have dark stripes in the image plane. Reduce x-resolution or y-resolution." << std::endl;
 
 	boost::progress_display show_progress(x_pixel*y_pixel*z_pixel);
+	double deltaz=(maxz-minz);
+	if (z_pixel != 1) deltaz/=(z_pixel-1);
 	
 #ifdef _OPENMP
 #pragma omp parallel for schedule(dynamic) collapse(2) shared (rtree) private (x,y,z,intpolpeak,intpolfwhm,intpollosvel,lambdaval,tempintens,ind,returned_values,targetpoint,maxdistancebox)
@@ -157,7 +159,7 @@ FoMo::RenderCube nearestneighbourinterpolation(FoMo::GoftCube goftcube, const do
 			#endif
 			for (int k=0; k<z_pixel; k++) // scanning through ccd
 			{
-				z = double(k)/(z_pixel-1)*(maxz-minz)+minz;
+				z = double(k)*deltaz+minz;
 		// calculate the interpolation in the original frame of reference
 		// i.e. derotate the point using angles -l and -b
 				p={x*cos(b)*cos(l)+y*sin(l)+z*sin(b)*cos(l),-x*cos(b)*sin(l)+y*cos(l)-z*sin(b)*sin(l),-x*sin(b)+z*cos(b)};
