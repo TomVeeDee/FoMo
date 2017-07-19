@@ -142,6 +142,41 @@ std::vector<bool> read_forest(istream & file, int forestsize)
 	return forest;
 }
 
+std::vector<std::vector<double>> read_blocks(istream & file, const int ndim, const int nw, const int nglev1, const int nleafs, const int version)
+{
+	double tempdouble;
+	int tempint;
+	std::vector<double> block(nw*nglev1);
+	std::vector<std::vector<double>> leafs;
+	for (int i=0; i<nleafs; i++)
+	{
+		// read nleaf blocks
+		// blocks are of size nw*nglev1*sizeof(double)
+		// and are preceded by two ghost cell integers per dimension (if version is 3)
+		if (version==3)
+		{
+			for (int j=0; j<ndim; j++)
+			{
+				file.read(reinterpret_cast<char*>(&tempint), sizeof(int));
+				file.read(reinterpret_cast<char*>(&tempint), sizeof(int));
+			}
+		}
+		// then start reading the block
+		// in principle, if the above number of ghost cells is non-zero, then we need to take a different block size, and select different numbers 
+		// implement this later, if needed
+		// we should also differentiate between version numbers for this aspect, though
+		for (int j=0; j<nw; j++)
+			for (int k=0; k<nglev1; k++)
+			{
+				file.read(reinterpret_cast<char*>(&tempdouble), sizeof(double));
+				block.at(j+k*nw)=tempdouble;
+			}
+		leafs.push_back(block);
+	}
+	
+	return leafs;
+}
+
 std::vector<std::vector<int>> build_block_info_morton(std::vector<int> nblocks, std::vector<bool> forest, int ndim, int nleafs)
 {
 	std::vector<std::vector<int>> block_info;
@@ -304,21 +339,7 @@ FoMo::FoMoObject read_amrvac_old_dat_file(const char* datfile, const char* amrva
 		
 		// let's read the data blocks, they are at the beginning of the file
 		file.seekg(0,ios_base::beg);
-		double temp;
-		vector<double> block(nw*nglev1);
-		vector<vector<double>> leafs;
-		for (int i=0; i<nleafs; i++)
-		{
-			// read nleaf blocks
-			// blocks are of size nw*nglev1*sizeof(double)
-			for (int j=0; j<nw; j++)
-				for (int k=0; k<nglev1; k++)
-				{
-					file.read(reinterpret_cast<char*>(&temp), sizeof(double));
-					block.at(j+k*nw)=temp;
-				}
-			leafs.push_back(block);
-		}
+		std::vector<std::vector<double>> leafs=read_blocks(file,ndim,nw,nglev1,nleafs,0);
 		// this position is the start of the forest
 		auto startofforest=file.tellg();
 		
@@ -497,31 +518,7 @@ FoMo::FoMoObject read_amrvac_new_dat_file(const char* datfile, int version_numbe
 		
 		// read the block structure
 		file.seekg(blockoffset,ios_base::beg);
-		double tempdouble;
-		int tempint;
-		vector<double> block(nw*nglev1);
-		vector<vector<double>> leafs;
-		for (int i=0; i<nleafs; i++)
-		{
-			// read nleaf blocks
-			// blocks are of size nw*nglev1*sizeof(double)
-			// and are preceded by two ghost cell integers per dimension
-			for (int j=0; j<ndim; j++)
-			{
-				file.read(reinterpret_cast<char*>(&tempint), sizeof(int));
-				file.read(reinterpret_cast<char*>(&tempint), sizeof(int));
-			}
-			// then start reading the block
-			// in principle, if the above number of ghost cells is non-zero, then we need to take a different block size, and select different numbers 
-			// implement this later, if needed
-			for (int j=0; j<nw; j++)
-				for (int k=0; k<nglev1; k++)
-				{
-					file.read(reinterpret_cast<char*>(&tempdouble), sizeof(double));
-					block.at(j+k*nw)=tempdouble;
-				}
-			leafs.push_back(block);
-		}
+		vector<vector<double>> leafs=read_blocks(file,ndim,nw,nglev1,nleafs,version);		
 		// we are now done with reading		
 		
 		//compute the number of blocks in the simulation
