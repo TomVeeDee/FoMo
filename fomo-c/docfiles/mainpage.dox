@@ -76,7 +76,7 @@ in which the emissivity was replaced by the instrument response function.
 
 \subsection Prerequisites
 
-To install FoMo, you first need to install autoconf-archive (or download ax_prog_doxygen.m4 to fomo-c/m4), the boost library (at least version 1.54) and the 
+To install FoMo, you first need to install autoconf-archive (or download <a href="http://git.savannah.gnu.org/gitweb/?p=autoconf-archive.git;a=blob_plain;f=m4/ax_prog_doxygen.m4">ax_prog_doxygen.m4</a> to fomo-c/m4), the boost library (at least version 1.54) and the 
 <a href="http://www.gnu.org/software/gsl/">GNU scientific library</a>.\n
 Some parts of the code require a c++ compiler with the C++11 standard. For <a href="http://gcc.gnu.org">gcc</a>, this means that it needs 
 to be at least 4.7. \n

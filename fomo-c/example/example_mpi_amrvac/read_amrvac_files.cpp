@@ -6,6 +6,7 @@
 #include <cmath>
 #include <algorithm>
 #include <sstream>
+#include <numeric>
 #include <gsl/gsl_const_mksa.h>
 
 using namespace std;
@@ -261,8 +262,8 @@ FoMo::FoMoObject fomo_from_amrvac(const int ndim,const int nleafs,const int ngle
 			// T
 			// first we calculate the pressure from the internal energy 
 			// p = (5/3 -1)*(e- K-B), with K = 0.5*rho *(vi^2), and B = 0.5*(bi^2)
-			double kineticenergy = inner_product(&leafs.at(i).at(1+k*nw), &leafs.at(i).at(3+k*nw), &leafs.at(i).at(1+k*nw), 0.)/leafs.at(i).at(0+k*nw)/2.;
-			double magneticenergy = inner_product(&leafs.at(i).at(5+k*nw), &leafs.at(i).at(7+k*nw), &leafs.at(i).at(5+k*nw), 0.)/2.;
+			double kineticenergy = std::inner_product(&leafs.at(i).at(1+k*nw), &leafs.at(i).at(3+k*nw), &leafs.at(i).at(1+k*nw), 0.)/leafs.at(i).at(0+k*nw)/2.;
+			double magneticenergy = std::inner_product(&leafs.at(i).at(5+k*nw), &leafs.at(i).at(7+k*nw), &leafs.at(i).at(5+k*nw), 0.)/2.;
 			double p = (gamma-1)*(leafs.at(i).at(4+k*nw)-kineticenergy - magneticenergy);
 			// then T = p/rho*Teunit
 			variables.push_back(p/leafs.at(i).at(0+k*nw));
