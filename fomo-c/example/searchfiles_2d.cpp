@@ -7,6 +7,7 @@
 #include <boost/filesystem/path.hpp>
 #include <boost/filesystem/operations.hpp>
 #include <map>
+#include <cmath>
 
 
 using namespace std;
