@@ -11,6 +11,7 @@
 using namespace std;
 
 string amrvac_version("old"); // provide the version of the AMRVAC code. It can be "old" or "gitlab".
+// This is only needed if using an old version of AMRVAC (before revision of snapshot format, around spring 2017)
 
 int gamma_eqparposition = 0; // provide the index of the eqpar vector in which the gamma value is contained
 
@@ -27,7 +28,7 @@ int main(int argc, char* argv[])
 	if (argc != 3)
 	{
 		cout << "This program should be run with two file names as argument." << endl;
-		cout << "The first file is the AMRVAC .dat file to be rendered, the second one is the amrvac.par file." << endl;
+		cout << "The first file is the AMRVAC .dat file to be rendered, the second one is the amrvac.par file (latter only used if pre-2017 AMRVAC snapshot)." << endl;
 		exit(EXIT_FAILURE);
 	}
 	

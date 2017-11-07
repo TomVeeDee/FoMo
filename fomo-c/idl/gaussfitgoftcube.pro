@@ -24,9 +24,9 @@ errors=mean(emiss)
 
 for i=0,nx-1 do begin
 	for j=0,ny-1 do begin
-		localmem=max(emiss[i,j,*])
+		localmem=max(emiss[i,j,*],maxpos)
 		if (localmem ge mem/100000.) then begin
-			yfit=gaussfit(lambda,reform(emiss[i,j,*]),coeff,nterms=3,chisq=ch,estimates=[localmem,l0,(max(lambda)-min(lambda))/4.],measure_errors=replicate(errors,nl))
+			yfit=gaussfit(lambda,reform(emiss[i,j,*]),coeff,nterms=3,chisq=ch,estimates=[localmem,lambda[maxpos],(max(lambda)-min(lambda))/4.],measure_errors=replicate(errors,nl))
 			peak[i,j]=coeff[0] ; coeff[0] is the peak intensity, because it is the constant in front of the Gaussian
 			doppler[i,j]=(coeff[1]-l0)/l0*2.99e5 ; in km/s
 			sigma[i,j]=abs(coeff[2])
