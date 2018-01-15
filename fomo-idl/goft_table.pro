@@ -96,7 +96,7 @@ numn = alog10(n_e_max/n_e_min)/steplg
 
 n_e_lg = dindgen(numn+1)/numn*alog10(n_e_max/n_e_min)+alog10(n_e_min)
 
-w0nm = string(round(w0),format='(i4.4)')
+if round(w0) lt 9999 then w0nm = string(round(w0),format='(i4.4)') else w0nm = string(round(w0),format='(i5.5)') 
 openw,unit,gotdir+'goft_table_'+ion+'_'+w0nm+'_'+nab+'.dat',/get_lun
 printf,unit,ion
 printf,unit,w0

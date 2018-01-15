@@ -97,9 +97,10 @@ endif else begin
 endelse
 
 if n_elements(abund_dflt) eq 0 then begin
-   abund_dflt = concat_dir(concat_dir('..','chiantitables'),'sun_coronal_2012_schmelz.abund')
+   abund_dflt = concat_dir(concat_dir(!xuvtop,'abundance'),'sun_coronal_2012_schmelz.abund')
    if file_test(abund_dflt) eq 0 then begin
-	   print,'No default abundance file found at',abund_dflt
+	abund_dflt = gotdir+'sun_coronal_2012_schmelz.abund'
+	if file_test(abund_dflt) eq 0 then print,'No default abundance file found at',abund_dflt
    endif
 endif
 
@@ -133,24 +134,33 @@ endelse
 if (~(keyword_set(nwave))) then begin
    nwave=100
 endif
-if round(w0) gt 500. then begin
+if round(w0) gt 6000. then begin
+   minwave = w0-2.
+   maxwave = w0+2.
+endif
+if round(w0) gt 2000. and round(w0) lt 6000. then begin
+   minwave = w0-1.
+   maxwave = w0+1.
+endif
+if round(w0) gt 500. and round(w0) lt 2000. then begin
    minwave = w0-0.3
    maxwave = w0+0.3
-endif else begin
+endif
+if round(w0) lt 500. then begin
    minwave = w0-0.07
    maxwave = w0+0.07
-endelse
+endif
 wave=findgen(nwave)/(nwave-1)*(maxwave-minwave)+minwave
 
-if wayemi eq 4 then begin
-   if (dims eq 1) then emission_goft=dblarr(nx)
-   if (dims eq 2) then emission_goft=dblarr(nx,nz)
-   if (dims eq 3) then emission_goft=dblarr(nx,ny,nz)
-endif else begin
-   if (dims eq 1) then emission_goft=dblarr(nx,nwave)
-   if (dims eq 2) then emission_goft=dblarr(nx,nz,nwave)
-   if (dims eq 3) then emission_goft=dblarr(nx,ny,nz,nwave)
-endelse
+;if wayemi eq 4 then begin
+;   if (dims eq 1) then emission_goft=dblarr(nx)
+;   if (dims eq 2) then emission_goft=dblarr(nx,nz)
+;   if (dims eq 3) then emission_goft=dblarr(nx,ny,nz)
+;endif else begin
+;   if (dims eq 1) then emission_goft=dblarr(nx,nwave)
+;   if (dims eq 2) then emission_goft=dblarr(nx,nz,nwave)
+;   if (dims eq 3) then emission_goft=dblarr(nx,ny,nz,nwave)
+;endelse
 
 ne_sort = sort(n_e)
 n_e_sorted = n_e[ne_sort]
@@ -274,7 +284,6 @@ if wayemi eq 4 or wayemi eq 5 then begin
       if ~keyword_set(silent) then print,string(13b)+' % finished: ',float(i)*100./(n_elements(n_e)-1),format='(a,f4.0,$)'
    endfor
 endif
-
 emission_goft = emission_goft*abund_fact
       
 end

@@ -26,7 +26,7 @@ pro fomo_synth,dir=dir,gotdir=gotdir,w0=w0,ion=ion,idcase=idcase,imaging=imaging
 ; subdirectory in dir exists with this name.
 ; The output will be saved in dir+idcase+'/sav/'
 ; W0 = line center for emission line of interest
-; ION = name of line (see below for a partial list, full list in FoMo/fomo-idl/elements.pro)
+; ION = name of line (see below for examples) 
 ; IMAGING: set this keyword indicating that only imaging (no spectra)
 ; will be saved
 ; AIA: keyword indicating that AIA channels will be treated. See below
