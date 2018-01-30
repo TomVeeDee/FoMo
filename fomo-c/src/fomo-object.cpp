@@ -214,6 +214,18 @@ void FoMo::FoMoObject::setrenderingdata(tgrid ingrid, tvars invars)
 }
 
 /**
+ * @brief This sets the goftcube for the object. This may be useful if the emission is generated with an alternative emission mechanism than 
+ * with the Chiantitables (e.g. Thomson scattering, where only the geometric angles are important). Later on, this Object.render may still be used, 
+ * with this manually inserted Goftcube
+ * 
+ * @param ingoftcube This is the Goftcube you want to set in the Object.
+ */
+void FoMo::FoMoObject::setgoftcube(FoMo::GoftCube & ingoftcube)
+{
+	this->goftcube=ingoftcube;
+}
+
+/**
  * @brief This routine returns the rendering of the FoMoObject.
  * 
  * At the moment, it is equivalent to accessing FoMoObject.rendering, because that member is public.
@@ -312,6 +324,7 @@ enum FoMoRenderValue
 #endif
 	NearestNeighbour,
 	Projection,
+	Thomson,
 	// add more methods here
 	LastVirtualRenderMethod
 };
@@ -326,6 +339,7 @@ static const std::map<std::string, FoMoRenderValue>::value_type RenderMapEntries
 #endif
 	std::map<std::string, FoMoRenderValue>::value_type("NearestNeighbour",NearestNeighbour),
 	std::map<std::string, FoMoRenderValue>::value_type("Projection",Projection),
+	std::map<std::string, FoMoRenderValue>::value_type("Thomson",Thomson),
 	/// [Rendermethods]
 	std::map<std::string, FoMoRenderValue>::value_type("ThisIsNotARealRenderMethod",LastVirtualRenderMethod)
 };
@@ -369,10 +383,14 @@ void FoMo::FoMoObject::render(const std::vector<double> lvec, const std::vector<
 	else
 		this->rendering.setobservationtype(Spectroscopic);
 	
-	std::bitset<FoMo::noptions> woptions=this->goftcube.getwriteoptions();
-	tmpgoft=FoMo::emissionfromdatacube(this->datacube,this->rendering.readchiantifile(),this->rendering.readabundfile(),this->rendering.readobservationtype());
-	this->goftcube=tmpgoft;
-	this->goftcube.setwriteoptions(woptions);
+	// check if the GoftCube still needs to be computed (e.g. not the case if manually added with FoMoObject.setgoftcube)
+	if (this->goftcube.readnvars()==0)
+	{
+		std::bitset<FoMo::noptions> woptions=this->goftcube.getwriteoptions();
+		tmpgoft=FoMo::emissionfromdatacube(this->datacube,this->rendering.readchiantifile(),this->rendering.readabundfile(),this->rendering.readobservationtype());
+		this->goftcube=tmpgoft;
+		this->goftcube.setwriteoptions(woptions);
+	}
 	
 	switch (RenderMap[rendering.readrendermethod()])
 	{
@@ -393,6 +411,10 @@ void FoMo::FoMoObject::render(const std::vector<double> lvec, const std::vector<
 		case NearestNeighbour:
 			std::cout << "Using nearest-neighbour rendering." << std::endl << std::flush;
 			tmprender=FoMo::RenderWithNearestNeighbour(this->goftcube,x_pixel, y_pixel, z_pixel, lambda_pixel, lambda_width, lvec, bvec, this->outfile);
+			break;
+		case Thomson:
+			std::cout << "Using rendering for Thomson scattering." << std::endl << std::flush;
+			tmprender=FoMo::RenderWithThomson(this->goftcube,x_pixel, y_pixel, z_pixel, lvec, bvec, this->outfile);
 			break;
 		case Projection:
 			std::cout << "Using projection for rendering." << std::endl << std::flush;

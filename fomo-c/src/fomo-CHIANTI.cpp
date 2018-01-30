@@ -267,9 +267,9 @@ FoMo::GoftCube FoMo::emissionfromdatacube(FoMo::DataCube datacube, std::string c
         
         	if (atoi(ion.c_str())!=int(lambda0+0.5)) 
 	        {// check if it is AIA GOFT table
-	                std::cerr << "GOFT table is not correct!" << std::endl; 
+	                std::cerr << "GOFT table is not correct for imaging!" << std::endl; 
 	                exit(EXIT_FAILURE);
-		} 
+			} 
  
 	  	for (int i=0; i<fittedwidth.size(); i++)
 			fittedwidth.at(i)=1.;

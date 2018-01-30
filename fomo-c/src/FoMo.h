@@ -192,6 +192,7 @@ namespace FoMo
 		void render(const double = 0, const double = 0); // l and b are arguments
 		void render(const std::vector<double> lvec, const std::vector<double> bvec);
 		void setrenderingdata(tgrid ingrid, tvars invars);
+		void setgoftcube(GoftCube& ingoftcube);
 		FoMo::DataCube readdatacube();
 		FoMo::RenderCube readrendering();
 		FoMo::GoftCube readgoftcube();
