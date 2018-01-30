@@ -6,6 +6,7 @@ namespace FoMo
 	double readgoftfromchianti(const std::string chiantifile);
 	DataCube readgoftfromchianti(const std::string chiantifile, std::string & ion, double & lambda0, double & atweight);
 	GoftCube emissionfromdatacube(DataCube, std::string, std::string, const FoMoObservationType);
+	GoftCube thomsonfromdatacube(DataCube);
 	
 #ifdef HAVE_CGAL_DELAUNAY_TRIANGULATION_2_H	
 	FoMo::RenderCube RenderWithCGAL(FoMo::DataCube datacube, FoMo::GoftCube goftcube, FoMoObservationType observationtype, 

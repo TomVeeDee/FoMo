@@ -384,11 +384,23 @@ void FoMo::FoMoObject::render(const std::vector<double> lvec, const std::vector<
 		this->rendering.setobservationtype(Spectroscopic);
 	
 	// check if the GoftCube still needs to be computed (e.g. not the case if manually added with FoMoObject.setgoftcube)
+	// only compute a new Goftcube, if it is still empty
 	if (this->goftcube.readnvars()==0)
 	{
+		// if goftcube is computed here, woptions should be saved and restored afterwards
 		std::bitset<FoMo::noptions> woptions=this->goftcube.getwriteoptions();
-		tmpgoft=FoMo::emissionfromdatacube(this->datacube,this->rendering.readchiantifile(),this->rendering.readabundfile(),this->rendering.readobservationtype());
+		// special case for thomson scattering
+		if (this->rendering.readrendermethod().compare("Thomson")==0)
+		{
+			tmpgoft=FoMo::thomsonfromdatacube(this->datacube);
+		}
+		// otherwise use chianti emission tables
+		else
+		{
+			tmpgoft=FoMo::emissionfromdatacube(this->datacube,this->rendering.readchiantifile(),this->rendering.readabundfile(),this->rendering.readobservationtype());
+		}
 		this->goftcube=tmpgoft;
+		// restore write options
 		this->goftcube.setwriteoptions(woptions);
 	}
 	

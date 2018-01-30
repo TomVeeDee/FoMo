@@ -27,6 +27,66 @@ typedef std::pair<point, unsigned> value;
 
 const double speedoflight=GSL_CONST_MKSA_SPEED_OF_LIGHT; // speed of light
 const double pi=M_PI; //pi
+const double RSUN=695.7; // radius of the Sun in Mm
+const double U=0.58; // limb darkening coefficient
+
+//! Calculate and return the Thomson scattering geometric functions
+// from raytrace.h, but with rho dependence removed (rho/r=sin(\bar{chi}) from Inhester 2016, after Eq. 3.38)
+inline void getThomsonGeomFactor(const float &r,float &totterm,float &polterm) {
+    float sinomega=RSUN/r;
+    float sinsquareomega=sinomega*sinomega;
+    float cossquareomega=1-sinsquareomega;
+    float cosomega=sqrt(cossquareomega);
+
+    float logterm=log((1.+sinomega)/cosomega);
+
+    float a=cosomega*sinsquareomega;
+    float b=-1./8.*(1.-3.*sinsquareomega-cossquareomega*((1.+3.*sinsquareomega)/sinomega)*logterm);
+
+    float c=(4./3.)-cosomega-(cosomega*cossquareomega)/3.;
+    float d=(1./8.)*(5.+sinsquareomega-cossquareomega*((5.-sinsquareomega)/sinomega)*logterm);
+
+    // Polarized brightness term
+    polterm=(a+U*(b-a));
+    // Total brightness term
+    totterm=(2*(c+U*(d-c)));
+	
+	// probably we are lacking some physical constants here to get to real emission
+}
+
+FoMo::GoftCube FoMo::thomsonfromdatacube(FoMo::DataCube datacube)
+{
+	// create goft, and manually convert with emission
+	// emission is computed with raytrace.h (using losinteg and getthompsongeomfactor, probably copy paste the latter one)
+	FoMo::GoftCube emission(datacube);
+	FoMo::tphysvar densvar=datacube.readvar(0);
+	FoMo::tphysvar totint, polint;
+	FoMo::tvars exporteddata;
+	// also compute r from grid positions
+	float r,totterm,polterm;
+	int npoints=datacube.readngrid();
+	FoMo::tgrid grid=datacube.readgrid();
+	// this loop can be parallelised easily with openmp
+	for (int i =0; i<npoints; i++)
+	{
+		r=std::sqrt(std::pow(grid[0][i],2)+std::pow(grid[1][i],2)+std::pow(grid[2][i],2));
+		getThomsonGeomFactor(r,totterm,polterm);
+		
+		// set both totterm and polterm in goftcube, and take care of integration in object.render(), 
+		// intensity will be I=totterm - polterm*sin(angle radial and los)**2 (inhester 2016)
+		totint.push_back(densvar.at(i)*totterm);
+		polint.push_back(densvar.at(i)*polterm);
+	}
+	exporteddata.push_back(totint);
+	exporteddata.push_back(polint);
+	emission.setdata(grid,exporteddata);
+	std::string emissname="thomson scattering";
+	emission.setchiantifile(emissname);
+	emission.setabundfile(emissname);
+	emission.setlambda0(0.);
+	
+	return emission;
+}
 
 FoMo::RenderCube thomsoninterpolation(FoMo::GoftCube goftcube, const double l, const double b, const int x_pixel, const int y_pixel, const int z_pixel)
 {
