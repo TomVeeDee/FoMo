@@ -1,4 +1,4 @@
-pro integrateemission,emission=emission,logt=logt,n_gridx=n_gridx,n_gridy=n_gridy,ngrid=ngrid,wave=wave,w0=w0,direction=direction,losvel=losvel,imaging=imaging,watom=watom,image=image,dl=dl,wayemi=wayemi,aia=aia,dkist=dkist,silent=silent
+pro integrateemission,emission=emission,logt=logt,n_gridx=n_gridx,n_gridy=n_gridy,ngrid=ngrid,wave=wave,w0=w0,direction=direction,losvel=losvel,imaging=imaging,watom=watom,image=image,dl=dl,wayemi=wayemi,channel=channel,silent=silent
 
 ; Calculates intensity by integrating emissivity along a given
 ; line-of-sight
@@ -8,11 +8,12 @@ pro integrateemission,emission=emission,logt=logt,n_gridx=n_gridx,n_gridy=n_grid
 ; wave = wavelength array from lineongrid_goft_tab.pro
 ; n_gridx, n_gridy, ngrid = output of gridlos.pro
 ; direction = (int) direction of the integration (1 = x, 2 = y, 3 = z, 4 = mua_d angle)
-; losvel = (2d array) output of gridlos.pro, line-of-sight velocity (in km/s unit)
+; losvel = (2d array) output of gridlos.pro, line-of-sight velocity
+; (in km/s unit). Only necessary for spectral calculations (no imaging)
 
 ; OPTIONAL:
-; set keyword imaging or aia or dkist (or wayemi = 5) for no doppler shift calculation (imaging
-; case) (default = 1).  
+; set keyword imaging or channel (-> wayemi = 5) for no doppler shift
+; calculation (imaging case) (default = 1).  
 
 ; OUTPUT:
 ; image	= (2d float array) intensity along line-of-sight (n_elements(ngrid),nwave)
@@ -22,7 +23,7 @@ dims = sizes[0]
 nx = sizes[1]
 ny = sizes[2]
 if dims eq 3 then nz = sizes[3] else nz = 1
-if ~keyword_set(imaging) and ~keyword_set(aia) and ~keyword_set(dkist)  then begin
+if ~keyword_set(imaging) and ~keyword_set(channel) then begin
    nwave = n_elements(wave)
 endif else begin
    nwave = 1
@@ -33,7 +34,7 @@ c=299792000.d
 
 if dims eq 3 then doppleremission = fltarr(nx,ny,nz,nwave) else doppleremission = fltarr(nx,ny,nwave)
 
-if wayemi ne 5 and ~keyword_set(aia) and ~keyword_set(dkist) and ~keyword_set(imaging) then begin
+if wayemi ne 5 and ~keyword_set(channel) and ~keyword_set(imaging) then begin
 
 ; calculate doppler shifts through binning of velocity matrix
    bsize = 0.5 ; bins of 0.5 km/s

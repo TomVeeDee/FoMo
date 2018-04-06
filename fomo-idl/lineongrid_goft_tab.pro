@@ -24,7 +24,7 @@ endif
 ;	     the full path to the abundance file in the keyword 'ext_abund'.
 ; wayemi: (int) for different ways of calculating the emissivity in the
 ;        routine lineongrid_goft_tab.pro. The default is wayemi = 4
-;        If wayemi = 5 and if keyword 'aia' is set then this procedure should not
+;        If wayemi = 5 is set then this procedure should not
 ;        be called. 
 
 ; OPTIONAL:
@@ -167,7 +167,7 @@ n_e_sorted = n_e[ne_sort]
 Tlg_sorted = logT[ne_sort]
 
 ; Read tabulated G(ne,T) values for given number density (n_e_lg) and temperature (t_lg) arrays
-lookup_goft, ion=ion, w0=w0, gotdir=gotdir,n_e_lg=n_e_lg, logt=t_lg, goft_mat=goft_mat, watom= watom,nab=nab,silent=silent
+lookup_goft,ion=ion,w0=w0,gotdir=gotdir,n_e_lg=n_e_lg,logt=t_lg,goft_mat=goft_mat,watom=watom,nab=nab,silent=silent
 if n_elements(enum) eq 0 or n_elements(inum) eq 0 then begin
    elements, w0=w0, ion=ion, enum=enum, inum=inum
 endif
