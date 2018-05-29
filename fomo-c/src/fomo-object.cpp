@@ -381,7 +381,6 @@ void FoMo::FoMoObject::render(const std::vector<double> lvec, const std::vector<
 	// otherwise use chianti emission tables
 	else
 	{
-		std::cout << "recompute goft with " << this->rendering.readchiantifile();
 		tmpgoft=FoMo::emissionfromdatacube(this->datacube,this->rendering.readchiantifile(),this->rendering.readabundfile(),this->rendering.readobservationtype());
 	}
 	this->goftcube=tmpgoft;
