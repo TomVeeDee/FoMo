@@ -214,18 +214,6 @@ void FoMo::FoMoObject::setrenderingdata(tgrid ingrid, tvars invars)
 }
 
 /**
- * @brief This sets the goftcube for the object. This may be useful if the emission is generated with an alternative emission mechanism than 
- * with the Chiantitables (e.g. Thomson scattering, where only the geometric angles are important). Later on, this Object.render may still be used, 
- * with this manually inserted Goftcube
- * 
- * @param ingoftcube This is the Goftcube you want to set in the Object.
- */
-void FoMo::FoMoObject::setgoftcube(FoMo::GoftCube & ingoftcube)
-{
-	this->goftcube=ingoftcube;
-}
-
-/**
  * @brief This routine returns the rendering of the FoMoObject.
  * 
  * At the moment, it is equivalent to accessing FoMoObject.rendering, because that member is public.
@@ -383,26 +371,22 @@ void FoMo::FoMoObject::render(const std::vector<double> lvec, const std::vector<
 	else
 		this->rendering.setobservationtype(Spectroscopic);
 	
-	// check if the GoftCube still needs to be computed (e.g. not the case if manually added with FoMoObject.setgoftcube)
-	// only compute a new Goftcube, if it is still empty
-	if (this->goftcube.readnvars()==0)
+	// if goftcube is computed here, woptions should be saved and restored afterwards
+	std::bitset<FoMo::noptions> woptions=this->goftcube.getwriteoptions();
+	// special case for thomson scattering
+	if (this->rendering.readrendermethod().compare("Thomson")==0)
 	{
-		// if goftcube is computed here, woptions should be saved and restored afterwards
-		std::bitset<FoMo::noptions> woptions=this->goftcube.getwriteoptions();
-		// special case for thomson scattering
-		if (this->rendering.readrendermethod().compare("Thomson")==0)
-		{
-			tmpgoft=FoMo::thomsonfromdatacube(this->datacube);
-		}
-		// otherwise use chianti emission tables
-		else
-		{
-			tmpgoft=FoMo::emissionfromdatacube(this->datacube,this->rendering.readchiantifile(),this->rendering.readabundfile(),this->rendering.readobservationtype());
-		}
-		this->goftcube=tmpgoft;
-		// restore write options
-		this->goftcube.setwriteoptions(woptions);
+		tmpgoft=FoMo::thomsonfromdatacube(this->datacube);
 	}
+	// otherwise use chianti emission tables
+	else
+	{
+		std::cout << "recompute goft with " << this->rendering.readchiantifile();
+		tmpgoft=FoMo::emissionfromdatacube(this->datacube,this->rendering.readchiantifile(),this->rendering.readabundfile(),this->rendering.readobservationtype());
+	}
+	this->goftcube=tmpgoft;
+	// restore write options
+	this->goftcube.setwriteoptions(woptions);
 	
 	switch (RenderMap[rendering.readrendermethod()])
 	{
