@@ -12,8 +12,8 @@ endif
 ; returns emissivity function 
 
 ; INPUT: 
-; ne_s, t_e: (0-2d float arrays) density and temperature values where
-;           to interpolate (in CGS)
+; ne_s, t_e: (0-2d float arrays) electron mumber density and
+; temperature values where to interpolate (in CGS)
 ; ion: (string) acronym of the ion
 ; w0: (float) wavelength of line center 
 
@@ -66,7 +66,7 @@ logte = alog10(te)
 goft_mat_size = size(goft_mat)
 logne_ind = interpol(findgen(goft_mat_size(1)), g_logne, logne)
 logte_ind = interpol(findgen(goft_mat_size(2)), g_logte, logte)
-emission_goft =  interpolate(goft_mat,logne_ind,logte_ind, cubic = -0.5) * ne_s^2
+emission_goft =  interpolate(goft_mat,logne_ind,logte_ind, cubic = -0.5) * ne_s^2 ; assuming a 0.887 ratio of protons to electrons number (= proton_dens(6.0) from Chianti, with coronal abundances)
 ;end of interpolation
 
 

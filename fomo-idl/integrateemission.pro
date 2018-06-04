@@ -1,4 +1,4 @@
-pro integrateemission,emission=emission,logt=logt,n_gridx=n_gridx,n_gridy=n_gridy,ngrid=ngrid,wave=wave,w0=w0,direction=direction,losvel=losvel,imaging=imaging,watom=watom,image=image,dl=dl,wayemi=wayemi,channel=channel,silent=silent
+pro integrateemission,emission=emission,logt=logt,n_gridx=n_gridx,n_gridy=n_gridy,ngrid=ngrid,wave=wave,w0=w0,direction=direction,losvel=losvel,imaging=imaging,watom=watom,image=image,dl=dl,dx=dx,dy=dy,wayemi=wayemi,channel=channel,silent=silent
 
 ; Calculates intensity by integrating emissivity along a given
 ; line-of-sight
@@ -17,6 +17,8 @@ pro integrateemission,emission=emission,logt=logt,n_gridx=n_gridx,n_gridy=n_grid
 
 ; OUTPUT:
 ; image	= (2d float array) intensity along line-of-sight (n_elements(ngrid),nwave)
+
+apix = dx*dy*(!pi/180./3600.)^2
 
 sizes=size(emission)
 dims = sizes[0]
@@ -91,17 +93,17 @@ endelse
 ; then sum up over rays:
 
 if (direction le dims) then begin
-	image=total(doppleremission,direction)*dl
+	image=total(doppleremission,direction)*dl*apix
 endif else begin
    if direction eq 4 then begin
       if dims eq 2 then image = dblarr(n_elements(ngrid)-1,nwave) else image = dblarr(nx,n_elements(ngrid)-1,nwave)
       for i=0., n_elements(ngrid)-2 do begin
          if (dims eq 2) then begin
-            for j=0,nwave-1 do image[i,j] = total(interpolate(reform(doppleremission[*,*,j]),n_gridx[ngrid[i]:ngrid[i+1]-1],n_gridy[ngrid[i]:ngrid[i+1]-1]))*dl
+            for j=0,nwave-1 do image[i,j] = total(interpolate(reform(doppleremission[*,*,j]),n_gridx[ngrid[i]:ngrid[i+1]-1],n_gridy[ngrid[i]:ngrid[i+1]-1]))*dl*apix
          endif
          if (dims eq 3) then begin
             for k=0,nx-1 do begin
-               for j=0,nwave-1 do image[k,i,j] = total(interpolate(reform(doppleremission[k,*,*,j]),n_gridx[ngrid[i]:ngrid[i+1]-1],n_gridy[ngrid[i]:ngrid[i+1]-1]),/double)*dl
+               for j=0,nwave-1 do image[k,i,j] = total(interpolate(reform(doppleremission[k,*,*,j]),n_gridx[ngrid[i]:ngrid[i+1]-1],n_gridy[ngrid[i]:ngrid[i+1]-1]),/double)*dl*apix
             endfor
          endif
          if ~keyword_set(silent) then print,string(13b)+' % finished: ',float(i)*100./(n_elements(ngrid)-2),format='(a,f4.0,$)'

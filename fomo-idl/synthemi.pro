@@ -8,7 +8,7 @@ endif
 
 
 ; INPUT:
-; rho (or nem): (2d float array) density (or number density) in CGS
+; rho (or nem): (2d float array) total density (or total number density) in CGS
 ; tem: (2d float array) temperature in CGS 
 ; v1m, v2m: (2d float arrays) x and y components of velocity, in km/s 
 ; gridx, gridy: (floats) x and y axes 
@@ -70,10 +70,29 @@ endif
 ; CALLS:
 ; lineongrid_goft_tab, integrateemission, interpol_emiss_data, gridlos
 
-   ; check for CGS
+proton = 1.67262158*10^(-24.)
+
+if keyword_set(file_abund) then begin
+   if file_abund eq 'photospheric' then fnhne = 0.848 ; ratio of protons to electrons number (= proton_dens(6.0) from Chianti, with photospheric abundances)
+   if file_abund eq 'coronal' then fnhne = 0.887 ; ratio of protons to electrons number (= proton_dens(6.0) from Chianti, with coronal abundances)
+   endif
+   if file_abund eq 'other' then begin
+      if ~keyword_set(ext_abund) then begin
+         print,'Please provide the name and full path of the abundance file in the keyword "ext_abund". Note: ratio of protons to electrons taken as 0.887. Modify accordingly.'
+         stop
+      endif else begin
+         abund_name = ext_abund
+         nab = '_abext'
+         fnhne = 0.887
+      endelse
+   endif
+endif else begin
+   fnhne = 0.887 ; ratio of protons to electrons number (= proton_dens(6.0) from Chianti, with coronal abundances)
+endelse
+
 te_s = tem
-if keyword_set(rho) then rh_s = rho
-if keyword_set(nem) then ne_s = nem
+if ~keyword_set(nem) and keyword_set(rho) then ne_s = rho/(proton*fnhne)
+if keyword_set(nem) then ne_s = nem/(1.+fnhne)
 
 direction = 4
 nang = n_elements(mua_d)
@@ -92,7 +111,7 @@ if keyword_set(imaging) or keyword_set(channel) then begin
    ; Channel imaging (filters) or line imaging:
    wayemi = 5
    logt = alog10(tem)
-   if keyword_set(channel) then interpol_emiss_data,ne_s=ne_s,te=tem,ion=ion, w0=w0,emission_goft=emission_goft,filenm=filenm,file_abund=file_abund,gotdir=gotdir,channel=channel,silent=silent else lineongrid_goft_tab, rh_s=rh_s, te_s=te_s, ne_s=ne_s, gotdir=gotdir,wave=wave,nwave=nwave,ion=ion, w0=w0, emission_goft=emission_goft,goft=goft, logt=logt,wayemi=wayemi,watom=watom,file_abund=file_abund,ext_abund=ext_abund,nab=nab,abund_name=abund_name,enum=enum,inum=inum,abund_fact=abund_fact,silent=silent
+   if keyword_set(channel) then interpol_emiss_data,ne_s=ne_s,te=tem,ion=ion, w0=w0,emission_goft=emission_goft,filenm=filenm,file_abund=file_abund,gotdir=gotdir,channel=channel,silent=silent else lineongrid_goft_tab, te_s=te_s, ne_s=ne_s, gotdir=gotdir,wave=wave,nwave=nwave,ion=ion, w0=w0, emission_goft=emission_goft,goft=goft, logt=logt,wayemi=wayemi,watom=watom,file_abund=file_abund,ext_abund=ext_abund,nab=nab,abund_name=abund_name,enum=enum,inum=inum,abund_fact=abund_fact,silent=silent
    
    for i=0,nang-1 do begin
       mua = mua_d[i]
@@ -118,7 +137,7 @@ if keyword_set(imaging) or keyword_set(channel) then begin
    endfor
 endif else begin
 
-   lineongrid_goft_tab, rh_s=rh_s, te_s=te_s, ne_s=ne_s, gotdir=gotdir,wave=wave,nwave=nwave,ion=ion, w0=w0, emission_goft=emission_goft,goft=goft, logt=logt,wayemi=wayemi,watom=watom,file_abund=file_abund,ext_abund=ext_abund,nab=nab,abund_name=abund_name,enum=enum,inum=inum,abund_fact=abund_fact,silent=silent
+   lineongrid_goft_tab, te_s=te_s, ne_s=ne_s, gotdir=gotdir,wave=wave,nwave=nwave,ion=ion, w0=w0, emission_goft=emission_goft,goft=goft, logt=logt,wayemi=wayemi,watom=watom,file_abund=file_abund,ext_abund=ext_abund,nab=nab,abund_name=abund_name,enum=enum,inum=inum,abund_fact=abund_fact,silent=silent
 
    for i=0,nang-1 do begin
       mua = mua_d[i]
