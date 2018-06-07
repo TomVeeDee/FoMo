@@ -5,12 +5,60 @@
 
 (This is a copy of the "instrument" paper on FoMo, published in Frontiers in Astronomy and Space Sciences. Please refer to the <a href="http://journal.frontiersin.org/article/10.3389/fspas.2016.00004/full">open access publication</a>.)
 
-The corona is optically thin, and thus the specific intensity \f$I(\lambda,x',y')\f$ (in \f$\mbox{ergs cm}^{-2} \mbox{s}^{-1} \mbox{sr}^{-1} \AA{}^{-1}\f$) at a wavelength \f$\lambda\f$ is the integral of the monochromatic emissivity \f$\epsilon(\lambda,x,y,z)\f$ at each point along the LOS. Let us assume that the LOS is along a given \f$z'\f$ axis, that may not be aligned to any of the numerical axes.
+The problem of generating of a synthetic image as seen by a telescope or spectrograph can be splitted into two: 
+- calculation of plasma emission in a particular spectral line or a passband of a telescope;
+- calculation of how a given imaging instrument sees the plasma, with taking into account its optical characteristics, sensitivity etc. 
+
+\subsection emissivity Plasma emission
+
+The emissivity of coronal plasma \f$\widetilde{\epsilon}_{\lambda_0}\f$ [\f$\mbox{erg s}^{-1}\mbox{ cm}^{-3}\mbox{ sr}^{-1}\f$] in a given spectral line \f$\lambda_0\f$ can be obtained from plasma parameters --- temperature \f$T\f$, density \f$n_e\f$, chemical abundances, and atomic coefficients such as excitation cross-section. We imply that the corona is optically thin, and thus we can project plasma emission into the plane of sky:
 \f{equation}{
-	I(\lambda,x',y')=\int \epsilon(\lambda,x(z'),y(z'),z(z')) dz'.
-	\label{eq:int}
+	I_{\lambda_0}(x',y') = \int \widetilde{\epsilon}_{\lambda_0}(x',y',z') dz'
 \f}
-Here \f$(x,y,z)\f$ are the coordinates in the original simulation, and \f$(x',y',z')\f$ are the coordinates in the rotated frame of reference of the observation. \f$(x',y')\f$ are the coordinates in the image plane (also known as the plane-of-the-sky, or POS), and \f$z'\f$ is the direction along the LOS. The two coordinate systems are connected by two rotations, first an angle \f$l\f$ around the \f$z\f$-axis, then around an angle \f$-b\f$ around the \f$y\f$-axis:
+where \f$(x',y')\f$ are the coordinates in the plane of sky, \f$I_{\lambda_0}\f$ [\f$\mbox{ergs s}^{-1} \mbox{ cm}^{-2} \mbox{ sr}^{-1}\f$]  is the specific intensity at a given spectral line, and the integration is performed along the LOS, that coincide with the \f$z'\f$-axis. The reference frame \f$(x',y',z')\f$ should not necessarily coincide with the reference frame of the simulation \f$(x,y,z)\f$.
+
+The emissivity \f$\widetilde{\epsilon}_{\lambda_0}\f$ at wavelength \f$\lambda_0\f$ is calculated as: 
+\f{equation}{
+	\widetilde{\epsilon}_{\lambda_0}=G_{\lambda_0}(T,n_\mathrm{e}) n^2_\mathrm{e},
+	\label{eq:contrib}
+\f}
+where \f$G_{\lambda_0}\f$ [\f$\mbox{erg s}^{-1} \mbox{ cm}^3 \mbox{ sr}^{-1}\f$] is the contribution function for that specific spectral line (depends upon excitation/de-excitation cross-sections, abundances, atomic term structure, plasma parameters). The contribution functions are pre-calculated using CHIANTI package and used as look-up tables in the code. There are various definitions of the contribution function in the literature, that do not include abundances directly, or do not include \f$\frac{1}{4\pi}\f$ factor; we use the former definition.
+
+The two equation can be combined:
+\f{equation}{
+	I_{\lambda_0}(x',y') = \int G_{\lambda_0}(T,n_e) n_e^2 dz',
+\f} 
+and it is implied that values \f$T\f$ and \f$n_e\f$ are taken at a point with coordinates \f$(x',y',z')\f$.
+
+\subsection imaging Imaging with a telescope
+
+The significant difference with the previous part is that usually a telescope spectral passband is wide enough, and many spectral lines emitted by the same plasma contribute to a registered signal  in a single pixel. Thus spectral integration should be performed at some step.
+
+When one considers how a telescope registers an image, it is convenient to split the process in two steps:
+- Ideal imaging system forms an image from the plane of sky in the plane of detector. The image in the detector plane is rescaled depending upon \f$f\f$ --- focal length of the telescope and \f$L\f$ --- distance between the telescope and plasma, the intensity also depends on the telescope aperture area \f$A\f$;
+- Real parameters of the telescope are taken into account, such as finite optical transmission, sensitivity of the detector, pixel size etc.
+
+Let's take \f$f\f$ [\f$\mbox{mm}\f$] --- focal distance of the telescope, \f$L\f$ [\f$\mbox{m}\f$] --- distance between the telescope and plasma, \f$A=\frac{\pi D^2}{4}\f$ [\f$\mbox{cm}^2\f$] --- telescope aperture area, \f$dx\f$ [\f$\mbox{mm}\f$] --- linear pixel size of the detector. Let's consider transmission of the optical system \f$T(\lambda)\f$ and consider particular wavelength \f$\lambda_0\f$. A given pixel on the detector will recieve all the photons from a particular area \f$S\f$ on the plane of sky that are emitted into \f$\Omega\f$ [\f$\mbox{sr}\f$] --- the solid angle that corresponds to the aperture of the telescope. Thus the number of received photons is calculated as:
+\f{equation}{
+  N = B_{\lambda_0} \cdot \Omega \cdot S \cdot T(\lambda) = B_{\lambda_0} \cdot A \cdot \left(\frac{dx}{f}\right)^2 \cdot T(\lambda_0),
+\f}
+where \f$B_{\lambda_0}=\frac{h\omega}{c} I_{\lambda_0}\f$ [\f$\mbox{photons s}^{-1} \mbox{ cm}^{-2} \mbox{ sr}^{-1}\f$] --- is the specific intensity in photons, the factor \f$\left( \frac{dx}{f} \right)^2\f$ [\f$\mbox{sr}\f$] denotes solid angle that corresponds to a pixel. Note that \f$A\cdot \left(\frac{dx}{f}\right)^2\f$ is purely geometrical factor, i.e. corresponds to an ideal imaging system, whereas \f$T(\lambda_0)\f$ reflect actual transmission. Other effects, such as final width of PSF can be taken into account at further steps. Worthing to note that \f$\mbox{N}\f$ has units [\f$\mbox{photons s}^{-1} \mbox{synth. pixel}^{-1}\f$], i.e. number of photons that receives synthetic pixel with linear size \f$\mbox{dx}\f$ or angular size \f$\left( \frac{dx}{f} \right)\f$. The formula automatically takes into account distance L, scaling of image etc.
+
+![How a telescope registers an image](./imaging_via_telescope2.png)
+
+Below we take spectral transmission into account. The optical throughput and the detector sensitivity strictly depend on \f$\lambda\f$. Let's denote with \f$\kappa(\lambda)\f$ [\f$\mbox{DN photon}^{-1}\f$] sensitivity of the detector. One usually introduces factor \f$ A'(\lambda)=A T(\lambda) \kappa(\lambda)\f$ [\f$\mbox{cm}^2 \mbox{ DN photon}^{-1}\f$] called "effective area", which stores most of the telescope spectral and sensitivity. 
+
+Now Eqs. 1.3, and 1.4 can be combined:
+\f{equation}{
+  N = \int_\lambda B_\lambda A'(\lambda) \left(\frac{dx}{f}\right)^2 d\lambda = \int_{\Delta z'} \int_\lambda G_\lambda(T,n_e) n_e^2 A'(\lambda) \left(\frac{dx}{f}\right)^2 d\lambda dz' = \left(\frac{dx}{f}\right)^2 \int_{\Delta z} \widetilde{G}(T,n_e) n_e^2 dz',
+\f}
+where \f$\widetilde{G}(T,n_e)=\int_\lambda G_\lambda(T,n_e)A'(\lambda) d\lambda\f$ reflects convolution with spectral sensitivity of the telescope, and N has units [\f$\mbox{DN s}^{-1} \mbox{ synth. pixel}^{-1}\f$]. Note that the Eq. 1.5 resembles Eq. 1.3, however here \f$\widetilde{G}(T,n_e)\f$ has units [\f$\mbox{DN s}^{-1} \mbox{ cm}^5 \mbox{ sr}^{-1}\f$].
+
+In the imaging regime we store precalculated \f$\widetilde{G}(T,n_e)\f$ functions. 
+
+\subsection software Software implementation
+
+The two coordinate systems are connected by two rotations, first an angle \f$l\f$ around the \f$z\f$-axis, then around an angle \f$-b\f$ around the \f$y\f$-axis:
 \f{equation}{
 	\begin{pmatrix} x' \\ y' \\ z'\end{pmatrix}=\begin{pmatrix} \cos{b} & 0 & -\sin{b} \\ 0&1&0\\ \sin{b} & 0 & \cos{b}\end{pmatrix}\begin{pmatrix} \cos{l} & -\sin{l} &0\\ \sin{l} & \cos{l} &0\\ 0&0&1\end{pmatrix} \begin{pmatrix} x\\y\\z\end{pmatrix}.
 	\label{eq:angle}
