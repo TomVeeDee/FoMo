@@ -152,6 +152,6 @@ for k=0,naiar-1 do begin
       printf,unit,resp
    endfor
    free_lun,unit
-endif
+endfor
 
 end
