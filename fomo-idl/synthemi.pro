@@ -11,7 +11,7 @@ endif
 ; rho (or nem): (2d float array) total density (or total number density) in CGS
 ; tem: (2d float array) temperature in CGS 
 ; v1m, v2m: (2d float arrays) x and y components of velocity, in km/s 
-; gridx, gridy: (floats) x and y axes 
+; gridx, gridy: (floats) x and y axes in cgs. Note: they are assumed uniform
 ; ion: (string) acronym of the ion
 ; w0: (float) wavelength of line center 
 ; mua_d: (floats) array of line-of-sight angles. The routine is set to return
@@ -120,7 +120,7 @@ if keyword_set(imaging) or keyword_set(channel) then begin
       if mua ne 0. and mua ne 90. then direction = 4
       gridlos, gridx=gridx, gridy=gridy, mua_d=mua, dx=dx, dy=dy, n_gridx=n_gridx, n_gridy=n_gridy, ngrid=ngrid, dl=dl
 
-      integrateemission,emission=emission_goft,logt=logt,n_gridx=n_gridx,n_gridy=n_gridy,ngrid=ngrid,w0=w0,direction=direction,imaging=imaging,channel=channel,image=image,dl=dl,wayemi=wayemi,silent=silent
+      integrateemission,emission=emission_goft,logt=logt,n_gridx=n_gridx,n_gridy=n_gridy,ngrid=ngrid,w0=w0,direction=direction,imaging=imaging,channel=channel,image=image,dl=dl,dx=dx,dy=dy,wayemi=wayemi,silent=silent
       dlos = (size(image))[1]
       inan = string(i+1,format="(i1)")
       exe1 = 'line_'+inan+' = image'
@@ -152,7 +152,7 @@ endif else begin
          losvel = losvel
       endelse
 
-      integrateemission,emission=emission_goft,logt=logt,n_gridx=n_gridx,n_gridy=n_gridy,ngrid=ngrid,wave=wave,w0=w0,direction=direction,losvel=losvel,imaging=imaging,image=image,watom=watom,wayemi=wayemi,dl=dl,silent=silent
+      integrateemission,emission=emission_goft,logt=logt,n_gridx=n_gridx,n_gridy=n_gridy,ngrid=ngrid,wave=wave,w0=w0,direction=direction,losvel=losvel,imaging=imaging,image=image,watom=watom,wayemi=wayemi,dl=dl,dx=dx,dy=dy,silent=silent
 
       dlos = (size(image))[1]
       inan = string(i+1,format="(i1)")

@@ -118,7 +118,7 @@ pro degrad_res,oslice=oslice,wave=wave,w0=w0,dlx=dlx,dly=dly,gridx=gridx,gridy=g
 
   if ~keyword_set(wfluc) and dimw ne 0 then wfluc = 0.1
 
-  apix = xres^2*2.35d-11
+;  apix = xres^2*2.35d-11
 
   if n_elements(vres) ne 0 then begin
   endif
@@ -238,7 +238,7 @@ pro degrad_res,oslice=oslice,wave=wave,w0=w0,dlx=dlx,dly=dly,gridx=gridx,gridy=g
         endfor
         for i=0,num_t-1 do dslice_cg[*,*,i] = frebin(reform(slice_s[*,*,i]),nx_cg,nw_cg,/total)
      endelse
-     dslice_cg = dslice_cg*dw*effarea*apix
+     dslice_cg = dslice_cg*dw*effarea;*apix
   endif else begin
      if dimy ne 0 then begin
         slice_s = slice_t*0.
@@ -253,7 +253,7 @@ pro degrad_res,oslice=oslice,wave=wave,w0=w0,dlx=dlx,dly=dly,gridx=gridx,gridy=g
         slice_s = filter_image(slice_t,FWHM=[numpix_x_fwhm,1],/all)
         dslice_cg = frebin(slice_s,nx_cg,num_t,/total)
      endelse
-     dslice_cg = dslice_cg*dw*effarea*apix
+     dslice_cg = dslice_cg*dw*effarea;*apix
   endelse        
 
   if dimw ne 0 then int_dslice = total(dslice_cg,locw)/cf[nwave/2] else int_dslice = dslice_cg/cf
