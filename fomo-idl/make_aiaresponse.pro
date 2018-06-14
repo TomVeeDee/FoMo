@@ -104,24 +104,29 @@ n_e_big = 10.^(n_e_lg_big)
 sterad_arc = 1.
 watom = 0.
 
-if sngfilter eq 'all' or sngfilter eq '1600' or sngfilter eq '1700' or sngfilter eq '4500' then aia_resp = aia_get_response(/dn,/uv) else aia_resp = aia_get_response(/dn)
-
 if sngfilter eq 'all' then aiarr = ['304','1600','1700','4500','171','193','211','335','094','131'] else aiarr = sngfilter
 naiar = n_elements(aiarr)
 
+; make the default to look for the EUV channels
+aia_resp = aia_get_response(/dn)
+
 for k=0,naiar-1 do begin
    filt = aiarr[k]
+   ; recalculate the AIA response if the UV channels are selected
+   if filt eq '1600' or filt eq '1700' or filt eq '4500' then aia_resp = aia_get_response(/dn,/uv)
    print,'Constructing AIA - '+filt+' G(T) table'
 
    openw,unit,gotdir+'goft_table_aia'+filt+'_'+nab+extname+'.dat',/get_lun & w0 = float(filt) & ion = filt
+   if filt eq '094' then filt2 = '94' else filt2 = filt
    if ~keyword_set(wvlmin) or ~keyword_set(wvlmax) or keyword_set(all) then begin
-      if filt eq '094' then filt2 = '94' else filt2 = filt
       ex1 = 'pk = max(aia_resp.a'+filt2+'.ea,ipk)'
       ex2 = 'wave = aia_resp.a'+filt2+'.wave'
       void = execute(ex1)
       void = execute(ex2)
       ex1 = 'wvlmin = wave[([min(abs(pk*0.01-aia_resp.a'+filt2+'.ea[0:ipk])),!c])[1]]'
       ex2 = 'wvlmax = wave[([min(abs(pk*0.01-aia_resp.a'+filt2+'.ea[ipk:-1])),!c])[1]+ipk]'
+      void = execute(ex1)
+      void = execute(ex2)
    endif
    if filt eq '304' or filt eq '1600' or filt eq '1700' or filt eq '4500' then begin 
       numn = numn_big 
@@ -152,6 +157,6 @@ for k=0,naiar-1 do begin
       printf,unit,resp
    endfor
    free_lun,unit
-endif
+endfor
 
 end

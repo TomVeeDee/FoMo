@@ -151,6 +151,7 @@ FoMo::DataCube FoMo::readgoftfromchianti(const std::string chiantifile, std::str
 	double nrhotemp;
 	int nrho, nt;
 	double field;
+	double minlevel, maxlevel;
 	FoMo::tphysvar temprho, tempt, tempgoft;
 
 	std::cout << "Reading G(T) from " << chiantifile << "... " << std::flush;
@@ -158,6 +159,8 @@ FoMo::DataCube FoMo::readgoftfromchianti(const std::string chiantifile, std::str
 	in >> ion;
 	in >> lambda0;
 	in >> atweight;
+	in >> minlevel;
+	in >> maxlevel;
 	in >> nrhotemp;
 	nrho=round(nrhotemp);
 	in >> nt;
