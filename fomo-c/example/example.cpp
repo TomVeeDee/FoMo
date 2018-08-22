@@ -69,7 +69,7 @@ int main(int argc, char* argv[])
 	/// [Set rendering options]
 	Object.setchiantifile("../chiantitables/goft_table_fe_12_0194_abco.dat"); // the default value is "../chiantitables/goft_table_fe_12_0194small_abco.dat"
 	Object.setabundfile("/empty"); //use "/empty" or do not set it at all for the default sun_coronal_2012_schmelz.abund file
-	Object.setrendermethod("NearestNeighbour"); // NearestNeighbour is the default rendermethod
+	Object.setrendermethod("GPUNearestNeighbour"); // NearestNeighbour is the default rendermethod
 	Object.setobservationtype(FoMo::Spectroscopic);
 	// adjust the resolution with these parameters
 	int x_pixel=149;
@@ -79,7 +79,7 @@ int main(int argc, char* argv[])
 	double lambda_width=200000; // in m/s
 	Object.setresolution(x_pixel,y_pixel,z_pixel,lambda_pixel,lambda_width);
 	// determine where the output will be written
-	Object.setoutfile("fomo-example-out.");
+	Object.setoutfile("fomo-example-out-gpu.");
 	/// [Set rendering options]
 	
 	/// [Render]
@@ -106,6 +106,6 @@ int main(int argc, char* argv[])
 	rendercube.setwriteoutzip();
 	// This says that only the zipped file needs to be kept. 
 	rendercube.setwriteoutdeletefiles();
-	rendercube.writegoftcube("fomo-output.txt");
+	rendercube.writegoftcube("fomo-output-gpu.txt");
 	/// [Details]
 }

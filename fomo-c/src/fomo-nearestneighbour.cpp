@@ -11,6 +11,7 @@
 #include <algorithm>
 #include <cassert>
 #include <set>
+#include <chrono>
 
 
 #include <boost/geometry.hpp>
@@ -28,6 +29,10 @@ typedef std::pair<point, unsigned> value;
 const double speedoflight=GSL_CONST_MKSA_SPEED_OF_LIGHT; // speed of light
 const double pi=M_PI; //pi
 
+static std::chrono::time_point<std::chrono::high_resolution_clock> time_now() {
+	return std::chrono::high_resolution_clock::now();
+}
+
 FoMo::RenderCube nearestneighbourinterpolation(FoMo::GoftCube goftcube, const double l, const double b, const int x_pixel, const int y_pixel, const int z_pixel, const int lambda_pixel, const double lambda_width)
 {
 //
@@ -41,6 +46,8 @@ FoMo::RenderCube nearestneighbourinterpolation(FoMo::GoftCube goftcube, const do
 #else
 	commrank = 0;
 #endif
+	// Start timing
+	std::chrono::time_point<std::chrono::high_resolution_clock> start = time_now();
 	//FoMo::DataCube goftcube=object.datacube;
 	FoMo::tgrid grid = goftcube.readgrid();
 	int ng=goftcube.readngrid();
@@ -94,7 +101,7 @@ FoMo::RenderCube nearestneighbourinterpolation(FoMo::GoftCube goftcube, const do
 		boostpair=std::make_pair(boostpoint,i);
 		input_values.at(i)=boostpair;
 	}
-	if (commrank==0) std::cout << "Done!" << std::endl;
+	if (commrank==0) std::cout << "Done! Time spent since start (seconds): " << std::chrono::duration<double>(time_now() - start).count() << std::endl << std::flush;
 	if (commrank==0) std::cout << "Building R-tree... " << std::flush;
 	// take an rtree with the quadratic packing algorithm, it takes (slightly) more time to build, but queries are faster for large renderings
 	bgi::rtree< value, bgi::quadratic<16> > rtree(input_values.begin(),input_values.end());
@@ -109,7 +116,7 @@ FoMo::RenderCube nearestneighbourinterpolation(FoMo::GoftCube goftcube, const do
 	xacc.clear(); // release the memory
 	yacc.clear();
 	zacc.clear();
-	if (commrank==0) std::cout << "Done!" << std::endl << std::flush;
+	if (commrank==0) std::cout << "Done! Time spent since start (seconds): " << std::chrono::duration<double>(time_now() - start).count() << std::endl << std::flush;
 
 	std::string chiantifile=goftcube.readchiantifile();
 	double lambda0=goftcube.readlambda0();// lambda0=AIA bandpass for AIA imaging
@@ -225,7 +232,7 @@ FoMo::RenderCube nearestneighbourinterpolation(FoMo::GoftCube goftcube, const do
 				++show_progress;
 			}
 		}
-	if (commrank==0) std::cout << " Done! " << std::endl << std::flush;
+	if (commrank==0) std::cout << "Done! Time spent since start (seconds): " << std::chrono::duration<double>(time_now() - start).count() << std::endl << std::flush;
 	
 	FoMo::RenderCube rendercube(goftcube);
 	FoMo::tvars newdata;
@@ -250,6 +257,7 @@ FoMo::RenderCube nearestneighbourinterpolation(FoMo::GoftCube goftcube, const do
 	{
 		rendercube.setobservationtype(FoMo::Spectroscopic);
 	}
+	if (commrank==0) std::cout << "Time spent in nearestneighbourinterpolation (seconds): " << std::chrono::duration<double>(time_now() - start).count() << std::endl << std::flush;
 	return rendercube;
 }
 
