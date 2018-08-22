@@ -333,7 +333,7 @@ FoMo::RenderCube gpunearestneighbourinterpolation(FoMo::GoftCube goftcube, const
 	// Read data
 	FoMo::tgrid grid = goftcube.readgrid();
 	int ng = goftcube.readngrid();
-	//ng = 10; // Setting ng to something small seems to cause memory access bugs in the kernel? Investigate?
+	//ng = 392751; // Setting ng to something small seems to cause memory access bugs in the kernel? Investigate?
 	std::cout << "ng = " << ng << std::endl;
 	int dim = goftcube.readdim();
 	FoMo::tphysvar peakvec=goftcube.readvar(0); // Peak intensity
@@ -402,20 +402,26 @@ FoMo::RenderCube gpunearestneighbourinterpolation(FoMo::GoftCube goftcube, const
 	cl::Buffer cl_buffer_coords(cl_context, CL_MEM_READ_ONLY | CL_MEM_ALLOC_HOST_PTR, 3*sizeof(float)*(input_amount + 1));
 	cl::Buffer cl_buffer_nodes(cl_context, CL_MEM_READ_ONLY | CL_MEM_ALLOC_HOST_PTR, sizeof(uint8_t)*(input_amount + 1)); // Tree metadata: index of axis of split for non-leaves, 3 for leaves
 	cl::Buffer cl_buffer_data_in(cl_context, CL_MEM_READ_ONLY | CL_MEM_ALLOC_HOST_PTR, data_in_per_point*sizeof(float)*(input_amount + 1)); // Peak, fwhm, losvel
-	cl::Buffer cl_buffer_parameters(cl_context, CL_MEM_READ_ONLY | CL_MEM_ALLOC_HOST_PTR, sizeof(parameters_struct)); // Various constant parameters
+	cl::Buffer cl_buffer_parameters0(cl_context, CL_MEM_READ_ONLY | CL_MEM_ALLOC_HOST_PTR, sizeof(parameters_struct)); // Various constant parameters      
+	cl::Buffer cl_buffer_parameters1(cl_context, CL_MEM_READ_ONLY | CL_MEM_ALLOC_HOST_PTR, sizeof(parameters_struct)); // Various constant parameters
+	cl::Buffer cl_buffer_parameters[] = {cl_buffer_parameters0, cl_buffer_parameters1};
 	cl::Buffer cl_buffer_data_out0(cl_context, CL_MEM_WRITE_ONLY | CL_MEM_ALLOC_HOST_PTR, data_out_per_point*sizeof(float)*output_amount);
 	cl::Buffer cl_buffer_data_out1(cl_context, CL_MEM_WRITE_ONLY | CL_MEM_ALLOC_HOST_PTR, data_out_per_point*sizeof(float)*output_amount);
 	cl::Buffer cl_buffer_data_out[] = {cl_buffer_data_out0, cl_buffer_data_out1};
 	// Create queue
-	cl::CommandQueue cl_queue(cl_context, cl_devices[0], 0, &err);
+	cl::CommandQueue cl_queue0(cl_context, cl_devices[0], 0, &err); // Used for first kernel and general stuff
+	cl::CommandQueue cl_queue1(cl_context, cl_devices[0], 0, &err); // Used for second kernel
+	cl::CommandQueue queues[] = {cl_queue0, cl_queue1};
 	assert(err == CL_SUCCESS);
 	// Map buffers
-	float *coords = (float*) cl_queue.enqueueMapBuffer(cl_buffer_coords, CL_FALSE, CL_MAP_WRITE, 0, 3*sizeof(float)*(input_amount + 1));
-	uint8_t *nodes = (uint8_t*) cl_queue.enqueueMapBuffer(cl_buffer_nodes, CL_FALSE, CL_MAP_WRITE, 0, sizeof(uint8_t)*(input_amount + 1));
-	float *data_in = (float*) cl_queue.enqueueMapBuffer(cl_buffer_data_in, CL_FALSE, CL_MAP_WRITE, 0, data_in_per_point*sizeof(float)*(input_amount + 1));
-	parameters_struct *parameters = (parameters_struct*) cl_queue.enqueueMapBuffer(cl_buffer_parameters, CL_FALSE, CL_MAP_WRITE, 0, sizeof(parameters_struct));
-	float *data_out0 = (float*) cl_queue.enqueueMapBuffer(cl_buffer_data_out0, CL_FALSE, CL_MAP_READ, 0, data_out_per_point*sizeof(float)*output_amount);
-	float *data_out1 = (float*) cl_queue.enqueueMapBuffer(cl_buffer_data_out1, CL_FALSE, CL_MAP_READ, 0, data_out_per_point*sizeof(float)*output_amount);
+	float *coords = (float*) queues[0].enqueueMapBuffer(cl_buffer_coords, CL_FALSE, CL_MAP_WRITE, 0, 3*sizeof(float)*(input_amount + 1));
+	uint8_t *nodes = (uint8_t*) queues[0].enqueueMapBuffer(cl_buffer_nodes, CL_FALSE, CL_MAP_WRITE, 0, sizeof(uint8_t)*(input_amount + 1));
+	float *data_in = (float*) queues[0].enqueueMapBuffer(cl_buffer_data_in, CL_FALSE, CL_MAP_WRITE, 0, data_in_per_point*sizeof(float)*(input_amount + 1));
+	parameters_struct *parameters0 = (parameters_struct*) queues[0].enqueueMapBuffer(cl_buffer_parameters[0], CL_FALSE, CL_MAP_WRITE, 0, sizeof(parameters_struct));
+	parameters_struct *parameters1 = (parameters_struct*) queues[1].enqueueMapBuffer(cl_buffer_parameters[0], CL_FALSE, CL_MAP_WRITE, 0, sizeof(parameters_struct));
+    parameters_struct *parameters[] = {parameters0, parameters1};
+	float *data_out0 = (float*) queues[0].enqueueMapBuffer(cl_buffer_data_out[0], CL_FALSE, CL_MAP_READ, 0, data_out_per_point*sizeof(float)*output_amount);
+	float *data_out1 = (float*) queues[1].enqueueMapBuffer(cl_buffer_data_out[0], CL_FALSE, CL_MAP_READ, 0, data_out_per_point*sizeof(float)*output_amount);
     float *data_out[] = {data_out0, data_out1};
 	// Create kernels
 	cl::Kernel cl_kernel0(cl_program, "calculate_ray", &err);
@@ -433,7 +439,7 @@ FoMo::RenderCube gpunearestneighbourinterpolation(FoMo::GoftCube goftcube, const
 		kernels[i].setArg(0, cl_buffer_coords);
 		kernels[i].setArg(1, cl_buffer_nodes);
 		kernels[i].setArg(2, cl_buffer_data_in);
-		kernels[i].setArg(3, cl_buffer_parameters);
+		kernels[i].setArg(3, cl_buffer_parameters[i]);
 		kernels[i].setArg(4, cl_buffer_data_out[i]);
 	}
 	if (commrank==0) std::cout << "Done! Time spent since start (seconds): " << std::chrono::duration<double>(time_now() - start).count() << std::endl << std::flush;
@@ -482,7 +488,7 @@ FoMo::RenderCube gpunearestneighbourinterpolation(FoMo::GoftCube goftcube, const
 	
 	// We need some OpenCL buffers for the next step, wait for allocation to finish first
 	if (commrank==0) std::cout << "Waiting for OpenCL to finish buffer allocation ... " << std::flush;
-	cl_queue.finish();
+	queues[0].finish();
 	if (commrank==0) std::cout << "Done! Time spent since start (seconds): " << std::chrono::duration<double>(time_now() - start).count() << std::endl << std::flush;
 	
 	// Construct tree
@@ -509,21 +515,24 @@ FoMo::RenderCube gpunearestneighbourinterpolation(FoMo::GoftCube goftcube, const
 	//exit(0);
 	
 	// Storing constant parameters
+	queues[1].finish();
 	if (commrank==0) std::cout << "Storing constant parameters ... " << std::flush;
-	parameters->ng = ng;
-	parameters->minx = minx;
-	parameters->dx = (maxx - minx)/(x_pixel - 1);
-	parameters->x_pixel = x_pixel;
-	parameters->miny = miny;
-	parameters->dy = (maxy - miny)/(y_pixel - 1);
-	parameters->minz = minz;
-	parameters->dz = (maxz - minz);
-	if (z_pixel != 1) parameters->dz /= (z_pixel - 1);
-	parameters->z_pixel = z_pixel;
-	parameters->lambda_pixel = lambda_pixel;
-	parameters->lambda0 = goftcube.readlambda0(); // lambda0=AIA bandpass for AIA imaging
-	parameters->lambda_width_in_A = lambda_width*goftcube.readlambda0()/speedoflight;
-	parameters->speedoflight = speedoflight;
+	for(int i = 0; i < 2; i++) {
+		parameters[i]->ng = ng;
+		parameters[i]->minx = minx;
+		parameters[i]->dx = (maxx - minx)/(x_pixel - 1);
+		parameters[i]->x_pixel = x_pixel;
+		parameters[i]->miny = miny;
+		parameters[i]->dy = (maxy - miny)/(y_pixel - 1);
+		parameters[i]->minz = minz;
+		parameters[i]->dz = (maxz - minz);
+		if (z_pixel != 1) parameters[i]->dz /= (z_pixel - 1);
+		parameters[i]->z_pixel = z_pixel;
+		parameters[i]->lambda_pixel = lambda_pixel;
+		parameters[i]->lambda0 = goftcube.readlambda0(); // lambda0=AIA bandpass for AIA imaging
+		parameters[i]->lambda_width_in_A = lambda_width*goftcube.readlambda0()/speedoflight;
+		parameters[i]->speedoflight = speedoflight;
+	}
 	if (commrank==0) std::cout << "Done! Time spent since start (seconds): " << std::chrono::duration<double>(time_now() - start).count() << std::endl << std::flush;
 	
 	// Building frame and extracting output
@@ -531,9 +540,9 @@ FoMo::RenderCube gpunearestneighbourinterpolation(FoMo::GoftCube goftcube, const
 	if (commrank==0) std::cout << "Building frame and extracting output ... " << std::flush;
 	
 	// Write input
-	cl_queue.enqueueWriteBuffer(cl_buffer_coords, CL_TRUE, 0, 3*sizeof(float)*(input_amount + 1), coords);
-	cl_queue.enqueueWriteBuffer(cl_buffer_nodes, CL_TRUE, 0, sizeof(uint8_t)*(input_amount + 1), nodes);
-	cl_queue.enqueueWriteBuffer(cl_buffer_data_in, CL_TRUE, 0, data_in_per_point*sizeof(float)*(input_amount + 1), data_in);
+	queues[0].enqueueWriteBuffer(cl_buffer_coords, CL_FALSE, 0, 3*sizeof(float)*(input_amount + 1), coords);
+	queues[0].enqueueWriteBuffer(cl_buffer_nodes, CL_FALSE, 0, sizeof(uint8_t)*(input_amount + 1), nodes);
+	queues[0].enqueueWriteBuffer(cl_buffer_data_in, CL_FALSE, 0, data_in_per_point*sizeof(float)*(input_amount + 1), data_in);
 	
 	// Initialize output data extraction
 	FoMo::tgrid newgrid;
@@ -558,17 +567,16 @@ FoMo::RenderCube gpunearestneighbourinterpolation(FoMo::GoftCube goftcube, const
 	pathlength *= 1e8; // assume that the coordinates are given in Mm, and convert to cm
 	
 	// Ping-pong in between two kernels until work is finished
+	queues[0].finish(); // The general queue needs to be finished because the second queue won't wait for it to copy the input
 	int index = 0;
-	parameters->offset = 0;
-	cl_queue.enqueueWriteBuffer(cl_buffer_parameters, CL_TRUE, 0, sizeof(parameters_struct), parameters);
-	enqueueKernel(cl_queue, kernels[index], 0, std::min(chunk_size, pixels));
-	cl_queue.finish();
+	parameters[index]->offset = 0;
+	queues[index].enqueueWriteBuffer(cl_buffer_parameters[index], CL_FALSE, 0, sizeof(parameters_struct), parameters[index]);
+	enqueueKernel(queues[index], kernels[index], 0, std::min(chunk_size, pixels));
 	for(int offset = chunk_size; offset < pixels; offset += chunk_size) {
-		parameters->offset = offset;
-		cl_queue.enqueueWriteBuffer(cl_buffer_parameters, CL_TRUE, 0, sizeof(parameters_struct), parameters);
-		enqueueKernel(cl_queue, kernels[1 - index], offset, std::min(chunk_size, pixels - offset)); // Queue other kernel execution
-		cl_queue.finish();
-		enqueueRead(cl_queue, cl_buffer_data_out[index], chunk_size*lambda_pixel*data_out_per_point*sizeof(float), data_out[index]); // Wait for this kernel to finish execution
+		parameters[1 - index]->offset = offset;
+		queues[1 - index].enqueueWriteBuffer(cl_buffer_parameters[1 - index], CL_FALSE, 0, sizeof(parameters_struct), parameters[1 - index]);
+		enqueueKernel(queues[1 - index], kernels[1 - index], offset, std::min(chunk_size, pixels - offset)); // Queue other kernel execution
+		enqueueRead(queues[index], cl_buffer_data_out[index], chunk_size*lambda_pixel*data_out_per_point*sizeof(float), data_out[index]); // Wait for this kernel to finish execution
 		// Extract output this kernel, other kernel is already queued for execution so GPU is not waiting
 		for(int i = 0; i < chunk_size*lambda_pixel; i++) {
 			int output_index = (offset - chunk_size)*lambda_pixel + i;
@@ -579,7 +587,7 @@ FoMo::RenderCube gpunearestneighbourinterpolation(FoMo::GoftCube goftcube, const
 		}
 		index = 1 - index;
 	}
-	enqueueRead(cl_queue, cl_buffer_data_out[index], (pixels%chunk_size)*lambda_pixel*data_out_per_point*sizeof(float), data_out[index]); // Wait for the last kernel to finish execution
+	enqueueRead(queues[index], cl_buffer_data_out[index], (pixels%chunk_size)*lambda_pixel*data_out_per_point*sizeof(float), data_out[index]); // Wait for the last kernel to finish execution
 	// Extract output this kernel, other kernel is already queued for execution so GPU is not waiting
 	for(int i = 0; i < (pixels%chunk_size)*lambda_pixel; i++) {
 		int output_index = pixels/chunk_size*chunk_size*lambda_pixel + i;
