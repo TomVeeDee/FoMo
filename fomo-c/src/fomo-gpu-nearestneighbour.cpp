@@ -18,9 +18,9 @@
 #include <CL/cl.hpp>
 
 #define LEAF 3
-#define WENT_DOWN_LEFT 0
-#define WENT_DOWN_RIGHT 1
-#define WENT_DOWN_BOTH 2
+#define WENT_DOWN_LEFT 1
+#define WENT_DOWN_RIGHT 2
+#define WENT_DOWN_BOTH 3
 
 struct __attribute__ ((packed)) parameters_struct {
 	cl_int offset;
@@ -194,8 +194,8 @@ int nearest_neighbour_kd(const float *coords, const uint8_t* nodes, int ng, floa
 			diffs[stack_pointer] = target[axis] - coords[3*current_node + axis];
 			if (diffs[stack_pointer] < 0) {
 				// Left child
-				current_node *= 2;
 				stack[stack_pointer++] = (current_node == single_child_node ? WENT_DOWN_BOTH : WENT_DOWN_LEFT);
+				current_node *= 2;
 			} else {
 				// Right child
 				stack[stack_pointer] = WENT_DOWN_RIGHT;
@@ -408,6 +408,7 @@ FoMo::RenderCube gpunearestneighbourinterpolation(FoMo::GoftCube goftcube, const
 	cl::Buffer cl_buffer_data_out0(cl_context, CL_MEM_WRITE_ONLY | CL_MEM_ALLOC_HOST_PTR, data_out_per_point*sizeof(float)*output_amount);
 	cl::Buffer cl_buffer_data_out1(cl_context, CL_MEM_WRITE_ONLY | CL_MEM_ALLOC_HOST_PTR, data_out_per_point*sizeof(float)*output_amount);
 	cl::Buffer cl_buffer_data_out[] = {cl_buffer_data_out0, cl_buffer_data_out1};
+	cl::Buffer cl_buffer_debug(cl_context, CL_MEM_READ_WRITE | CL_MEM_ALLOC_HOST_PTR, 20*sizeof(double));
 	// Create queue
 	cl::CommandQueue cl_queue0(cl_context, cl_devices[0], 0, &err); // Used for first kernel and general stuff
 	cl::CommandQueue cl_queue1(cl_context, cl_devices[0], 0, &err); // Used for second kernel
@@ -423,6 +424,7 @@ FoMo::RenderCube gpunearestneighbourinterpolation(FoMo::GoftCube goftcube, const
 	float *data_out0 = (float*) queues[0].enqueueMapBuffer(cl_buffer_data_out[0], CL_FALSE, CL_MAP_READ, 0, data_out_per_point*sizeof(float)*output_amount);
 	float *data_out1 = (float*) queues[1].enqueueMapBuffer(cl_buffer_data_out[0], CL_FALSE, CL_MAP_READ, 0, data_out_per_point*sizeof(float)*output_amount);
     float *data_out[] = {data_out0, data_out1};
+	double *debug_buffer = (double*) queues[0].enqueueMapBuffer(cl_buffer_debug, CL_FALSE, CL_MAP_READ, 0, 20*sizeof(double));
 	// Create kernels
 	cl::Kernel cl_kernel0(cl_program, "calculate_ray", &err);
 	if(err != CL_SUCCESS) {
@@ -441,6 +443,7 @@ FoMo::RenderCube gpunearestneighbourinterpolation(FoMo::GoftCube goftcube, const
 		kernels[i].setArg(2, cl_buffer_data_in);
 		kernels[i].setArg(3, cl_buffer_parameters[i]);
 		kernels[i].setArg(4, cl_buffer_data_out[i]);
+		kernels[i].setArg(5, cl_buffer_debug);
 	}
 	if (commrank==0) std::cout << "Done! Time spent since start (seconds): " << std::chrono::duration<double>(time_now() - start).count() << std::endl << std::flush;
 
@@ -566,17 +569,31 @@ FoMo::RenderCube gpunearestneighbourinterpolation(FoMo::GoftCube goftcube, const
 	}
 	pathlength *= 1e8; // assume that the coordinates are given in Mm, and convert to cm
 	
+	// Read debug data from tree
+	std::cout << "Tree data:" << std::endl;
+	std::cout << int(nodes[13107201/2]) << std::endl;
+	
 	// Ping-pong in between two kernels until work is finished
 	queues[0].finish(); // The general queue needs to be finished because the second queue won't wait for it to copy the input
 	int index = 0;
 	parameters[index]->offset = 0;
+	std::cout << "Test1" << std::endl;
 	queues[index].enqueueWriteBuffer(cl_buffer_parameters[index], CL_FALSE, 0, sizeof(parameters_struct), parameters[index]);
+	queues[index].finish();
+	std::cout << "Test2" << std::endl;
 	enqueueKernel(queues[index], kernels[index], 0, std::min(chunk_size, pixels));
+	queues[index].finish();
 	for(int offset = chunk_size; offset < pixels; offset += chunk_size) {
+		std::cout << "Test3 " << offset << std::endl;
 		parameters[1 - index]->offset = offset;
 		queues[1 - index].enqueueWriteBuffer(cl_buffer_parameters[1 - index], CL_FALSE, 0, sizeof(parameters_struct), parameters[1 - index]);
+		queues[1 - index].finish();
+		std::cout << "Test4 " << offset << std::endl;
 		enqueueKernel(queues[1 - index], kernels[1 - index], offset, std::min(chunk_size, pixels - offset)); // Queue other kernel execution
+		queues[index].finish();
+		std::cout << "Test5 " << offset << std::endl;
 		enqueueRead(queues[index], cl_buffer_data_out[index], chunk_size*lambda_pixel*data_out_per_point*sizeof(float), data_out[index]); // Wait for this kernel to finish execution
+		queues[index].finish();
 		// Extract output this kernel, other kernel is already queued for execution so GPU is not waiting
 		for(int i = 0; i < chunk_size*lambda_pixel; i++) {
 			int output_index = (offset - chunk_size)*lambda_pixel + i;
@@ -587,7 +604,9 @@ FoMo::RenderCube gpunearestneighbourinterpolation(FoMo::GoftCube goftcube, const
 		}
 		index = 1 - index;
 	}
+	std::cout << "Test6" << std::endl;
 	enqueueRead(queues[index], cl_buffer_data_out[index], (pixels%chunk_size)*lambda_pixel*data_out_per_point*sizeof(float), data_out[index]); // Wait for the last kernel to finish execution
+	queues[index].finish();
 	// Extract output this kernel, other kernel is already queued for execution so GPU is not waiting
 	for(int i = 0; i < (pixels%chunk_size)*lambda_pixel; i++) {
 		int output_index = pixels/chunk_size*chunk_size*lambda_pixel + i;
@@ -597,7 +616,22 @@ FoMo::RenderCube gpunearestneighbourinterpolation(FoMo::GoftCube goftcube, const
 		intens.at(output_index) = data_out[index][data_out_per_point*i + (data_out_per_point - 1)]*pathlength;
 	}
 	
+	std::cout << "Debug data:" << std::endl;
+	err = queues[0].enqueueReadBuffer(cl_buffer_debug, CL_TRUE, 0, 20*sizeof(double), debug_buffer);
+	if(err != CL_SUCCESS) {
+        std::cerr << "Error: Could not enqueue buffer read: " << err << std::endl;
+        exit(1);
+    }
+	for(int i = 0; i < 20; i++) {
+		std::cout << i << ": " << debug_buffer[i] << std::endl;
+	}
+		
 	if (commrank==0) std::cout << "Done! Time spent since start (seconds): " << std::chrono::duration<double>(time_now() - start).count() << std::endl << std::flush;
+	
+	for(int i = 0; i < 20; i++) {
+		int index = 2010*lambda_pixel + i;
+		std::cout << newgrid.at(0).at(index) << " " << newgrid.at(1).at(index) << " " << newgrid.at(2).at(index) << " " << intens.at(index) << std::endl;
+	}
 	
 	// Constructing RenderCube
 	if (commrank==0) std::cout << "Constructing RenderCube ... " << std::flush;
