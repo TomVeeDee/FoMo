@@ -313,6 +313,7 @@ enum FoMoRenderValue
 	NearestNeighbour,
 	Projection,
 	GPUNearestNeighbour,
+	GPURegularGrid,
 	// add more methods here
 	LastVirtualRenderMethod
 };
@@ -328,6 +329,7 @@ static const std::map<std::string, FoMoRenderValue>::value_type RenderMapEntries
 	std::map<std::string, FoMoRenderValue>::value_type("NearestNeighbour",NearestNeighbour),
 	std::map<std::string, FoMoRenderValue>::value_type("Projection",Projection),
 	std::map<std::string, FoMoRenderValue>::value_type("GPUNearestNeighbour",GPUNearestNeighbour),
+	std::map<std::string, FoMoRenderValue>::value_type("GPURegularGrid",GPURegularGrid),
 	/// [Rendermethods]
 	std::map<std::string, FoMoRenderValue>::value_type("ThisIsNotARealRenderMethod",LastVirtualRenderMethod)
 };
@@ -403,6 +405,10 @@ void FoMo::FoMoObject::render(const std::vector<double> lvec, const std::vector<
 		case GPUNearestNeighbour:
 			std::cout << "Using GPU nearest-neighbour rendering." << std::endl << std::flush;
 			tmprender=FoMo::RenderWithGPUNearestNeighbour(this->goftcube, x_pixel, y_pixel, z_pixel, lambda_pixel, lambda_width, lvec, bvec, this->outfile);
+			break;
+		case GPURegularGrid:
+			std::cout << "Using GPU regular grid rendering." << std::endl << std::flush;
+			tmprender=FoMo::RenderWithGPURegularGrid(this->goftcube, x_pixel, y_pixel, z_pixel, lambda_pixel, lambda_width, lvec, bvec, this->outfile);
 			break;
 		case LastVirtualRenderMethod: // this should not be reached, since it is excluded from the map
 		default:

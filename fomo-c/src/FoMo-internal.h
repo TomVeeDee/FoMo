@@ -25,4 +25,7 @@ namespace FoMo
 	
 	FoMo::RenderCube RenderWithGPUNearestNeighbour(FoMo::GoftCube goftcube, const int x_pixel, const int y_pixel, const int z_pixel, const int lambda_pixel, const double lambda_width,
 	std::vector<double> lvec, std::vector<double> bvec, const std::string outfile);
+	
+	FoMo::RenderCube RenderWithGPURegularGrid(FoMo::GoftCube goftcube, const int x_pixel, const int y_pixel, const int z_pixel, const int lambda_pixel, const double lambda_width,
+	std::vector<double> lvec, std::vector<double> bvec, const std::string outfile);
 }
