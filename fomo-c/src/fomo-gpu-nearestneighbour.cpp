@@ -389,6 +389,7 @@ FoMo::RenderCube gpunearestneighbourinterpolation(FoMo::GoftCube goftcube, const
 	cl::Program::Sources cl_program_source(1, std::make_pair(prog.data(), prog.size()));
 	cl::Program cl_program(cl_context, cl_program_source);
 	std::string build_options = "-cl-nv-verbose -D MAX_LAMBDA_PIXEL=" + std::to_string(lambda_pixel) + " -D MAX_DEPTH=" + std::to_string(int(floor(log2(ng))));
+	if (commrank==0) std::cout << "Done! Time spent since start (seconds): " << std::chrono::duration<double>(time_now() - start).count() << std::endl << std::flush;
 	err = cl_program.build(cl_devices, build_options.c_str());
 	if(err != CL_SUCCESS) {
 		std::cerr << "Error: Could not compile OpenCL program!" << std::endl;
@@ -419,10 +420,10 @@ FoMo::RenderCube gpunearestneighbourinterpolation(FoMo::GoftCube goftcube, const
 	uint8_t *nodes = (uint8_t*) queues[0].enqueueMapBuffer(cl_buffer_nodes, CL_FALSE, CL_MAP_WRITE, 0, sizeof(uint8_t)*(input_amount + 1));
 	float *data_in = (float*) queues[0].enqueueMapBuffer(cl_buffer_data_in, CL_FALSE, CL_MAP_WRITE, 0, data_in_per_point*sizeof(float)*(input_amount + 1));
 	parameters_struct *parameters0 = (parameters_struct*) queues[0].enqueueMapBuffer(cl_buffer_parameters[0], CL_FALSE, CL_MAP_WRITE, 0, sizeof(parameters_struct));
-	parameters_struct *parameters1 = (parameters_struct*) queues[1].enqueueMapBuffer(cl_buffer_parameters[0], CL_FALSE, CL_MAP_WRITE, 0, sizeof(parameters_struct));
+	parameters_struct *parameters1 = (parameters_struct*) queues[1].enqueueMapBuffer(cl_buffer_parameters[1], CL_FALSE, CL_MAP_WRITE, 0, sizeof(parameters_struct));
     parameters_struct *parameters[] = {parameters0, parameters1};
 	float *data_out0 = (float*) queues[0].enqueueMapBuffer(cl_buffer_data_out[0], CL_FALSE, CL_MAP_READ, 0, data_out_per_point*sizeof(float)*output_amount);
-	float *data_out1 = (float*) queues[1].enqueueMapBuffer(cl_buffer_data_out[0], CL_FALSE, CL_MAP_READ, 0, data_out_per_point*sizeof(float)*output_amount);
+	float *data_out1 = (float*) queues[1].enqueueMapBuffer(cl_buffer_data_out[1], CL_FALSE, CL_MAP_READ, 0, data_out_per_point*sizeof(float)*output_amount);
     float *data_out[] = {data_out0, data_out1};
 	// Create kernels
 	cl::Kernel cl_kernel0(cl_program, "calculate_ray", &err);
@@ -584,7 +585,7 @@ FoMo::RenderCube gpunearestneighbourinterpolation(FoMo::GoftCube goftcube, const
 		queues[index].finish();
 		enqueueRead(queues[index], cl_buffer_data_out[index], chunk_size*lambda_pixel*data_out_per_point*sizeof(float), data_out[index]); // Wait for this kernel to finish execution
 		queues[index].finish();
-		// Extract output this kernel, other kernel is already queued for execution so GPU is not waiting
+		// Extract output from this kernel, other kernel is already queued for execution so GPU is not waiting
 		for(int i = 0; i < chunk_size*lambda_pixel; i++) {
 			int output_index = (offset - chunk_size)*lambda_pixel + i;
 			for(int j = 0; j < data_out_per_point - 1; j++) {
@@ -596,7 +597,7 @@ FoMo::RenderCube gpunearestneighbourinterpolation(FoMo::GoftCube goftcube, const
 	}
 	enqueueRead(queues[index], cl_buffer_data_out[index], (pixels%chunk_size)*lambda_pixel*data_out_per_point*sizeof(float), data_out[index]); // Wait for the last kernel to finish execution
 	queues[index].finish();
-	// Extract output this kernel, other kernel is already queued for execution so GPU is not waiting
+	// Extract output from this kernel, other kernel is already queued for execution so GPU is not waiting
 	for(int i = 0; i < (pixels%chunk_size)*lambda_pixel; i++) {
 		int output_index = pixels/chunk_size*chunk_size*lambda_pixel + i;
 		for(int j = 0; j < data_out_per_point - 1; j++) {
@@ -604,7 +605,7 @@ FoMo::RenderCube gpunearestneighbourinterpolation(FoMo::GoftCube goftcube, const
 		}
 		intens.at(output_index) = data_out[index][data_out_per_point*i + (data_out_per_point - 1)]*pathlength;
 	}
-		
+	
 	if (commrank==0) std::cout << "Done! Time spent since start (seconds): " << std::chrono::duration<double>(time_now() - start).count() << std::endl << std::flush;
 	
 	// Constructing RenderCube

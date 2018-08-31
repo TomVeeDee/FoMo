@@ -1,8 +1,10 @@
-""" A simple script to look at FoMo RenderCubes. Wavelengths are mapped entirely into blue, green or red depending on their size (the spectrum is divided into three equal parts). """
+""" A simple script to look at FoMo RenderCubes. OLD: Wavelengths are mapped entirely into blue, green or red depending on their size (the spectrum is divided into three equal parts). """
 
 import sys
-from pylab import zeros, close, imshow, show
+from pylab import zeros, close, imshow, show, title
 from math import sqrt
+import matplotlib.cm as cm
+import matplotlib.pyplot as pl
 
 def show_cube(path):
 	
@@ -11,17 +13,20 @@ def show_cube(path):
 		lines = f.readlines()
 	
 	# Initialize grid
-	x_pixels = 149
-	y_pixels = 148
-	grid = zeros([x_pixels, y_pixels, 3])
+	x_pixels = 50#149/50
+	y_pixels = 724#148/724
+	grid = zeros([y_pixels, x_pixels])
+	
+	ys = set()
 	
 	# Read header
 	amount = int(lines[1])
 	
 	# Find bounds
-	minx, maxx = x_pixels, 0
-	miny, maxy = y_pixels, 0
-	minl, maxl = 1000, 0
+	MAX_VALUE = 10**20
+	minx, maxx = MAX_VALUE, -MAX_VALUE
+	miny, maxy = MAX_VALUE, -MAX_VALUE
+	minl, maxl = MAX_VALUE, -MAX_VALUE
 	for line in lines[5:]:
 		words = line.split(" ")
 		x = float(words[0])
@@ -37,14 +42,20 @@ def show_cube(path):
 	for line in lines[5:]:
 		words = line.split(" ")
 		l = float(words[2])
-		color = max(0, min(2, int((maxl - l)/(maxl - minl)*3)))
 		x = int(round((float(words[0]) - minx)/x_distance*(x_pixels - 1)))
 		y = int(round((float(words[1]) - miny)/y_distance*(y_pixels - 1)))
-		grid[x, y, color] += float(words[3])
+		grid[y, x] += float(words[3])
+	
+	print("Finished loading!")
 	
 	# Display grid
+	half_x_pixel = x_distance/(x_pixels - 1)/2
+	half_y_pixel = y_distance/(y_pixels - 1)/2
 	close('all')
-	imshow(grid, interpolation = "none")
+	imshow(grid, extent=(minx - half_x_pixel, maxx + half_x_pixel, miny - half_y_pixel, maxy + half_y_pixel), vmin=0, cmap=cm.hot, aspect="auto")
+	cb = pl.colorbar()
+	cb.set_label(r'$ergs\ cm^{-2} s^{-1} sr^{-1}$')
+	title(path)
 	show()
 
 def compare_cubes(path1, path2):
@@ -93,10 +104,18 @@ def compare_cubes(path1, path2):
 		
 		cubes.append(grid)
 	
+	#cubes[1] = cubes[1]/16.5990192
+	
 	# Compare cubes
-	print("RMSE(1):", sqrt((cubes[0]**2).mean()))
-	print("RMSE(2):", sqrt((cubes[1]**2).mean()))
-	print("RMSE(1-2):", sqrt(((cubes[0] - cubes[1])**2).mean()))
+	mean0 = cubes[0].mean()
+	print("mean(0):", mean0)
+	mean1 = cubes[0].mean()
+	print("mean(1):", mean1)
+	rmse = sqrt(((cubes[0] - cubes[1])**2).mean())
+	print("RMSE(0-1):", rmse)
+	print("RMSE(0-1)/mean(0):", rmse/mean0)
+	print("RMSE(0-1)/mean(1):", rmse/mean1)
+	print(cubes[1]/cubes[0])
 
 def main():
 	

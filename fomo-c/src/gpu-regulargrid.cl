@@ -11,16 +11,20 @@ typedef struct __attribute__ ((packed)) RegularPoint {
 } RegularPoint;
 
 // Macro variables that should be defined at compile-time:
-// X_PIXEL, Z_PIXEL, XZ_PIXEL, LAMBDA_PIXEL, LAMBDA0
-// OX, OY: Represents the coordinates of the global origin in the local coordinate system.
-// Rij for i, j = X, Y, Z: (RIX, RIY, RIZ) represents the I-vector from the local coordinate system in global coordinates.
-// RX and RY do not have to be unit vectors in global coordinates (1*RX represents a distance of 1 pixel on the screen), RZ has to be a unit vector in global coordinates.
-// SX, SY, SZ: signs of RZX, RZY, RZZ (-1/0/1).
+// DEBUG: Specifies whether or not a debug buffer will be present
+// X_PIXEL: Amount of pixels along axes.
+// PIXEL_WIDTH, PIXEL_HEIGHT: Dimensions of pixels in global coordinates.
+// LAMBDA_PIXEL, LAMBDA0
 // MINX, MINY, MINZ, MAXX, MAXY, MAXZ: (non-integer) bounds of grid in global coordinates.
 // GX, GY, GZ: size of a grid cell along each axis.
-// STEPX, STEPY, STEPZ: amount of distance that should be travelled along this ray in order to reach the next cell along this axis. STEPI = GI/RZI. Not necessary for SI == 0.
 // GSX, GSY, GSZ: amount of grid cells along each axis.
+// OX, OY: Represents the coordinates of the global origin in pixel coordinates (so usually X_PIXEL/2.0 and Y_PIXEL/2.0). Pixels are sampled at half-coordinates.
+// RIJ for I, J = X, Y, Z: (RIX, RIY, RIZ) represents the I-vector from the local coordinate system in global coordinates. All unit vectors.
+// X_OFFSET, Y_OFFSET: Represents the offset that should be added to the local coordinates to compensate for the shift that happened during the construction of the regular grid.
+// SX, SY, SZ: signs of RZX, RZY, RZZ (-1/0/1).
+// STEPX, STEPY, STEPZ: amount of distance that should be travelled along this ray in order to reach the next cell along this axis. STEPI = abs(GI/RZI). Not necessary for SI == 0.
 #define SPEEDOFLIGHT 299792458.0
+#define DATA_OUT_PER_POINT 4
 
 inline int calculate_intersection(float4 pos, float* distance) {
 	
@@ -66,18 +70,18 @@ inline int calculate_intersection(float4 pos, float* distance) {
 			
 			// Ray is parallel to X-planes but not parallel to Y/Z-planes
 			#if (SY == 1)
-				*distance = (MINY - pos.y)/RZY;
-				float tymax = (MAXY - pos.y)/RZY;
+				*distance = (MINY - pos.y)*(1/RZY);
+				float tymax = (MAXY - pos.y)*(1/RZY);
 			#else
-				*distance = (MAXY - pos.y)/RZY;
-				float tymax = (MINY - pos.y)/RZY;
+				*distance = (MAXY - pos.y)*(1/RZY);
+				float tymax = (MINY - pos.y)*(1/RZY);
 			#endif
 			#if (SZ == 1)
-				float tzmin = (MINZ - pos.z)/RZZ;
-				float tzmax = (MAXZ - pos.z)/RZZ;
+				float tzmin = (MINZ - pos.z)*(1/RZZ);
+				float tzmax = (MAXZ - pos.z)*(1/RZZ;
 			#else
-				float tzmin = (MAXZ - pos.z)/RZZ;
-				float tzmax = (MINZ - pos.z)/RZZ;
+				float tzmin = (MAXZ - pos.z)*(1/RZZ);
+				float tzmax = (MINZ - pos.z)*(1/RZZ);
 			#endif
 			if ((*distance > tzmax) || (tzmin > tymax))
 				return 0;
@@ -110,18 +114,18 @@ inline int calculate_intersection(float4 pos, float* distance) {
 				
 				// Ray is parallel to Y-planes, but not parallel to X/Z-planes
 				#if (SX == 1)
-					*distance = (MINX - pos.x)/RZX;
-					float txmax = (MAXX - pos.x)/RZX;
+					*distance = (MINX - pos.x)*(1/RZX);
+					float txmax = (MAXX - pos.x)*(1/RZX);
 				#else
-					*distance = (MAXX - pos.x)/RZX;
-					float txmax = (MINX - pos.x)/RZX;
+					*distance = (MAXX - pos.x)*(1/RZX);
+					float txmax = (MINX - pos.x)*(1/RZX);
 				#endif
 				#if (SZ == 1)
-					float tzmin = (MINZ - pos.z)/RZZ;
-					float tzmax = (MAXZ - pos.z)/RZZ;
+					float tzmin = (MINZ - pos.z)*(1/RZZ);
+					float tzmax = (MAXZ - pos.z)*(1/RZZ);
 				#else
-					float tzmin = (MAXZ - pos.z)/RZZ;
-					float tzmax = (MINZ - pos.z)/RZZ;
+					float tzmin = (MAXZ - pos.z)*(1/RZZ);
+					float tzmax = (MINZ - pos.z)*(1/RZZ);
 				#endif
 				if ((*distance > tzmax) || (tzmin > txmax))
 					return 0;
@@ -134,18 +138,18 @@ inline int calculate_intersection(float4 pos, float* distance) {
 				
 			// Ray is parallel to Z-planes, but not parallel to X/Y-planes
 			#if (SX == 1)
-				*distance = (MINX - pos.x)/RZX;
-				float txmax = (MAXX - pos.x)/RZX;
+				*distance = (MINX - pos.x)*(1/RZX);
+				float txmax = (MAXX - pos.x)*(1/RZX);
 			#else
-				*distance = (MAXX - pos.x)/RZX;
-				float txmax = (MINX - pos.x)/RZX;
+				*distance = (MAXX - pos.x)*(1/RZX);
+				float txmax = (MINX - pos.x)*(1/RZX);
 			#endif
 			#if (SY == 1)
-				float tymin = (MINY - pos.y)/RZY;
-				float tymax = (MAXY - pos.y)/RZY;
+				float tymin = (MINY - pos.y)*(1/RZY);
+				float tymax = (MAXY - pos.y)*(1/RZY);
 			#else
-				float tymin = (MAXY - pos.y)/RZY;
-				float tymax = (MINY - pos.y)/RZY;
+				float tymin = (MAXY - pos.y)*(1/RZY);
+				float tymax = (MINY - pos.y)*(1/RZY);
 			#endif
 			if ((*distance > tymax) || (tymin > txmax))
 				return 0;
@@ -157,18 +161,18 @@ inline int calculate_intersection(float4 pos, float* distance) {
 				
 			// Ray is not parallel to X/Y/Z-planes
 			#if (SX == 1)
-				*distance = (MINX - pos.x)/RZX;
-				tmax = (MAXX - pos.x)/RZX;
+				*distance = (MINX - pos.x)*(1/RZX);
+				float tmax = (MAXX - pos.x)/RZX;
 			#else
-				*distance = (MAXX - pos.x)/RZX;
-				tmax = (MINX - pos.x)/RZX;
+				*distance = (MAXX - pos.x)*(1/RZX);
+				float tmax = (MINX - pos.x)*(1/RZX);
 			#endif
 			#if (SY == 1)
-				tymin = (MINY - pos.y)/RZY;
-				tymax = (MAXY - pos.y)/RZY;
+				float tymin = (MINY - pos.y)*(1/RZY);
+				float tymax = (MAXY - pos.y)*(1/RZY);
 			#else
-				tymin = (MAXY - pos.y)/RZY;
-				tymax = (MINY - pos.y)/RZY;
+				float tymin = (MAXY - pos.y)*(1/RZY);
+				float tymax = (MINY - pos.y)*(1/RZY);
 			#endif
 			if ((*distance > tymax) || (tymin > tmax))
 				return 0;
@@ -177,11 +181,11 @@ inline int calculate_intersection(float4 pos, float* distance) {
 			if (tymax < tmax)
 				tmax = tymax;
 			#if (SZ == 1)
-				tzmin = (MINZ - pos.z)/RZZ;
-				tzmax = (MAXZ - pos.z)/RZZ;
+				float tzmin = (MINZ - pos.z)*(1/RZZ);
+				float tzmax = (MAXZ - pos.z)*(1/RZZ);
 			#else
-				tzmin = (MAXZ - pos.z)/RZZ;
-				tzmax = (MINZ - pos.z)/RZZ;
+				float tzmin = (MAXZ - pos.z)*(1/RZZ);
+				float tzmax = (MINZ - pos.z)*(1/RZZ);
 			#endif
 			if ((*distance > tzmax) || (tzmin > tmax))
 				return 0;
@@ -195,67 +199,78 @@ inline int calculate_intersection(float4 pos, float* distance) {
 
 }
 
-kernel void calculate_ray(global const RegularPoint* points, local const float* lambda_val, local const Parameters* parameters, global float* data_out) {
+#if (DEBUG == 1)
+	kernel void calculate_ray(global const RegularPoint* points, constant const float* lambdaval, constant const Parameters* parameters, global float* data_out, global float* debug_buffer) {
+#else
+	kernel void calculate_ray(global const RegularPoint* points, constant const float* lambdaval, constant const Parameters* parameters, global float* data_out) {
+#endif
 	
 	// Calculate screen coordinates
 	size_t id = get_global_id(0); // y*x_pixel + x
 	int local_id = id - parameters->offset;
-	float screen_x = convert_float(id%X_PIXEL) - OX;
-	float screen_y = convert_float(id/X_PIXEL) - OY;
+	float local_x = (convert_float(id%X_PIXEL) + (0.5 - OX))*PIXEL_WIDTH;
+	float local_y = (convert_float(id/X_PIXEL) + (0.5 - OY))*PIXEL_HEIGHT;
 	
 	// Initialize intensities
 	float intensity[LAMBDA_PIXEL];
-	//#pragma unroll
+	#pragma unroll
 	for(int i = 0; i < LAMBDA_PIXEL; i++) {
 		intensity[i] = 0;
 	}
 	
 	// Calculate first intersection with box
-	// Needed: cell[3], event_distance[3], t
 	float4 rx = (float4) (RXX, RXY, RXZ, 0);
 	float4 ry = (float4) (RYX, RYY, RYZ, 0);
-	float4 ry = (float4) (RZX, RZY, RZZ, 0);
-	float4 pos = rx*screen_x + ry*screen_y; // Position of ray at z_local = 0
+	float4 rz = (float4) (RZX, RZY, RZZ, 0);
+	float4 pos = rx*local_x + ry*local_y; // Position of ray at z_local = 0
 	float t;
+	int bug_index = -1;
+	int bug_x = -1;
+	int bug_y = -1;
+	int bug_z = -1;
+	int bug_axis = -1;
 	if (calculate_intersection(pos, &t) == 1) {
 		
 		// Ray intersects box at distance tmin
 		
 		// Initialization
 		float4 intersection = pos + t*rz;
-		int x = convert_int((intersection.x - MINX)/GX);
-		int y = convert_int((intersection.y - MINY)/GY);
-		int z = convert_int((intersection.z - MINZ)/GZ)};
+		int x = max(0, min(GSX - 1, convert_int((intersection.x - MINX)*(1.0/GX))));
+		int y = max(0, min(GSY - 1, convert_int((intersection.y - MINY)*(1.0/GY))));
+		int z = max(0, min(GSZ - 1, convert_int((intersection.z - MINZ)*(1.0/GZ))));
 		float steps[3] = {STEPX, STEPY, STEPZ};
 		float event_distance[3];
 		#if (SX == 1)
-			event_distance[0] = ((GX + 1)*cell[0] - pos.x)*STEPX;
+			event_distance[0] = (MINX + GX*(x + 1) - pos.x)*(1/RZX);
 		#elif (SX == 0)
 			event_distance[0] = FLT_MAX;
 		#else
-			event_distance[0] = (pos.x - GX*cell[0])*STEPX;
+			event_distance[0] = (MINX + GX*x - pos.x)*(1/RZX);
 		#endif
 		#if (SY == 1)
-			event_distance[1] = ((GY + 1)*cell[1] - pos.y)*STEPY;
+			event_distance[1] = (MINY + GY*(y + 1) - pos.y)*(1/RZY);
 		#elif (SY == 0)
 			event_distance[1] = FLT_MAX;
 		#else
-			event_distance[1] = (pos.y - GY*cell[1])*STEPY;
+			event_distance[1] = (MINY + GY*y - pos.y)*(1/RZY);
 		#endif
 		#if (SZ == 1)
-			event_distance[2] = ((GZ + 1)*cell[2] - pos.z)*STEPZ;
+			event_distance[2] = (MINZ + GZ*(z + 1) - pos.z)*(1/RZZ);
 		#elif (SZ == 0)
 			event_distance[2] = FLT_MAX;
 		#else
-			event_distance[2] = (pos.z - GZ*cell[2])*STEPZ;
+			event_distance[2] = (MINZ + GZ*z - pos.z)*(1/RZZ);
 		#endif
-		uchar8 in_bounds = 1;
+		#if (DEBUG == 1)
+			int counter = 0;
+		#endif
+		int in_bounds;
 		int axis;
 		do {
 			
 			// Find next event axis
 			// Condition ordering can possibly be optimized during pre-processing by using S/STEP-macros
-			int index = y*XZ_PIXEL + x*Z_PIXEL + z;
+			int index = y*(GSX*GSZ) + x*GSZ + z;
 			if (event_distance[0] <= event_distance[1] && event_distance[0] <= event_distance[2]) {
 				axis = 0;
 				#if (SX == 1)
@@ -285,194 +300,52 @@ kernel void calculate_ray(global const RegularPoint* points, local const float* 
 				#endif
 			}
 			
-			float distance = event_distance[axis] - t;
+			#if (LAMBDA_PIXEL > 1)
+			
+				// Pre-compute values for intensity calculations
+				// Some more pre-computations could be done theoretically but the pre-emptive exponentiations sometimes hit the limit of single-precision
+				float fwhm = points[index].fwhm;
+				float b = ((RZX*points[index].vx + RZY*points[index].vy + RZZ*points[index].vz)/fwhm)*(2*LAMBDA0/SPEEDOFLIGHT);
+				float factor = points[index].peak*(event_distance[axis] - t);
+				float exponent0 = -b*b;
+				float exponent1 = 4*b/fwhm;
+				float exponent2 = -4/(fwhm*fwhm);
+				
+				#pragma unroll
+				for(int i = 0; i < LAMBDA_PIXEL; i++) {
+					float a = lambdaval[i];
+					intensity[i] += factor*exp2(exponent0 + a*(exponent1 + a*exponent2));//factor*pow(base1, a)*exp2(a*a*exponent2)
+					#if (DEBUG == 1)
+						if (id == 7454 && i == 0) {
+							debug_buffer[counter] = points[index].fwhm;
+						}
+					#endif
+				}
+			
+			#else
+				intensity[0] += points[index].peak;
+			#endif
+			
+			// Update traversal information
 			t = event_distance[axis];
 			event_distance[axis] += steps[axis];
 			
-			// Get values from cell
-			float peak = points[index]->peak;
-			float fwhm = points[index]->fwhm;
-			float losvel = RZX*points[index]->vx + RZY*points[index]->vy + RZZ*points[index]->vz;
-			
-			// Pre-compute values for intensity calculations
-			float b = -(losvel/fwhm)*2*LAMBDA0/SPEEDOFLIGHT;
-			float factor = peak*distance;
-			
-			//#pragma unroll
-			for(int i = 0; i < LAMBDA_PIXEL; i++) {
-				float a = lambdaval[i]/fwhm;
-				intensity[i] = 0;
-			}
+			#if (DEBUG == 1)
+				counter++;
+			#endif
 			
 		} while (in_bounds);
 		
 	}
 	
 	// Write out intensities
-	int index = DATA_OUT_PER_POINT*LAMBDA_PIXEL*local_id;
-	//#pragma unroll
-	for (int i = 0; i < LAMBDA_PIXEL; i++) {
-		data_out[index++] = pos.x;
-		data_out[index++] = pos.y;
-		data_out[index++] = lambda_val[i] + LAMBDA0;
+	int index = (DATA_OUT_PER_POINT*LAMBDA_PIXEL)*local_id;
+	#pragma unroll
+	for(int i = 0; i < LAMBDA_PIXEL; i++) {
+		data_out[index++] = local_x + X_OFFSET;//(convert_float(id%X_PIXEL) + (0.5 - OX))*PIXEL_WIDTH;
+		data_out[index++] = local_y + Y_OFFSET;
+		data_out[index++] = lambdaval[i] + LAMBDA0;
 		data_out[index++] = intensity[i];
 	}
 	
 }
-	
-/*	// Reading input
-	size_t id = get_global_id(0); // y*x_pixel + x
-	int local_id = id - params->offset;
-	int x_pixel = params->x_pixel;
-	int ng = params->ng;
-	float pos[3];
-	pos[0] = convert_float(id%x_pixel)*params->dx + params->minx;
-	pos[1] = convert_float(id/x_pixel)*params->dy + params->miny;
-	float minz = params->minz;
-	float dz = params->dz;
-	int z_pixel = params->z_pixel;
-	int lambda_pixel = params->lambda_pixel;
-	float lambda_width_in_A = params->lambda_width_in_A;
-	float lambda0 = params->lambda0;
-	float lambda1 = lambda_width_in_A/(lambda_pixel - 1);
-	float lambda2 = lambda_width_in_A/2.;
-	float lambda3 = lambda0/params->speedoflight;
-	
-	// Initialize intensity vector
-	float intens[MAX_LAMBDA_PIXEL];
-	float lambdaval[MAX_LAMBDA_PIXEL];
-	for(int il = 0; il < lambda_pixel; il++) {
-		intens[il] = 0;
-		lambdaval[il] = convert_float(il)*lambda1 - lambda2;
-	}
-	
-	// Iterate through samples
-	uchar state[MAX_DEPTH]; // Keeps track of path
-	float diffs[MAX_DEPTH]; // Stores non-absolute distances to splitting planes
-	uchar axises[MAX_DEPTH]; // Stores non-absolute distances to splitting planes
-	int single_child_node = 0;
-	if (ng%2 == 0) single_child_node = ng/2;
-	float best_dist2 = 0;
-	int min_index = -1;
-	for(int k = 0; k < z_pixel; k++) {
-		
-		pos[2] = convert_float(k)*dz + minz;
-		
-		// Find closest data point - KD-tree
-		
-		// Initialize KD-tree NN
-		int stack_pointer = 0;
-		int current_node = 1;
-		if (k > 0) {
-			// We're reusing the last nearest neighbour as best candidate so far
-			best_dist2 = 0;
-			for(int l = 0; l < 3; l++) {
-				float temp = pos[l] - coords[3*min_index + l];
-				best_dist2 += temp*temp;
-			}
-		}
-		
-		// Continue going down and up the tree until we go up the root, indicating that the search has finished
-		while (current_node > 0) {
-			
-			// Descend until we reach a leaf
-			while (1) {
-				
-				// Stop at leaf
-				axises[stack_pointer] = nodes[current_node];
-				int axis = axises[stack_pointer];
-				if (axis == LEAF)
-					break;
-				
-				// Continue descending and keep track of path on stack
-				diffs[stack_pointer] = pos[axis] - coords[3*current_node + axis];
-				if (diffs[stack_pointer] < 0) {
-					// Left child
-					state[stack_pointer++] = (current_node == single_child_node ? WENT_DOWN_BOTH : WENT_DOWN_LEFT);
-					current_node = current_node << 1;
-				} else {
-					// Right child
-					state[stack_pointer] = WENT_DOWN_RIGHT;
-					if (current_node != single_child_node) {
-						current_node = current_node << 1;
-						current_node++;
-						stack_pointer++;
-					} else {
-						break;
-					}
-				}
-				
-			}
-			
-			// Ascend until we reach the root of the tree or go down a new branch
-			while (current_node > 0) {
-				
-				// Check if current node is best candidate
-				// Excessive work if state[stack_pointer] == WENT_DOWN_BOTH, however keeping this in seems to be faster, possibly due to lower divergence?
-				float temp_dist = 0;
-				for(int l = 0; l < 3; l++) {
-					float temp = pos[l] - coords[3*current_node + l];
-					temp_dist += temp*temp;
-				}
-				if (temp_dist < best_dist2 || min_index == -1) {
-					min_index = current_node;
-					best_dist2 = temp_dist;
-				}
-				
-				// Consider branching out
-				if (axises[stack_pointer] != LEAF && state[stack_pointer] != WENT_DOWN_BOTH && diffs[stack_pointer]*diffs[stack_pointer] < best_dist2) {
-					// Node is not a leaf, has an unexplored branch and splitting plane is within best distance, so branch out
-					if (state[stack_pointer] == WENT_DOWN_RIGHT) {
-						// Left child
-						current_node = current_node << 1;
-					} else {
-						// Right child
-						current_node = current_node << 1;
-						current_node++;
-					}
-					state[stack_pointer++] = WENT_DOWN_BOTH;
-					break;
-				} else {
-					// Continue going up
-					current_node = current_node >> 1;
-					stack_pointer--;
-				}
-				
-			}
-			
-		}
-		
-		// End of KD-tree NN-search
-		
-		// Get data from closest point
-		int index = DATA_IN_PER_POINT*min_index;
-		float intpolpeak = data_in[index++];
-		float intpolfwhm = data_in[index++];
-		float intpollosvel = data_in[index];
-		
-		// Calculate intensities
-		if (lambda_pixel > 1) {
-			// Spectroscopic study
-			float lambda4 = intpollosvel*lambda3;
-			for (int il = 0; il < lambda_pixel; il++) {
-				// if intpolpeak is not zero then the correct expression is used. otherwise, the intensity is just 0
-				// it remains to be tested if this is faster than just the direct computation
-				float temp = (lambdaval[il] - lambda4)/intpolfwhm;
-				intens[il] += intpolpeak*exp(-temp*temp*2.772588722); // Last number is 4*ln(2)
-			}
-		} else {
-			// Imaging study
-			intens[0] += intpolpeak;
-		}
-	}
-	
-	// Write out intensity for every wavelength
-	int index = DATA_OUT_PER_POINT*lambda_pixel*local_id;
-	for (int il = 0; il < lambda_pixel; il++) {
-		data_out[index++] = pos[0];
-		data_out[index++] = pos[1];
-		data_out[index++] = lambdaval[il] + lambda0;
-		data_out[index++] = intens[il];
-	}
-	
-}*/

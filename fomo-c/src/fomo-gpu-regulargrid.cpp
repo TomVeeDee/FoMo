@@ -1,7 +1,9 @@
 #include "../config.h"
 #include "FoMo.h"
 #include "FoMo-internal.h"
+#include <cstdlib>
 #include <sstream>
+#include <fstream>
 #include <iomanip>
 #include <cstdlib>
 #include <gsl/gsl_const_mksa.h>
@@ -21,12 +23,19 @@
 #include <boost/geometry/index/rtree.hpp>
 #include <functional>
 
+#define DEBUG 0
+#define DEBUG_BUFFER_SIZE 200
+
 namespace bg = boost::geometry;
 namespace bgi = boost::geometry::index;
 
 typedef bg::model::point<float, 3, bg::cs::cartesian> point;
 typedef bg::model::box<point> box;
 typedef std::pair<point, unsigned> value;
+
+typedef struct __attribute__ ((packed)) Parameters {
+	cl_int offset;
+} Parameters;
 
 typedef struct __attribute__ ((packed)) RegularPoint {
 	cl_float peak;
@@ -37,33 +46,76 @@ typedef struct __attribute__ ((packed)) RegularPoint {
 } RegularPoint;
 
 typedef struct RegularGrid {
+	// Offset indicates the coordinates of the new origin (the middle of the grid) in the old coordinate system
+	float x_offset;
 	float minx;
-	float maxx;
-	int x_pixel;
+	float y_offset;
 	float miny;
-	float maxy;
-	int y_pixel;
+	float z_offset;
 	float minz;
-	float maxz;
-	int z_pixel;
 	RegularPoint* points; // Index: y*x_pixel*z_pixel + x*z_pixel + z
 } RegularGrid;
 
-const double speedoflight=GSL_CONST_MKSA_SPEED_OF_LIGHT; // speed of light
 const double pi=M_PI; //pi
 
-static std::chrono::time_point<std::chrono::high_resolution_clock> time_now() {
+inline static std::chrono::time_point<std::chrono::high_resolution_clock> time_now() {
 	return std::chrono::high_resolution_clock::now();
 }
 
-RegularGrid* constructRegularGrid(FoMo::GoftCube goftcube, const int x_pixel, const int y_pixel, const int z_pixel)
+inline int sgn(float val) {
+    return (0 < val) - (val < 0);
+}
+
+void enqueueKernel2(cl::CommandQueue queue, cl::Kernel kernel, int offset, int size) {
+	int err = queue.enqueueNDRangeKernel(kernel, cl::NDRange(offset), cl::NDRange(size), cl::NullRange);
+	if(err != CL_SUCCESS) {
+        std::cerr << "Error: Could not enqueue the kernel for execution: " << err << std::endl;
+        exit(1);
+    }
+}
+
+void enqueueRead2(cl::CommandQueue queue, cl::Buffer cl_buffer_data_out, int size, float *data_out) {
+	int err = queue.enqueueReadBuffer(cl_buffer_data_out, CL_TRUE, 0, size, data_out);
+	if(err != CL_SUCCESS) {
+        std::cerr << "Error: Could not enqueue buffer read: " << err << std::endl;
+        exit(1);
+    }
+}
+
+inline void rotateAroundZ(float* in, float angle, float* out) {
+	
+	// in/out are 3-component vectors
+	// angle is in radians
+	
+	float cosa = cos(angle);
+	float sina = sin(angle);
+	out[0] = cosa*in[0] - sina*in[1];
+	out[1] = sina*in[0] + cosa*in[1];
+	out[2] = in[2];
+	
+}
+
+inline void rotateAroundY(float* in, float angle, float* out) {
+	
+	// in/out are 3-component vectors
+	// angle is in radians
+	
+	float cosa = cos(angle);
+	float sina = sin(angle);
+	out[0] = cosa*in[0] + sina*in[2];
+	out[1] = in[1];
+	out[2] = -sina*in[0] + cosa*in[2];
+	
+}
+
+RegularGrid* constructRegularGrid(FoMo::GoftCube goftcube, RegularPoint* points, const int x_pixel, const int y_pixel, const int z_pixel)
 {
 //
 // results is an array of at least dimension (x2-x1+1)*(y2-y1+1)*lambda_pixel and must be initialized to zero
 // 
 // determine contributions per pixel
 
-// Allocates RegularGrid and RegularGrid->points on the heap, must be deleted by caller.
+// Allocates RegularGrid on the heap, must be deleted by caller. The points array must be allocated by the caller already and a pointer to the start of it is passed as an argument.
 	
 	int commrank;
 #ifdef HAVEMPI
@@ -116,20 +168,16 @@ RegularGrid* constructRegularGrid(FoMo::GoftCube goftcube, const int x_pixel, co
 	double maxy = *(max_element(grid[1].begin(), grid[1].end()));
 	if (commrank==0) std::cout << "Done! Time spent since start (seconds): " << std::chrono::duration<double>(time_now() - start).count() << std::endl << std::flush;
 	
-	if (commrank==0) std::cout << "Building frame: " << std::flush;
+	if (commrank==0) std::cout << "Building regular grid: " << std::flush;
 	double x,y,z;
-	
-	// Initialize grid
-	RegularPoint *points = new RegularPoint[y_pixel*x_pixel*z_pixel];
-	RegularPoint* regular_point;
 	
 	// maxdistance is the furthest distance between a grid point and a simulation point at which the emission is interpolated
 	// it is computed as the half diagonal of the rectangle around this ray, with the sides equal to the x and y distance between rays
 	// i.e. it needs to be closer to this ray than to any other ray
-	double maxdistance; 
-	maxdistance = std::sqrt(std::pow((maxx-minx)/(x_pixel-1),2)+std::pow((maxy-miny)/(y_pixel-1),2))/2.;
+	double maxdistance;
+	//maxdistance = std::sqrt(std::pow((maxx-minx)/(x_pixel-1),2)+std::pow((maxy-miny)/(y_pixel-1),2))/2.;
 	// However, it is better to just take the minimum of the pixel size in either direction, because it is then used in the maxdistancebox
-	maxdistance = std::max((maxx-minx)/(x_pixel-1),(maxy-miny)/(y_pixel-1))/2.;
+	//maxdistance = std::max((maxx-minx)/(x_pixel-1),(maxy-miny)/(y_pixel-1))/2.;
 	// If the viewing is along one of the axis, the previous value does not work very well, and the rendering almost always shows dark stripes: make the value 6 times larger!
 	maxdistance = std::max((maxx-minx)/(x_pixel-1),(maxy-miny)/(y_pixel-1))/.3;
 	if ((maxx-minx)/std::pow(ng,1./3.)>maxdistance || (maxy-miny)/std::pow(ng,1./3.)>maxdistance) std::cout << std::endl << "Warning: maximum distance to interpolated point set to " << maxdistance << "Mm. If it is too small, you have too many interpolating rays and you will have dark stripes in the image plane. Reduce x-resolution or y-resolution." << std::endl;
@@ -138,10 +186,12 @@ RegularGrid* constructRegularGrid(FoMo::GoftCube goftcube, const int x_pixel, co
 	double deltaz = (maxz - minz);
 	if (z_pixel != 1) deltaz /= (z_pixel - 1);
 	
-#ifdef _OPENMP
-#pragma omp parallel for schedule(dynamic) collapse(2) shared (rtree) private (x, y, z, returned_values, targetpoint, maxdistancebox, regular_point)
-#endif
-	for (int i = 0; i < y_pixel; i++)
+	RegularPoint* regular_point;
+	
+	#ifdef _OPENMP
+	#pragma omp parallel for schedule(dynamic) collapse(2) shared (rtree, points) private (x, y, z, returned_values, targetpoint, maxdistancebox, regular_point)
+	#endif
+	for (int i = 0; i < y_pixel; i++) {
 		for (int j = 0; j < x_pixel; j++)
 		{
 			// now we're on one ray, through point with coordinates in the image plane
@@ -153,9 +203,9 @@ RegularGrid* constructRegularGrid(FoMo::GoftCube goftcube, const int x_pixel, co
 			#ifdef _OPENMP
 			#pragma omp task
 			#endif
-			for (int k=0; k<z_pixel; k++) {
+			for (int k = 0; k < z_pixel; k++) {
+				//std::cout << i << " " << j << " " << k << std::endl << std::flush;
 				z = double(k)*deltaz+minz;
-				//p = {x, y, z};
 				
 				// initialise nearestindex to point -1
 				int nearestindex=-1;
@@ -174,7 +224,7 @@ RegularGrid* constructRegularGrid(FoMo::GoftCube goftcube, const int x_pixel, co
 				regular_point = &(points[i*x_pixel*z_pixel + j*z_pixel + k]);
 				if (returned_values.size() >= 1) {
 					nearestindex = returned_values.at(0).second;
-					regular_point->peak = 1e8*peakvec.at(nearestindex);
+					regular_point->peak = peakvec.at(nearestindex);
 					regular_point->fwhm = fwhmvec.at(nearestindex);
 					regular_point->vx = vx.at(nearestindex);
 					regular_point->vy = vy.at(nearestindex);
@@ -182,30 +232,34 @@ RegularGrid* constructRegularGrid(FoMo::GoftCube goftcube, const int x_pixel, co
 				} else {
 					// All values must be initialized to deal with NaN and such
 					regular_point->peak = 0;
-					regularPoint.fwhm = 0;
-					regularPoint.vx = 0;
-					regularPoint.vy = 0;
-					regularPoint.vz = 0;
+					regular_point->fwhm = 1;
+					regular_point->vx = 0;
+					regular_point->vy = 0;
+					regular_point->vz = 0;
 				}
 
 				// Print progress
 				++show_progress;
 			}
 		}
+	}
 	if (commrank==0) std::cout << "Done! Time spent since start (seconds): " << std::chrono::duration<double>(time_now() - start).count() << std::endl << std::flush;
+	
+	std::cout << minx << " " << maxx << " " << miny << " " << maxy << " " << minz << " " << maxz << " " << std::endl;
 	
 	if (commrank==0) std::cout << "Constructing grid object ..." << std::flush;
 	RegularGrid* regular_grid = new RegularGrid();
-	regular_grid->minx = minx;
-	regular_grid->maxx = maxx;
-	regular_grid->x_pixel = x_pixel;
-	regular_grid->miny = miny;
-	regular_grid->maxy = maxy;
-	regular_grid->y_pixel = y_pixel;
-	regular_grid->minz = minz;
-	regular_grid->maxz = maxz;
-	regular_grid->z_pixel = z_pixel;
+	regular_grid->x_offset = (minx + maxx)/2.0;
+	regular_grid->minx = (minx - maxx)/2.0*float(x_pixel)/float(x_pixel - 1);
+	regular_grid->y_offset = (miny + maxy)/2.0;
+	regular_grid->miny = (miny - maxy)/2.0*float(y_pixel)/float(y_pixel - 1);
+	regular_grid->z_offset = (minz + maxz)/2.0;
+	regular_grid->minz = (dim < 3 || z_pixel == 1 ? -0.5 : (minz - maxz)/2.0*float(z_pixel)/float(z_pixel - 1)); // If dimension is smaller than 3, set Z-grid-size to 1 Mm.
 	regular_grid->points = points;
+	if (dim < 3 || z_pixel == 1) {
+		std::cout << "Assuming that this is a 2D simulations: setting thickness of simulation to 1 Mm." << std::endl << std::flush;
+	}
+	if (commrank==0) std::cout << "Done! Time spent since start (seconds): " << std::chrono::duration<double>(time_now() - start).count() << std::endl << std::flush;
 	
 	if (commrank==0) std::cout << "Time spent in constructRegularGrid (seconds): " << std::chrono::duration<double>(time_now() - start).count() << std::endl << std::flush;
 	return regular_grid;
@@ -215,11 +269,21 @@ RegularGrid* constructRegularGrid(FoMo::GoftCube goftcube, const int x_pixel, co
 namespace FoMo
 {
 	FoMo::RenderCube RenderWithGPURegularGrid(FoMo::GoftCube goftcube, const int x_pixel, const int y_pixel, const int z_pixel, const int lambda_pixel, const double lambda_width,
-	std::vector<double> lvec, std::vector<double> bvec, std::string outfile)
-	{
+		std::vector<double> lvec, std::vector<double> bvec, std::string outfile) {
+	
+		int commrank;
+		#ifdef HAVEMPI
+			MPI_Comm_rank(MPI_COMM_WORLD,&commrank);
+		#else
+			commrank = 0;
+		#endif
 		
 		// Start timing
 		std::chrono::time_point<std::chrono::high_resolution_clock> start = time_now();
+		
+		// Constants
+		const int data_out_per_point = 4;
+		const int chunk_size = 1024; // Amount of jobs submitted to the GPU simultaneously
 		
 		// Start of pre-processing
 		
@@ -266,89 +330,240 @@ namespace FoMo
 			exit(1);
 		}
 		prog.push_back('\0');
-		// Compile the program
-		cl::Program::Sources cl_program_source(1, std::make_pair(prog.data(), prog.size()));
-		cl::Program cl_program(cl_context, cl_program_source);
-		std::string build_options = "-cl-nv-verbose -D MAX_LAMBDA_PIXEL=" + std::to_string(lambda_pixel) + " -D MAX_DEPTH=" + std::to_string(int(floor(log2(ng))));
-		err = cl_program.build(cl_devices, build_options.c_str());
-		if(err != CL_SUCCESS) {
-			std::cerr << "Error: Could not compile OpenCL program!" << std::endl;
-			std::cerr << "OpenCL build log:\n" << cl_program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(cl_devices[0]) << std::endl;
-			exit(1);
-		}
 		// Allocate buffers
-		int input_amount = ng;
+		int input_size = sizeof(RegularPoint)*x_pixel*y_pixel*z_pixel;
 		int pixels = x_pixel*y_pixel;
 		int output_amount = std::min(chunk_size, pixels)*lambda_pixel;
-		cl::Buffer cl_buffer_coords(cl_context, CL_MEM_READ_ONLY | CL_MEM_ALLOC_HOST_PTR, 3*sizeof(float)*(input_amount + 1));
-		cl::Buffer cl_buffer_nodes(cl_context, CL_MEM_READ_ONLY | CL_MEM_ALLOC_HOST_PTR, sizeof(uint8_t)*(input_amount + 1)); // Tree metadata: index of axis of split for non-leaves, 3 for leaves
-		cl::Buffer cl_buffer_data_in(cl_context, CL_MEM_READ_ONLY | CL_MEM_ALLOC_HOST_PTR, data_in_per_point*sizeof(float)*(input_amount + 1)); // Peak, fwhm, losvel
-		cl::Buffer cl_buffer_parameters0(cl_context, CL_MEM_READ_ONLY | CL_MEM_ALLOC_HOST_PTR, sizeof(parameters_struct)); // Various constant parameters      
-		cl::Buffer cl_buffer_parameters1(cl_context, CL_MEM_READ_ONLY | CL_MEM_ALLOC_HOST_PTR, sizeof(parameters_struct)); // Various constant parameters
+		cl::Buffer cl_buffer_points(cl_context, CL_MEM_READ_ONLY | CL_MEM_ALLOC_HOST_PTR, input_size);
+		cl::Buffer cl_buffer_lambdaval(cl_context, CL_MEM_READ_ONLY | CL_MEM_ALLOC_HOST_PTR, sizeof(float)*lambda_pixel);
+		cl::Buffer cl_buffer_parameters0(cl_context, CL_MEM_READ_ONLY | CL_MEM_ALLOC_HOST_PTR, sizeof(Parameters)); // Various constant parameters      
+		cl::Buffer cl_buffer_parameters1(cl_context, CL_MEM_READ_ONLY | CL_MEM_ALLOC_HOST_PTR, sizeof(Parameters)); // Various constant parameters
 		cl::Buffer cl_buffer_parameters[] = {cl_buffer_parameters0, cl_buffer_parameters1};
 		cl::Buffer cl_buffer_data_out0(cl_context, CL_MEM_WRITE_ONLY | CL_MEM_ALLOC_HOST_PTR, data_out_per_point*sizeof(float)*output_amount);
 		cl::Buffer cl_buffer_data_out1(cl_context, CL_MEM_WRITE_ONLY | CL_MEM_ALLOC_HOST_PTR, data_out_per_point*sizeof(float)*output_amount);
 		cl::Buffer cl_buffer_data_out[] = {cl_buffer_data_out0, cl_buffer_data_out1};
-		//cl::Buffer cl_buffer_debug(cl_context, CL_MEM_READ_WRITE | CL_MEM_ALLOC_HOST_PTR, 20*sizeof(double));
+		#if (DEBUG == 1)
+			cl::Buffer cl_buffer_debug(cl_context, CL_MEM_READ_WRITE | CL_MEM_ALLOC_HOST_PTR, DEBUG_BUFFER_SIZE*sizeof(float));
+		#endif
 		// Create queue
 		cl::CommandQueue cl_queue0(cl_context, cl_devices[0], 0, &err); // Used for first kernel and general stuff
 		cl::CommandQueue cl_queue1(cl_context, cl_devices[0], 0, &err); // Used for second kernel
 		cl::CommandQueue queues[] = {cl_queue0, cl_queue1};
 		assert(err == CL_SUCCESS);
 		// Map buffers
-		float *coords = (float*) queues[0].enqueueMapBuffer(cl_buffer_coords, CL_FALSE, CL_MAP_WRITE, 0, 3*sizeof(float)*(input_amount + 1));
-		uint8_t *nodes = (uint8_t*) queues[0].enqueueMapBuffer(cl_buffer_nodes, CL_FALSE, CL_MAP_WRITE, 0, sizeof(uint8_t)*(input_amount + 1));
-		float *data_in = (float*) queues[0].enqueueMapBuffer(cl_buffer_data_in, CL_FALSE, CL_MAP_WRITE, 0, data_in_per_point*sizeof(float)*(input_amount + 1));
-		parameters_struct *parameters0 = (parameters_struct*) queues[0].enqueueMapBuffer(cl_buffer_parameters[0], CL_FALSE, CL_MAP_WRITE, 0, sizeof(parameters_struct));
-		parameters_struct *parameters1 = (parameters_struct*) queues[1].enqueueMapBuffer(cl_buffer_parameters[0], CL_FALSE, CL_MAP_WRITE, 0, sizeof(parameters_struct));
-		parameters_struct *parameters[] = {parameters0, parameters1};
+		RegularPoint *points = (RegularPoint*) queues[0].enqueueMapBuffer(cl_buffer_points, CL_FALSE, CL_MAP_WRITE, 0, input_size);
+		float *lambdaval = (float*) queues[0].enqueueMapBuffer(cl_buffer_lambdaval, CL_FALSE, CL_MAP_WRITE, 0, sizeof(float)*lambda_pixel);
+		Parameters *parameters0 = (Parameters*) queues[0].enqueueMapBuffer(cl_buffer_parameters[0], CL_FALSE, CL_MAP_WRITE, 0, sizeof(Parameters));
+		Parameters *parameters1 = (Parameters*) queues[1].enqueueMapBuffer(cl_buffer_parameters[1], CL_FALSE, CL_MAP_WRITE, 0, sizeof(Parameters));
+		Parameters *parameters[] = {parameters0, parameters1};
 		float *data_out0 = (float*) queues[0].enqueueMapBuffer(cl_buffer_data_out[0], CL_FALSE, CL_MAP_READ, 0, data_out_per_point*sizeof(float)*output_amount);
-		float *data_out1 = (float*) queues[1].enqueueMapBuffer(cl_buffer_data_out[0], CL_FALSE, CL_MAP_READ, 0, data_out_per_point*sizeof(float)*output_amount);
+		float *data_out1 = (float*) queues[1].enqueueMapBuffer(cl_buffer_data_out[1], CL_FALSE, CL_MAP_READ, 0, data_out_per_point*sizeof(float)*output_amount);
 		float *data_out[] = {data_out0, data_out1};
-		// Create kernels
-		cl::Kernel cl_kernel0(cl_program, "calculate_ray", &err);
-		if(err != CL_SUCCESS) {
-			std::cerr << "Error: Could not create kernel: " << err << std::endl;
-			exit(1);
-		}
-		cl::Kernel cl_kernel1(cl_program, "calculate_ray", &err);
-		if(err != CL_SUCCESS) {
-			std::cerr << "Error: Could not create kernel: " << err << std::endl;
-			exit(1);
-		}
-		cl::Kernel kernels[] = {cl_kernel0, cl_kernel1};
-		for(int i = 0; i < 2; i++) {
-			kernels[i].setArg(0, cl_buffer_coords);
-			kernels[i].setArg(1, cl_buffer_nodes);
-			kernels[i].setArg(2, cl_buffer_data_in);
-			kernels[i].setArg(3, cl_buffer_parameters[i]);
-			kernels[i].setArg(4, cl_buffer_data_out[i]);
-			//kernels[i].setArg(5, cl_buffer_debug);
-		}
+		#if (DEBUG == 1)
+			float *debug_buffer = (float*) queues[0].enqueueMapBuffer(cl_buffer_debug, CL_FALSE, CL_MAP_READ, 0, DEBUG_BUFFER_SIZE*sizeof(float));
+		#endif
+		queues[0].finish();
 		if (commrank==0) std::cout << "Done! Time spent since start (seconds): " << std::chrono::duration<double>(time_now() - start).count() << std::endl << std::flush;
 		
-		RegularGrid* regular_grid = constructRegularGrid(goftcube, x_pixel, y_pixel, z_pixel);
-		std::cout << (regular_grid->points)[0].vx << std::endl;
+		// Construct regular grid
+		if (commrank==0) std::cout << "Constructing regular grid ... " << std::flush;
+		RegularGrid* regular_grid = constructRegularGrid(goftcube, points, x_pixel, y_pixel, z_pixel);
+		if (commrank==0) std::cout << "Done! Time spent since start (seconds): " << std::chrono::duration<double>(time_now() - start).count() << std::endl << std::flush;
 		
+		// Other initialization
+		if (commrank==0) std::cout << "Other initialization ... " << std::flush;
 		FoMo::RenderCube rendercube(goftcube);
-		/*for (std::vector<double>::iterator lit=lvec.begin(); lit!=lvec.end(); ++lit) {
-			for (std::vector<double>::iterator bit=bvec.begin(); bit!=bvec.end(); ++bit)
-			{
-				rendercube=nearestneighbourinterpolation(goftcube,*lit,*bit, x_pixel, y_pixel, z_pixel, lambda_pixel, lambda_width);
-				rendercube.setangles(*lit,*bit);
+		float lambda0 = float(goftcube.readlambda0());
+		float lambda_width_in_A = lambda_width*lambda0/GSL_CONST_MKSA_SPEED_OF_LIGHT;
+		for(int i = 0; i < lambda_pixel; i++)
+			lambdaval[i] = float(i)/(lambda_pixel - 1)*lambda_width_in_A - lambda_width_in_A/2.0;
+		queues[0].enqueueWriteBuffer(cl_buffer_points, CL_FALSE, 0, input_size, points);
+		queues[0].enqueueWriteBuffer(cl_buffer_lambdaval, CL_FALSE, 0, sizeof(float)*lambda_pixel, lambdaval);
+		queues[0].finish();
+		if (commrank==0) std::cout << "Done! Time spent since start (seconds): " << std::chrono::duration<double>(time_now() - start).count() << std::endl << std::flush;
+		
+		// End of pre-processing
+		
+		// Render frames
+		int frame_index = 0;
+		float g[] = {-2*regular_grid->minx/x_pixel, -2*regular_grid->miny/y_pixel, -2*regular_grid->minz/z_pixel};
+		float pixel_width = g[0];
+		float pixel_height = g[1];
+		float temp[3];
+		float inx[] = {1, 0, 0};
+		float iny[] = {0, 1, 0};
+		float inz[] = {0, 0, 1};
+		float global_offset_vector[] = {regular_grid->x_offset, regular_grid->y_offset, regular_grid->z_offset};
+		float rx[3];
+		float ry[3];
+		float rz[3];
+		float local_offset_vector[3];
+		for (std::vector<double>::iterator lit = lvec.begin(); lit != lvec.end(); ++lit) {
+			for (std::vector<double>::iterator bit = bvec.begin(); bit != bvec.end(); ++bit) {
+				
+				if (commrank==0) std::cout << "Rendering frame " << frame_index++ << " at " << std::chrono::duration<double>(time_now() - start).count() << std::endl << std::flush;
+				
+				double l = *lit;
+				double b = *bit;
+				
+				// Calculating frame parameters
+				if (commrank==0) std::cout << "Calculating frame parameters ... " << std::flush;
+				rotateAroundY(inx, b, temp);
+				rotateAroundZ(temp, -l, rx);
+				rotateAroundZ(iny, -l, ry);
+				rotateAroundY(inz, b, temp);
+				rotateAroundZ(temp, -l, rz);
+				rotateAroundZ(global_offset_vector, l, temp);
+				rotateAroundY(temp, -b, local_offset_vector);
+				if (commrank==0) std::cout << "Done! Time spent since start (seconds): " << std::chrono::duration<double>(time_now() - start).count() << std::endl << std::flush;
+				
+				if (commrank==0) std::cout << "Compiling OpenCL program and creating kernels ... " << std::flush;
+				// Compile the program
+				cl::Program::Sources cl_program_source(1, std::make_pair(prog.data(), prog.size()));
+				cl::Program cl_program(cl_context, cl_program_source);
+				std::string build_options = "-cl-nv-verbose -D DEBUG=" + std::to_string(DEBUG) + " -D X_PIXEL=" + std::to_string(x_pixel)
+					+ " -D PIXEL_WIDTH=" + std::to_string(pixel_width) + " -D PIXEL_HEIGHT=" + std::to_string(pixel_height)
+					+ " -D LAMBDA_PIXEL=" + std::to_string(lambda_pixel) + " -D LAMBDA0=" + std::to_string(lambda0)
+					+ " -D MINX=" + std::to_string(regular_grid->minx) + " -D MAXX=" + std::to_string(-regular_grid->minx)
+					+ " -D MINY=" + std::to_string(regular_grid->miny) + " -D MAXY=" + std::to_string(-regular_grid->miny)
+					+ " -D MINZ=" + std::to_string(regular_grid->minz) + " -D MAXZ=" + std::to_string(-regular_grid->minz)
+					+ " -D GX=" + std::to_string(g[0]) + " -D GSX=" + std::to_string(x_pixel)
+					+ " -D GY=" + std::to_string(g[1]) + " -D GSY=" + std::to_string(y_pixel)
+					+ " -D GZ=" + std::to_string(g[2]) + " -D GSZ=" + std::to_string(z_pixel)
+					+ " -D OX=" + std::to_string(x_pixel/2.0) + " -D OY=" + std::to_string(y_pixel/2.0)
+					+ " -D RXX=" + std::to_string(rx[0]) + " -D RXY=" + std::to_string(rx[1]) + " -D RXZ=" + std::to_string(rx[2])
+					+ " -D RYX=" + std::to_string(ry[0]) + " -D RYY=" + std::to_string(ry[1]) + " -D RYZ=" + std::to_string(ry[2])
+					+ " -D RZX=" + std::to_string(rz[0]) + " -D RZY=" + std::to_string(rz[1]) + " -D RZZ=" + std::to_string(rz[2])
+					+ " -D X_OFFSET=" + std::to_string(local_offset_vector[0]) + " -D Y_OFFSET=" + std::to_string(local_offset_vector[1])
+					+ " -D SX=" + std::to_string(sgn(rz[0])) + " -D SY=" + std::to_string(sgn(rz[1])) + " -D SZ=" + std::to_string(sgn(rz[2]))
+					+ " -D STEPX=" + std::to_string(rz[0] == 0 ? 1 : abs(g[0]/rz[0])) + " -D STEPY=" + std::to_string(rz[1] == 0 ? 1 : abs(g[1]/rz[1]))
+					+ " -D STEPZ=" + std::to_string(rz[2] == 0 ? 1 : abs(g[2]/rz[2]));
+				err = cl_program.build(cl_devices, build_options.c_str());
+				if(err != CL_SUCCESS) {
+					std::cerr << "Error: Could not compile OpenCL program!" << std::endl;
+					std::cerr << "OpenCL build log:\n" << cl_program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(cl_devices[0]) << std::endl;
+					exit(1);
+				}
+				// Create kernels
+				cl::Kernel cl_kernel0(cl_program, "calculate_ray", &err);
+				if(err != CL_SUCCESS) {
+					std::cerr << "Error: Could not create kernel: " << err << std::endl;
+					exit(1);
+				}
+				cl::Kernel cl_kernel1(cl_program, "calculate_ray", &err);
+				if(err != CL_SUCCESS) {
+					std::cerr << "Error: Could not create kernel: " << err << std::endl;
+					exit(1);
+				}
+				cl::Kernel kernels[] = {cl_kernel0, cl_kernel1};
+				for(int i = 0; i < 2; i++) {
+					kernels[i].setArg(0, cl_buffer_points);
+					kernels[i].setArg(1, cl_buffer_lambdaval);
+					kernels[i].setArg(2, cl_buffer_parameters[i]);
+					kernels[i].setArg(3, cl_buffer_data_out[i]);
+					#if (DEBUG == 1)
+						kernels[i].setArg(4, cl_buffer_debug);
+					#endif
+				}
+				if (commrank==0) std::cout << "Done! Time spent since start (seconds): " << std::chrono::duration<double>(time_now() - start).count() << std::endl << std::flush;
+				
+				if (commrank==0) std::cout << "Building frame and extracting output ... " << std::flush;
+				
+				// Initialize output data extraction
+				FoMo::tgrid newgrid;
+				FoMo::tcoord xvec(x_pixel*y_pixel*lambda_pixel), yvec(x_pixel*y_pixel*lambda_pixel);
+				newgrid.push_back(xvec);
+				newgrid.push_back(yvec);
+				if (lambda_pixel > 1) {
+					FoMo::tcoord lambdavec(x_pixel*y_pixel*lambda_pixel);
+					newgrid.push_back(lambdavec);
+				}
+				FoMo::tphysvar intens(x_pixel*y_pixel*lambda_pixel, 0);
+				
+				// Ping-pong in between two kernels until work is finished
+				int index = 0;
+				parameters[index]->offset = 0;
+				queues[index].enqueueWriteBuffer(cl_buffer_parameters[index], CL_FALSE, 0, sizeof(Parameters), parameters[index]);
+				queues[index].finish();
+				enqueueKernel2(queues[index], kernels[index], 0, std::min(chunk_size, pixels));
+				queues[index].finish();
+				for(int offset = chunk_size; offset < pixels; offset += chunk_size) {
+					parameters[1 - index]->offset = offset;
+					queues[1 - index].enqueueWriteBuffer(cl_buffer_parameters[1 - index], CL_FALSE, 0, sizeof(Parameters), parameters[1 - index]);
+					queues[1 - index].finish();
+					enqueueKernel2(queues[1 - index], kernels[1 - index], offset, std::min(chunk_size, pixels - offset)); // Queue other kernel execution
+					queues[index].finish();
+					enqueueRead2(queues[index], cl_buffer_data_out[index], chunk_size*lambda_pixel*data_out_per_point*sizeof(float), data_out[index]); // Wait for this kernel to finish execution
+					queues[index].finish();
+					// Extract output from this kernel, other kernel is already queued for execution so GPU is not waiting
+					for(int i = 0; i < chunk_size*lambda_pixel; i++) {
+						int output_index = (offset - chunk_size)*lambda_pixel + i;
+						for(int j = 0; j < data_out_per_point - 1; j++) {
+							newgrid.at(j).at(output_index) = data_out[index][data_out_per_point*i + j];
+						}
+						intens.at(output_index) = 1e8*data_out[index][data_out_per_point*i + (data_out_per_point - 1)];
+					}
+					index = 1 - index;
+				}
+				enqueueRead2(queues[index], cl_buffer_data_out[index], (pixels%chunk_size)*lambda_pixel*data_out_per_point*sizeof(float), data_out[index]); // Wait for the last kernel to finish execution
+				queues[index].finish();
+				// Extract output from this kernel, other kernel is already queued for execution so GPU is not waiting
+				for(int i = 0; i < (pixels%chunk_size)*lambda_pixel; i++) {
+					int output_index = pixels/chunk_size*chunk_size*lambda_pixel + i;
+					for(int j = 0; j < data_out_per_point - 1; j++) {
+						newgrid.at(j).at(output_index) = data_out[index][data_out_per_point*i + j];
+					}
+					intens.at(output_index) = 1e8*data_out[index][data_out_per_point*i + (data_out_per_point - 1)];
+				}
+				
+				if (commrank==0) std::cout << "Done! Time spent since start (seconds): " << std::chrono::duration<double>(time_now() - start).count() << std::endl << std::flush;
+				
+				#if (DEBUG == 1)
+					enqueueRead2(queues[0], cl_buffer_debug, DEBUG_BUFFER_SIZE*sizeof(float), debug_buffer); // Wait for the last kernel to finish execution
+					queues[0].finish();
+					for(int i = 0; i < DEBUG_BUFFER_SIZE; i++) {
+						std::cout << i << "\t" << debug_buffer[i] << std::endl << std::flush;
+					}
+				#endif
+				
+				if (commrank==0) std::cout << "Constructing RenderCube ... " << std::flush;
+				FoMo::tvars newdata;
+				newdata.push_back(intens);
+				rendercube.setdata(newgrid, newdata);
+				rendercube.setrendermethod("GPURegularGrid");
+				rendercube.setresolution(x_pixel, y_pixel, z_pixel, lambda_pixel, lambda_width);
+				if (lambda_pixel == 1) {
+					rendercube.setobservationtype(FoMo::Imaging);
+				} else {
+					rendercube.setobservationtype(FoMo::Spectroscopic);
+				}
+				rendercube.setangles(l, b);
+				if (commrank==0) std::cout << "Done! Time spent since start (seconds): " << std::chrono::duration<double>(time_now() - start).count() << std::endl << std::flush;
+				
+				if (commrank==0) std::cout << "Writing frame to file ... " << std::flush;
 				std::stringstream ss;
 				// if outfile is "", then this should not be executed.
 				ss << outfile;
 				ss << "l";
-				ss << std::setfill('0') << std::setw(3) << std::round(*lit/pi*180.);
+				ss << std::setfill('0') << std::setw(3) << std::round(l/pi*180.);
 				ss << "b";
-				ss << std::setfill('0') << std::setw(3) << std::round(*bit/pi*180.);
+				ss << std::setfill('0') << std::setw(3) << std::round(b/pi*180.);
 				ss << ".txt";
 				rendercube.writegoftcube(ss.str());
 				ss.str("");
+				if (commrank==0) std::cout << "Done! Time spent since start (seconds): " << std::chrono::duration<double>(time_now() - start).count() << std::endl << std::flush;
+				
+				if (commrank==0) std::cout << "Freeing grid and data ... " << std::flush;
+				newgrid.clear();
+				newdata.clear();
+				if (commrank==0) std::cout << "Done! Time spent since start (seconds): " << std::chrono::duration<double>(time_now() - start).count() << std::endl << std::flush;
+				
 			}
-		}*/
+		}
+		
+		// Only returns last rendercube!
 		return rendercube;
+		
 	}
 }
 

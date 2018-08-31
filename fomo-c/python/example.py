@@ -5,8 +5,8 @@ import numpy as np
 from mpl_toolkits.mplot3d import Axes3D
 from matplotlib.colors import LogNorm
 
-if 'txtdata' not in locals(): txtdata=readgoftcube('../fomo-output.txt.gz')
-if 'datdata' not in locals(): datdata=readgoftcube('../fomo-output.dat.gz')
+if 'txtdata' not in locals(): txtdata=readgoftcube('fomo-example-out.l090b090.txt')
+#if 'datdata' not in locals(): datdata=readgoftcube('../fomo-output.dat.gz')
 
 emiss,xvec,yvec,lvec=regulargoftcube(txtdata)
 # pl.imshow(emiss[50,:,:],extent=(np.amin(xvec),np.amax(xvec),np.amin(yvec),np.amax(yvec)),aspect='auto')
