@@ -35,6 +35,17 @@ typedef std::pair<point, unsigned> value;
 
 typedef struct __attribute__ ((packed)) Parameters {
 	cl_int offset;
+	cl_float rxx;
+	cl_float rxy;
+	cl_float rxz;
+	cl_float ryx;
+	cl_float ryy;
+	cl_float ryz;
+	cl_float rzx;
+	cl_float rzy;
+	cl_float rzz;
+	cl_float x_offset;
+	cl_float y_offset;
 } Parameters;
 
 typedef struct __attribute__ ((packed)) RegularPoint {
@@ -330,6 +341,8 @@ namespace FoMo
 			exit(1);
 		}
 		prog.push_back('\0');
+		cl::Program::Sources cl_program_source(1, std::make_pair(prog.data(), prog.size()));
+		cl::Program cl_program(cl_context, cl_program_source);
 		// Allocate buffers
 		int input_size = sizeof(RegularPoint)*x_pixel*y_pixel*z_pixel;
 		int pixels = x_pixel*y_pixel;
@@ -370,10 +383,56 @@ namespace FoMo
 		RegularGrid* regular_grid = constructRegularGrid(goftcube, points, x_pixel, y_pixel, z_pixel);
 		if (commrank==0) std::cout << "Done! Time spent since start (seconds): " << std::chrono::duration<double>(time_now() - start).count() << std::endl << std::flush;
 		
+		// Compile program and create kernels
+		if (commrank==0) std::cout << "Compiling OpenCL program and creating kernels ... " << std::flush;
+		// Build program
+		float g[] = {-2*regular_grid->minx/x_pixel, -2*regular_grid->miny/y_pixel, -2*regular_grid->minz/z_pixel};
+		float pixel_width = g[0];
+		float pixel_height = g[1];
+		float lambda0 = float(goftcube.readlambda0());
+		std::string build_options = "-cl-nv-verbose -D DEBUG=" + std::to_string(DEBUG) + " -D X_PIXEL=" + std::to_string(x_pixel)
+			+ " -D PIXEL_WIDTH=" + std::to_string(pixel_width) + " -D PIXEL_HEIGHT=" + std::to_string(pixel_height)
+			+ " -D LAMBDA_PIXEL=" + std::to_string(lambda_pixel) + " -D LAMBDA0=" + std::to_string(lambda0)
+			+ " -D MINX=" + std::to_string(regular_grid->minx) + " -D MAXX=" + std::to_string(-regular_grid->minx)
+			+ " -D MINY=" + std::to_string(regular_grid->miny) + " -D MAXY=" + std::to_string(-regular_grid->miny)
+			+ " -D MINZ=" + std::to_string(regular_grid->minz) + " -D MAXZ=" + std::to_string(-regular_grid->minz)
+			+ " -D GX=" + std::to_string(g[0]) + " -D GSX=" + std::to_string(x_pixel)
+			+ " -D GY=" + std::to_string(g[1]) + " -D GSY=" + std::to_string(y_pixel)
+			+ " -D GZ=" + std::to_string(g[2]) + " -D GSZ=" + std::to_string(z_pixel)
+			+ " -D OX=" + std::to_string(x_pixel/2.0) + " -D OY=" + std::to_string(y_pixel/2.0);
+		err = cl_program.build(cl_devices, build_options.c_str());
+		if(err != CL_SUCCESS) {
+			std::cerr << "Error: Could not compile OpenCL program!" << std::endl;
+			std::cerr << "OpenCL build log:\n" << cl_program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(cl_devices[0]) << std::endl;
+			exit(1);
+		}
+		// Create kernels
+		cl::Kernel cl_kernel0(cl_program, "calculate_ray", &err);
+		if(err != CL_SUCCESS) {
+			std::cerr << "Error: Could not create kernel: " << err << std::endl;
+			exit(1);
+		}
+		cl::Kernel cl_kernel1(cl_program, "calculate_ray", &err);
+		if(err != CL_SUCCESS) {
+			std::cerr << "Error: Could not create kernel: " << err << std::endl;
+			exit(1);
+		}
+		cl::Kernel kernels[] = {cl_kernel0, cl_kernel1};
+		// Set kernel arguments
+		for(int i = 0; i < 2; i++) {
+			kernels[i].setArg(0, cl_buffer_points);
+			kernels[i].setArg(1, cl_buffer_lambdaval);
+			kernels[i].setArg(2, cl_buffer_parameters[i]);
+			kernels[i].setArg(3, cl_buffer_data_out[i]);
+			#if (DEBUG == 1)
+				kernels[i].setArg(4, cl_buffer_debug);
+			#endif
+		}
+		if (commrank==0) std::cout << "Done! Time spent since start (seconds): " << std::chrono::duration<double>(time_now() - start).count() << std::endl << std::flush;
+		
 		// Other initialization
 		if (commrank==0) std::cout << "Other initialization ... " << std::flush;
 		FoMo::RenderCube rendercube(goftcube);
-		float lambda0 = float(goftcube.readlambda0());
 		float lambda_width_in_A = lambda_width*lambda0/GSL_CONST_MKSA_SPEED_OF_LIGHT;
 		for(int i = 0; i < lambda_pixel; i++)
 			lambdaval[i] = float(i)/(lambda_pixel - 1)*lambda_width_in_A - lambda_width_in_A/2.0;
@@ -386,9 +445,6 @@ namespace FoMo
 		
 		// Render frames
 		int frame_index = 0;
-		float g[] = {-2*regular_grid->minx/x_pixel, -2*regular_grid->miny/y_pixel, -2*regular_grid->minz/z_pixel};
-		float pixel_width = g[0];
-		float pixel_height = g[1];
 		float temp[3];
 		float inx[] = {1, 0, 0};
 		float iny[] = {0, 1, 0};
@@ -406,7 +462,7 @@ namespace FoMo
 				double l = *lit;
 				double b = *bit;
 				
-				// Calculating frame parameters
+				// Calculate frame parameters
 				if (commrank==0) std::cout << "Calculating frame parameters ... " << std::flush;
 				rotateAroundY(inx, b, temp);
 				rotateAroundZ(temp, -l, rx);
@@ -415,55 +471,11 @@ namespace FoMo
 				rotateAroundZ(temp, -l, rz);
 				rotateAroundZ(global_offset_vector, l, temp);
 				rotateAroundY(temp, -b, local_offset_vector);
-				if (commrank==0) std::cout << "Done! Time spent since start (seconds): " << std::chrono::duration<double>(time_now() - start).count() << std::endl << std::flush;
-				
-				if (commrank==0) std::cout << "Compiling OpenCL program and creating kernels ... " << std::flush;
-				// Compile the program
-				cl::Program::Sources cl_program_source(1, std::make_pair(prog.data(), prog.size()));
-				cl::Program cl_program(cl_context, cl_program_source);
-				std::string build_options = "-cl-nv-verbose -D DEBUG=" + std::to_string(DEBUG) + " -D X_PIXEL=" + std::to_string(x_pixel)
-					+ " -D PIXEL_WIDTH=" + std::to_string(pixel_width) + " -D PIXEL_HEIGHT=" + std::to_string(pixel_height)
-					+ " -D LAMBDA_PIXEL=" + std::to_string(lambda_pixel) + " -D LAMBDA0=" + std::to_string(lambda0)
-					+ " -D MINX=" + std::to_string(regular_grid->minx) + " -D MAXX=" + std::to_string(-regular_grid->minx)
-					+ " -D MINY=" + std::to_string(regular_grid->miny) + " -D MAXY=" + std::to_string(-regular_grid->miny)
-					+ " -D MINZ=" + std::to_string(regular_grid->minz) + " -D MAXZ=" + std::to_string(-regular_grid->minz)
-					+ " -D GX=" + std::to_string(g[0]) + " -D GSX=" + std::to_string(x_pixel)
-					+ " -D GY=" + std::to_string(g[1]) + " -D GSY=" + std::to_string(y_pixel)
-					+ " -D GZ=" + std::to_string(g[2]) + " -D GSZ=" + std::to_string(z_pixel)
-					+ " -D OX=" + std::to_string(x_pixel/2.0) + " -D OY=" + std::to_string(y_pixel/2.0)
-					+ " -D RXX=" + std::to_string(rx[0]) + " -D RXY=" + std::to_string(rx[1]) + " -D RXZ=" + std::to_string(rx[2])
-					+ " -D RYX=" + std::to_string(ry[0]) + " -D RYY=" + std::to_string(ry[1]) + " -D RYZ=" + std::to_string(ry[2])
-					+ " -D RZX=" + std::to_string(rz[0]) + " -D RZY=" + std::to_string(rz[1]) + " -D RZZ=" + std::to_string(rz[2])
-					+ " -D X_OFFSET=" + std::to_string(local_offset_vector[0]) + " -D Y_OFFSET=" + std::to_string(local_offset_vector[1])
-					+ " -D SX=" + std::to_string(sgn(rz[0])) + " -D SY=" + std::to_string(sgn(rz[1])) + " -D SZ=" + std::to_string(sgn(rz[2]))
-					+ " -D STEPX=" + std::to_string(rz[0] == 0 ? 1 : abs(g[0]/rz[0])) + " -D STEPY=" + std::to_string(rz[1] == 0 ? 1 : abs(g[1]/rz[1]))
-					+ " -D STEPZ=" + std::to_string(rz[2] == 0 ? 1 : abs(g[2]/rz[2]));
-				err = cl_program.build(cl_devices, build_options.c_str());
-				if(err != CL_SUCCESS) {
-					std::cerr << "Error: Could not compile OpenCL program!" << std::endl;
-					std::cerr << "OpenCL build log:\n" << cl_program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(cl_devices[0]) << std::endl;
-					exit(1);
-				}
-				// Create kernels
-				cl::Kernel cl_kernel0(cl_program, "calculate_ray", &err);
-				if(err != CL_SUCCESS) {
-					std::cerr << "Error: Could not create kernel: " << err << std::endl;
-					exit(1);
-				}
-				cl::Kernel cl_kernel1(cl_program, "calculate_ray", &err);
-				if(err != CL_SUCCESS) {
-					std::cerr << "Error: Could not create kernel: " << err << std::endl;
-					exit(1);
-				}
-				cl::Kernel kernels[] = {cl_kernel0, cl_kernel1};
 				for(int i = 0; i < 2; i++) {
-					kernels[i].setArg(0, cl_buffer_points);
-					kernels[i].setArg(1, cl_buffer_lambdaval);
-					kernels[i].setArg(2, cl_buffer_parameters[i]);
-					kernels[i].setArg(3, cl_buffer_data_out[i]);
-					#if (DEBUG == 1)
-						kernels[i].setArg(4, cl_buffer_debug);
-					#endif
+					parameters[i]->rxx = rx[0]; parameters[i]->rxy = rx[1]; parameters[i]->rxz = rx[2];
+					parameters[i]->ryx = ry[0]; parameters[i]->ryy = ry[1]; parameters[i]->ryz = ry[2];
+					parameters[i]->rzx = rz[0]; parameters[i]->rzy = rz[1]; parameters[i]->rzz = rz[2];
+					parameters[i]->x_offset = local_offset_vector[0]; parameters[i]->y_offset = local_offset_vector[1];
 				}
 				if (commrank==0) std::cout << "Done! Time spent since start (seconds): " << std::chrono::duration<double>(time_now() - start).count() << std::endl << std::flush;
 				
