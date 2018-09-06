@@ -1,5 +1,4 @@
 typedef struct __attribute__ ((packed)) Parameters {
-	int offset;
 	float rxx;
 	float rxy;
 	float rxz;
@@ -13,13 +12,13 @@ typedef struct __attribute__ ((packed)) Parameters {
 	float y_offset;
 } Parameters;
 
-typedef struct __attribute__ ((packed)) RegularPoint {
+/*typedef struct __attribute__ ((packed)) RegularPoint {
 	float peak;
 	float fwhm;
 	float vx;
 	float vy;
 	float vz;
-} RegularPoint;
+} RegularPoint;*/
 
 // Macro variables that should be defined at compile-time:
 // DEBUG: Specifies whether or not a debug buffer will be present
@@ -29,13 +28,8 @@ typedef struct __attribute__ ((packed)) RegularPoint {
 // MINX, MINY, MINZ, MAXX, MAXY, MAXZ: (non-integer) bounds of grid in global coordinates.
 // GX, GY, GZ: size of a grid cell along each axis.
 // GSX, GSY, GSZ: amount of grid cells along each axis.
-// X_OFFSET, Y_OFFSET: Represents the offset that should be added to the local coordinates to compensate for the shift that happened during the construction of the regular grid.
 // OX, OY: Represents the coordinates of the global origin in pixel coordinates (so usually X_PIXEL/2.0 and Y_PIXEL/2.0). Pixels are sampled at half-coordinates.
-// RIJ for I, J = X, Y, Z: (RIX, RIY, RIZ) represents the I-vector from the local coordinate system in global coordinates. All unit vectors.
-// SX, SY, SZ: signs of RZX, RZY, RZZ (-1/0/1).
-// STEPX, STEPY, STEPZ: amount of distance that should be travelled along this ray in order to reach the next cell along this axis. STEPI = abs(GI/RZI). Not necessary for SI == 0.
 #define SPEEDOFLIGHT 299792458.0
-#define DATA_OUT_PER_POINT 4
 
 inline int calculate_intersection(float4 pos, float* distance, float4 rz) {
 	
@@ -211,20 +205,20 @@ inline int calculate_intersection(float4 pos, float* distance, float4 rz) {
 }
 
 #if (DEBUG == 1)
-	kernel void calculate_ray(global const RegularPoint* points, constant const float* lambdaval, constant const Parameters* parameters, global float* data_out, global float* debug_buffer) {
+	kernel void calculate_ray(global const float8* points, constant const float* lambdaval, constant const Parameters* parameters, global float* data_out, global float* debug_buffer) {
 #else
-	kernel void calculate_ray(global const RegularPoint* points, constant const float* lambdaval, constant const Parameters* parameters, global float* data_out) {
+	kernel void calculate_ray(global const float8* points, constant const float* lambdaval, constant const Parameters* parameters, global float* data_out) {
 #endif
 	
 	// Calculate screen coordinates
 	size_t id = get_global_id(0); // y*x_pixel + x
-	int local_id = id - parameters->offset;
+	int local_id = id - get_global_offset(0);
 	float local_x = (convert_float(id%X_PIXEL) + (0.5 - OX))*PIXEL_WIDTH;
 	float local_y = (convert_float(id/X_PIXEL) + (0.5 - OY))*PIXEL_HEIGHT;
 	
 	// Initialize intensities
 	float intensity[LAMBDA_PIXEL];
-	//#pragma unroll
+	#pragma unroll
 	for(int i = 0; i < LAMBDA_PIXEL; i++) {
 		intensity[i] = 0;
 	}
@@ -235,11 +229,6 @@ inline int calculate_intersection(float4 pos, float* distance, float4 rz) {
 	float4 rz = (float4) (parameters->rzx, parameters->rzy, parameters->rzz, 0);
 	float4 pos = rx*local_x + ry*local_y; // Position of ray at z_local = 0
 	float t;
-	int bug_index = -1;
-	int bug_x = -1;
-	int bug_y = -1;
-	int bug_z = -1;
-	int bug_axis = -1;
 	if (calculate_intersection(pos, &t, rz) == 1) {
 		
 		// Ray intersects box at distance tmin
@@ -274,10 +263,10 @@ inline int calculate_intersection(float4 pos, float* distance, float4 rz) {
 		#endif
 		int in_bounds;
 		int axis;
+		//int initialIndex = y*(GSX*GSZ) + x*GSZ + z;
 		do {
 			
 			// Find next event axis
-			// Condition ordering can possibly be optimized during pre-processing by using S/STEP-macros
 			int index = y*(GSX*GSZ) + x*GSZ + z;
 			if (event_distance[0] <= event_distance[1] && event_distance[0] <= event_distance[2]) {
 				axis = 0;
@@ -307,31 +296,29 @@ inline int calculate_intersection(float4 pos, float* distance, float4 rz) {
 					in_bounds = (z >= 0);
 				}
 			}
+			if (in_bounds)
+				prefetch(&(points[y*(GSX*GSZ) + x*GSZ + z]), 1);
 			
 			#if (LAMBDA_PIXEL > 1)
 			
 				// Pre-compute values for intensity calculations
 				// Some more pre-computations could be done theoretically but the pre-emptive exponentiations sometimes hit the limit of single-precision
-				float fwhm = points[index].fwhm;
-				float b = ((rz.x*points[index].vx + rz.y*points[index].vy + rz.z*points[index].vz)/fwhm)*(2*LAMBDA0/SPEEDOFLIGHT);
-				float factor = points[index].peak*(event_distance[axis] - t);
+				float8 point = points[index];
+				float fwhm = point.s1;
+				float b = ((rz.x*point.s2 + rz.y*point.s3 + rz.z*point.s4)/fwhm)*(2*LAMBDA0/SPEEDOFLIGHT);
+				float factor = point.s0*(event_distance[axis] - t);
 				float exponent0 = -b*b;
 				float exponent1 = 4*b/fwhm;
 				float exponent2 = -4/(fwhm*fwhm);
 				
-				//#pragma unroll
+				#pragma unroll
 				for(int i = 0; i < LAMBDA_PIXEL; i++) {
 					float a = lambdaval[i];
 					intensity[i] += factor*exp2(exponent0 + a*(exponent1 + a*exponent2));
-					#if (DEBUG == 1)
-						if (id == 7454 && i == 0) {
-							debug_buffer[counter] = points[index].fwhm;
-						}
-					#endif
 				}
 			
 			#else
-				intensity[0] += points[index].peak;
+				intensity[0] += points[index].s0;
 			#endif
 			
 			// Update traversal information
@@ -344,15 +331,15 @@ inline int calculate_intersection(float4 pos, float* distance, float4 rz) {
 			
 		} while (in_bounds);
 		
+		//float8 point = points[initialIndex];
+		//intensity[0] += point.s0;
+		
 	}
 	
 	// Write out intensities
-	int index = (DATA_OUT_PER_POINT*LAMBDA_PIXEL)*local_id;
-	//#pragma unroll
+	int index = LAMBDA_PIXEL*local_id;
+	#pragma unroll
 	for(int i = 0; i < LAMBDA_PIXEL; i++) {
-		data_out[index++] = local_x + parameters->x_offset;
-		data_out[index++] = local_y + parameters->y_offset;
-		data_out[index++] = lambdaval[i] + LAMBDA0;
 		data_out[index++] = intensity[i];
 	}
 	
