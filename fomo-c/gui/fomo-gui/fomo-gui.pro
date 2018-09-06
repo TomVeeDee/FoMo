@@ -22,19 +22,19 @@ DEFINES += QT_DEPRECATED_WARNINGS
 # You can also select to disable deprecated APIs only up to a certain version of Qt.
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
+CONFIG += c++11
 
 SOURCES += \
         main.cpp \
-    mainWindow.cpp \
-    logger.cpp
+    logger.cpp \
+    window.cpp
 
 HEADERS += \
-    mainWindow.h \
     logger.h \
-    json.h
+    json.h \
+    window.h
 
-FORMS += \
-        mainwindow.ui
+FORMS +=
 
 win32:CONFIG(release, debug|release): LIBS += -L$$PWD/../../release/ -lFoMo
 else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/../../debug/ -lFoMo
@@ -42,3 +42,5 @@ else:unix: LIBS += -L$$PWD/../../ -lFoMo
 
 INCLUDEPATH += $$PWD/../../
 DEPENDPATH += $$PWD/../../
+
+DISTFILES +=
