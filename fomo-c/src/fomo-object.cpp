@@ -61,6 +61,7 @@ FoMo::DataCube FoMo::FoMoObject::readdatacube()
 	 return datacube;
 }
 
+
 /**
  * @brief This routine returns the GoftCube of the FoMoObject.
  * 
@@ -71,6 +72,18 @@ FoMo::DataCube FoMo::FoMoObject::readdatacube()
 FoMo::GoftCube FoMo::FoMoObject::readgoftcube()
 {
 	 return goftcube;
+}
+
+/**
+ * @brief This routine returns a pointer to the GoftCube of the FoMoObject.
+ * 
+ * Just returns a pointer instead of a copy, see readgoftcube() for more documentation.
+ * The pointer will remain valid throughout the lifetime of the FomoObject.
+ * @return The return value is a pointer to the goftcube of the FoMoObject and is of type GoftCube. It contains the calculated
+ * emission at each datapoint of the original mesh.
+ */
+FoMo::GoftCube* FoMo::FoMoObject::readgoftcubepointer() {
+	return &goftcube;
 }
 
 /**
@@ -340,6 +353,17 @@ static const std::map<std::string, FoMoRenderValue>::value_type RenderMapEntries
 static std::map<std::string, FoMoRenderValue> RenderMap{ &RenderMapEntries[0], &RenderMapEntries[LastVirtualRenderMethod-1] };
 
 /**
+ * @brief Converts the currently stored DataCube to a GoftCube.
+ * 
+ * The settings for CHIANTI-file, abundance file and observation type should already be set. The result can be read using FoMo::FoMoObject.readgoftcube().
+ */
+void FoMo::FoMoObject::constructGoftcube(std::string chiantifile, std::string abundfile, const FoMoObservationType observationtype) {
+	std::bitset<FoMo::noptions> woptions = this->goftcube.getwriteoptions();
+	this->goftcube=FoMo::emissionfromdatacube(this->datacube, chiantifile, abundfile, observationtype);
+	this->goftcube.setwriteoptions(woptions);
+}
+
+/**
  * @brief This is the main render routine for the FoMo::FoMoObject.
  * 
  * The routine starts from the FoMo::FoMoObject.datacube, and renders it using the 
@@ -363,7 +387,6 @@ static std::map<std::string, FoMoRenderValue> RenderMap{ &RenderMapEntries[0], &
  */
 void FoMo::FoMoObject::render(const std::vector<double> lvec, const std::vector<double> bvec)
 {
-	FoMo::GoftCube tmpgoft;
 	FoMo::RenderCube tmprender(this->goftcube);
 	int x_pixel, y_pixel, z_pixel, lambda_pixel;
 	double lambda_width;
@@ -372,11 +395,7 @@ void FoMo::FoMoObject::render(const std::vector<double> lvec, const std::vector<
 		this->rendering.setobservationtype(Imaging);
 	else
 		this->rendering.setobservationtype(Spectroscopic);
-	
-	std::bitset<FoMo::noptions> woptions=this->goftcube.getwriteoptions();
-	tmpgoft=FoMo::emissionfromdatacube(this->datacube,this->rendering.readchiantifile(),this->rendering.readabundfile(),this->rendering.readobservationtype());
-	this->goftcube=tmpgoft;
-	this->goftcube.setwriteoptions(woptions);
+	constructGoftcube(this->rendering.readchiantifile(), this->rendering.readabundfile(), this->rendering.readobservationtype());
 	
 	switch (RenderMap[rendering.readrendermethod()])
 	{

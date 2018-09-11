@@ -27,20 +27,22 @@ CONFIG += c++11
 SOURCES += \
         main.cpp \
     logger.cpp \
-    window.cpp
+    window.cpp \
+    view.cpp
 
 HEADERS += \
     logger.h \
     json.h \
-    window.h
+    window.h \
+    view.h
 
 FORMS +=
 
 win32:CONFIG(release, debug|release): LIBS += -L$$PWD/../../release/ -lFoMo
 else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/../../debug/ -lFoMo
-else:unix: LIBS += -L$$PWD/../../ -lFoMo
+else:unix: LIBS += -L$$PWD/../../build/src/.libs -lFoMo
 
-INCLUDEPATH += $$PWD/../../
+INCLUDEPATH += $$PWD/../../src/
 DEPENDPATH += $$PWD/../../
 
 DISTFILES +=

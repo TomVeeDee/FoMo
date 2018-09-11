@@ -13,10 +13,10 @@ Logger::Logger(QWidget *parent) : QPlainTextEdit(parent) {
 	empty = true;
 }
 
-void Logger::log(std::string text) {
+void Logger::log(const std::string &text) {
 	std::time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
 	std::stringstream ss;
-	ss << (empty ? "" : "\n") << "[" <<std::put_time(std::localtime(&now), "%T") << "] " << text;
+	ss << (empty ? "" : "\n") << "[" << std::put_time(std::localtime(&now), "%T") << "] " << text;
 	moveCursor(QTextCursor::End);
 	insertPlainText(QString::fromStdString(ss.str())); // Adds the text to the log without newline
 	moveCursor(QTextCursor::End);

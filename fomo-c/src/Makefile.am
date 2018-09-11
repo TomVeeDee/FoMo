@@ -17,6 +17,7 @@ libFoMo_la_SOURCES= \
 	fomo-io.cpp sun_coronal.cpp \
 	fomo-nearestneighbour.cpp \
 	fomo-gpu-nearestneighbour.cpp \
+	gpu-regulargrid-kernel.cpp \
 	fomo-gpu-regulargrid.cpp \
 	fomo-projection.cpp
 
