@@ -78,7 +78,7 @@ namespace FoMo
 		cl::Context cl_context;
 		std::vector<cl::Device> cl_devices;
 		cl::Buffer cl_buffer_points;
-		cl::Buffer cl_buffer_peaks;
+		cl::Buffer cl_buffer_emissivity;
 		cl::Buffer cl_buffer_lambdaval;
 		cl::Buffer cl_buffer_parameters;
 		cl::Buffer cl_buffer_bytes_out[2];

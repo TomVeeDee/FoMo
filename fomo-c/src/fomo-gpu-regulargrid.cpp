@@ -198,9 +198,9 @@ void FoMo::RegularGridRenderer::constructRegularGrid(const int gridx, const int 
 	// Allocate OpenCL buffers
 	int input_size = gridx*gridy*gridz;
 	cl_buffer_points = cl::Buffer(cl_context, CL_MEM_READ_ONLY | CL_MEM_ALLOC_HOST_PTR, sizeof(cl_float8)*input_size);
-	cl_buffer_peaks = cl::Buffer(cl_context, CL_MEM_READ_ONLY | CL_MEM_ALLOC_HOST_PTR, sizeof(cl_float)*input_size);
+	cl_buffer_emissivity = cl::Buffer(cl_context, CL_MEM_READ_ONLY | CL_MEM_ALLOC_HOST_PTR, sizeof(cl_float)*input_size);
 	cl_float8 *points = (cl_float8*) queues[0].enqueueMapBuffer(cl_buffer_points, CL_FALSE, CL_MAP_WRITE, 0, sizeof(cl_float8)*input_size);
-	cl_float *peaks = (cl_float*) queues[0].enqueueMapBuffer(cl_buffer_points, CL_FALSE, CL_MAP_WRITE, 0, sizeof(cl_float)*input_size);
+	cl_float *emissivity = (cl_float*) queues[0].enqueueMapBuffer(cl_buffer_points, CL_FALSE, CL_MAP_WRITE, 0, sizeof(cl_float)*input_size);
 	queues[0].finish();
 	finish_timing("Finished allocating grid-dependent OpenCL buffers in ");
 	
@@ -220,7 +220,7 @@ void FoMo::RegularGridRenderer::constructRegularGrid(const int gridx, const int 
 	int index;
 	int counter = 0;
 	#ifdef _OPENMP
-	#pragma omp parallel for schedule(dynamic) collapse(2) shared (rtree, points, peaks, counter) private (x, y, z, returnedValues, targetPoint, maxdistancebox, index)
+	#pragma omp parallel for schedule(dynamic) collapse(2) shared (rtree, points, emissivity, counter) private (x, y, z, returnedValues, targetPoint, maxdistancebox, index)
 	#endif
 	for (int i = 0; i < gridy; i++) {
 		for (int j = 0; j < gridx; j++) {
@@ -250,11 +250,12 @@ void FoMo::RegularGridRenderer::constructRegularGrid(const int gridx, const int 
 					counter++;
 					int nearestindex = returnedValues.at(0).second;
 					points[index] = {float(1e8)*peakvec[nearestindex], fwhmvec[nearestindex], vx[nearestindex], vy[nearestindex], vz[nearestindex], 0, 0, 0};
-					peaks[index] = float(1e8)*peakvec[nearestindex];
+					// Convert peak to emissivity, first constant is to convert from cm to Mm, last constant is sqrt(pi/(4*ln(2)))
+					emissivity[index] = float(1e8)*peakvec[nearestindex]*fwhmvec[nearestindex]*1.064467019;
 				} else {
 					// All values must be initialized to deal with NaN and such
 					points[index] = {0, 1, 0, 0, 0, 0, 0, 0};
-					peaks[index] = 0;
+					emissivity[index] = 0;
 				}
 				
 			}
@@ -267,7 +268,7 @@ void FoMo::RegularGridRenderer::constructRegularGrid(const int gridx, const int 
 	finish_timing("Finished constructing regular grid in ");
 	
 	queues[0].enqueueWriteBuffer(cl_buffer_points, CL_FALSE, 0, sizeof(cl_float8)*input_size, points);
-	queues[0].enqueueWriteBuffer(cl_buffer_peaks, CL_FALSE, 0, sizeof(cl_float)*input_size, peaks);
+	queues[0].enqueueWriteBuffer(cl_buffer_emissivity, CL_FALSE, 0, sizeof(cl_float)*input_size, emissivity);
 	finish_timing("Finished enqueuing grid-dependent OpenCL buffers write in ");
 	
 }
@@ -521,7 +522,7 @@ void FoMo::RegularGridRenderer::setDisplayMode(DisplayMode displayMode) {
 	// Set kernel arguments
 	for(int i = 0; i < 2; i++) {
 		if (displayMode == DisplayMode::IntegratedIntensity)
-			kernels[i].setArg(0, cl_buffer_peaks);
+			kernels[i].setArg(0, cl_buffer_emissivity);
 		else
 			kernels[i].setArg(0, cl_buffer_points);
 		kernels[i].setArg(1, cl_buffer_lambdaval);

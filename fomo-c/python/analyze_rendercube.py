@@ -15,6 +15,7 @@ def show_cube(path):
 	# Initialize grid
 	x_pixels = 50#149/50
 	y_pixels = 724#148/724
+	l_pixels = 100
 	grid = zeros([y_pixels, x_pixels])
 	
 	ys = set()
@@ -27,11 +28,18 @@ def show_cube(path):
 	minx, maxx = MAX_VALUE, -MAX_VALUE
 	miny, maxy = MAX_VALUE, -MAX_VALUE
 	minl, maxl = MAX_VALUE, -MAX_VALUE
+	counter = 0
 	for line in lines[5:]:
 		words = line.split(" ")
-		x = float(words[0])
-		y = float(words[1])
-		l = float(words[2])
+		try:
+			x = float(words[0])
+			y = float(words[1])
+			l = float(words[2])
+		except ValueError:
+			print("Count", counter)
+			print(line)
+			print(words)
+		counter += 1
 		minx, maxx = min(minx, x), max(maxx, x)
 		miny, maxy = min(miny, y), max(maxy, y)
 		minl, maxl = min(minl, l), max(maxl, l)
@@ -46,6 +54,8 @@ def show_cube(path):
 		y = int(round((float(words[1]) - miny)/y_distance*(y_pixels - 1)))
 		grid[y, x] += float(words[3])
 	
+	grid = grid*(maxl - minl)/(l_pixels - 1) # Calculate integral of intensity over wavelength by adding sample integrities and multiplying by the wavelength sampling width
+	
 	print("Finished loading!")
 	
 	# Display grid
@@ -58,20 +68,24 @@ def show_cube(path):
 	title(path)
 	show()
 
-def compare_cubes(path1, path2):
+def compare_cubes(path0, path1):
 	
 	cubes = []
 	
 	# Read input
-	for path in path1, path2:
+	for path in path0, path1:
+		
+		xs = set()
+		ys = set()
+		ls = set()
 		
 		# Load input file
 		with open(path, "r") as f:
 			lines = f.readlines()
 		
 		# Initialize grid
-		x_pixels = 149
-		y_pixels = 148
+		x_pixels = 50
+		y_pixels = 724
 		l_pixels = 100
 		grid = zeros([x_pixels, y_pixels, l_pixels])
 		
@@ -87,15 +101,18 @@ def compare_cubes(path1, path2):
 			x = float(words[0])
 			y = float(words[1])
 			l = float(words[2])
+			xs.add(x)
+			ys.add(y)
+			ls.add(l)
 			minx, maxx = min(minx, x), max(maxx, x)
 			miny, maxy = min(miny, y), max(maxy, y)
 			minl, maxl = min(minl, l), max(maxl, l)
 		
-		# Map to pixels and add emissivity
+		# Map to pixels and add intensity
 		x_distance = maxx - minx
 		y_distance = maxy - miny
 		l_distance = maxl - minl
-		for line in lines[5:1000]:
+		for line in lines[5:]:
 			words = line.split(" ")
 			x = int(round((float(words[0]) - minx)/x_distance*(x_pixels - 1)))
 			y = int(round((float(words[1]) - miny)/y_distance*(y_pixels - 1)))
@@ -103,19 +120,40 @@ def compare_cubes(path1, path2):
 			grid[x, y, l] = float(words[3])
 		
 		cubes.append(grid)
+		
+		print("xs:", sorted(list(xs)))
+		print("ys:", sorted(list(ys)))
+		print("ls:", sorted(list(ls)))
 	
 	#cubes[1] = cubes[1]/16.5990192
 	
 	# Compare cubes
+	print("Comparing cubes")
 	mean0 = cubes[0].mean()
 	print("mean(0):", mean0)
-	mean1 = cubes[0].mean()
+	mean1 = cubes[1].mean()
 	print("mean(1):", mean1)
 	rmse = sqrt(((cubes[0] - cubes[1])**2).mean())
 	print("RMSE(0-1):", rmse)
 	print("RMSE(0-1)/mean(0):", rmse/mean0)
 	print("RMSE(0-1)/mean(1):", rmse/mean1)
-	print(cubes[1]/cubes[0])
+	#print(cubes[1]/cubes[0])
+	
+	# Compare cuts
+	cuts = []
+	cut_height = 150
+	cuts.append(cubes[0][:, y_pixels//2 - cut_height//2:y_pixels//2 + cut_height//2, :])
+	cuts.append(cubes[1][:, y_pixels//2 - cut_height//2:y_pixels//2 + cut_height//2, :])
+	print("Comparing cuts")
+	mean0 = cuts[0].mean()
+	print("mean(0):", mean0)
+	mean1 = cuts[1].mean()
+	print("mean(1):", mean1)
+	rmse = sqrt(((cuts[0] - cuts[1])**2).mean())
+	print("RMSE(0-1):", rmse)
+	print("RMSE(0-1)/mean(0):", rmse/mean0)
+	print("RMSE(0-1)/mean(1):", rmse/mean1)
+	#print(cuts[1]/cuts[0])
 
 def main():
 	
