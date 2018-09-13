@@ -92,6 +92,19 @@ AC_CHECK_HEADER(boost/iostreams/copy.hpp,[],[AC_MSG_ERROR(Boost copy header not 
 AC_CHECK_HEADER(boost/iostreams/filter/gzip.hpp,[],[AC_MSG_ERROR(Boost zlib header not found)])
 
 PKG_PROG_PKG_CONFIG
+
+# Check for OpenCL
+# Copied from CGAL code above
+AC_ARG_WITH([opencl],
+	    [AS_HELP_STRING([--with-opencl=yes/no],
+			    [link with OpenCL for GPU-accelerated rendering @<:@default=yes@:>@])],
+	    [opencl=$withval],
+	    [opencl=yes])
+if test "a$opencl" = "ayes" ; then
+	AC_CHECK_HEADERS([CL/cl.hpp],[],AC_MSG_ERROR([OpenCL header not found]))
+	LDFLAGS+=" -lOpenCL"
+fi
+
 #check if MPI is available
 if test "a$mpi" = "ayes" ; then
    AC_CHECK_HEADER(mpi.h, [AC_DEFINE([HAVEMPI],"1",[Is MPI used?])],AC_MSG_ERROR([MPI header not found]))
@@ -101,13 +114,13 @@ fi
 AC_CHECK_HEADER([gsl/gsl_const_mksa.h],[],AC_MSG_ERROR([GSL physical constants not found]))
 AC_ARG_WITH([cgal],
 	    [AS_HELP_STRING([--with-cgal=yes/no],
-			    [link with CGAL for Delaunay triangulation for interpolation @<:@default=yes@:>@])],
+			    [link with CGAL for Delaunay triangulation for interpolation @<:@default=no@:>@])],
 	    [cgal=$withval],
 	    [cgal=no])
 if test "a$cgal" = "ayes" ; then
 	AC_CHECK_HEADERS([CGAL/Delaunay_triangulation_2.h],[],AC_MSG_ERROR([CGAL Delaunay headers not found]))
 	#AC_SEARCH_LIBS(a_function_what?,[CGAL],[],AC_MSG_ERROR([CGAL libraries not found]))
-	LDFLAGS+="-lCGAL -lgmp"
+	LDFLAGS+=" -lCGAL -lgmp"
 	CXXFLAGS+=" -frounding-math"
 fi
 

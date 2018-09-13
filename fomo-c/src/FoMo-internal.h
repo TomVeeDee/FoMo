@@ -1,9 +1,14 @@
+#include <config.h>
+
 #include <vector>
 #include <string>
 #include <chrono>
 
 #include <boost/geometry/index/rtree.hpp>
+
+#ifdef HAVE_CL_CL_HPP
 #include <CL/cl.hpp>
+#endif
 
 namespace FoMo
 {
@@ -27,12 +32,13 @@ namespace FoMo
 	FoMo::RenderCube RenderWithProjection(FoMo::GoftCube goftcube, const int x_pixel, const int y_pixel, const int z_pixel, const int lambda_pixel, const double lambda_width,
 	std::vector<double> lvec, std::vector<double> bvec, const std::string outfile);
 	
-	FoMo::RenderCube RenderWithGPUNearestNeighbour(FoMo::GoftCube goftcube, const int x_pixel, const int y_pixel, const int z_pixel, const int lambda_pixel, const double lambda_width,
-	std::vector<double> lvec, std::vector<double> bvec, const std::string outfile);
+#ifdef HAVE_CL_CL_HPP
+	//FoMo::RenderCube RenderWithGPUNearestNeighbour(FoMo::GoftCube goftcube, const int x_pixel, const int y_pixel, const int z_pixel, const int lambda_pixel, const double lambda_width,
+	//std::vector<double> lvec, std::vector<double> bvec, const std::string outfile);
 	
 	FoMo::RenderCube RenderWithGPURegularGrid(FoMo::GoftCube goftcube, const int x_pixel, const int y_pixel, const int z_pixel, const int lambda_pixel, const double lambda_width,
 	std::vector<double> lvec, std::vector<double> bvec, const std::string outfile);
-
+	
 	typedef RegularGridRendererDisplayMode DisplayMode;
 	
 	class RegularGridRenderer {
@@ -130,5 +136,6 @@ namespace FoMo
 		inline void extractData(int index, int pixels_in_job, int offset, unsigned char *bytes, float *floats);
 		inline void enqueueRead(cl::Buffer *cl_buffers, int index, int size, void *buffer);
 	};
+#endif
 	
 }

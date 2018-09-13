@@ -25,7 +25,6 @@
 #include <QPushButton>
 
 #include "window.h"
-#include "ui_mainwindow.h"
 #include "FoMo.h"
 
 #define WINDOW_RENDERER_STATE_HAS_DATACUBE 1

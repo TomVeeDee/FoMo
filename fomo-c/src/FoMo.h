@@ -1,3 +1,5 @@
+#include <config.h>
+
 #include <vector>
 #include <string>
 #include <bitset>
@@ -218,6 +220,7 @@ namespace FoMo
 		void setwriteoutdeletefiles(const bool = true);
 	};
 	
+#ifdef HAVE_CL_CL_HPP
 	enum RegularGridRendererDisplayMode {
 		AllIntensities, // Store all wavelengths
 		IntegratedIntensity // Only store total intensity along ray, one byte per pixel
@@ -229,15 +232,17 @@ namespace FoMo
 	 * This public interface simply wraps around an instance of RegularGridRenderer and is used to remove any library dependencies from the FoMo-header.
 	 * This interface is necessary to provide API methods on top of the standard ones so that the user can separate the different phases of rendering for efficient rendering.
 	 * The methods that should be called in order, are:
+	 * 
 	 * - RegularGridRenderer(FoMo::GoftCube *goftcube): constructs the renderer by storing the goftcube and constructing an R-tree for the data points.
 	 * - constructRegularGrid(const int gridx, const int gridy, const int gridz): constructs a regular grid.
-	 * - setRenderingSettings(const int x_pixel, const int y_pixel, const int lambda_pixel, const float view_width, const float view_height,
-	 * 		const float lambda_width, const float max_intensity = 1.0,
-	 * 		const RegularGridRendererDisplayMode displayMode = RegularGridRendererDisplayMode::IntegratedIntensity):
+	 * - setRenderingSettings(const int x_pixel, const int y_pixel, const int lambda_pixel, const float lambda_width,
+			const RegularGridRendererDisplayMode displayMode, const float max_intensity = 1.0):
 	 * 		sets the rendering settings.
-	 * - render(const float l, const float b, unsigned char *data): does the rendering.
+	 * 
+	 * - renderToBuffer(const float l, const float b, const float view_width, const float view_height, unsigned char *data): does the rendering.
 	 * OR
-	 * - renderToFile(const float l, const float b, std::string fileName, FoMo::RenderCube *renderCubePointer = NULL): renders to file or RenderCube object.
+	 * - renderToCube(const float l, const float b, const float view_width, const float view_height, std::string fileName,
+	 * 		FoMo::RenderCube *renderCubePointer = NULL): renders to file or RenderCube object.
 	 */
 	class RegularGridRendererWrapper {
 	public:
@@ -245,14 +250,15 @@ namespace FoMo
 		~RegularGridRendererWrapper();
 		void readBounds(float &minx, float &maxx, float &miny, float &maxy, float &minz, float &maxz);
 		void constructRegularGrid(const int gridx, const int gridy, const int gridz, const float max_distance_x, const float max_distance_y, const float max_distance_z);
-		void setRenderingSettings(const int x_pixel, const int y_pixel, const int lambda_pixel, const float lambda_width, const RegularGridRendererDisplayMode displayMode,
-			const float max_intensity = 1.0);
+		void setRenderingSettings(const int x_pixel, const int y_pixel, const int lambda_pixel, const float lambda_width,
+			const RegularGridRendererDisplayMode displayMode, const float max_intensity = 1.0);
 		void renderToBuffer(const float l, const float b, const float view_width, const float view_height, unsigned char *data);
 		void renderToCube(const float l, const float b, const float view_width, const float view_height, std::string fileName,
 			FoMo::RenderCube *renderCubePointer = NULL);
 	private:
 		RegularGridRenderer *renderer;
 	};
+#endif
 	
 }
 

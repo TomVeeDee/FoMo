@@ -14,8 +14,9 @@ libFoMo_la_SOURCES= \
 	fomo-goftcube.cpp \
 	fomo-rendercube.cpp \
 	fomo-CHIANTI.cpp \
-	fomo-io.cpp sun_coronal.cpp \
+	fomo-io.cpp \
+	sun_coronal.cpp \
+	fomo-nearestneighbour.cpp \
+	fomo-projection.cpp \
 	gpu-regulargrid-kernel.cpp \
-	fomo-gpu-regulargrid.cpp \
-	fomo-projection.cpp
-
+	fomo-gpu-regulargrid.cpp

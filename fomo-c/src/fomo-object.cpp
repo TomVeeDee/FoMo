@@ -325,8 +325,10 @@ enum FoMoRenderValue
 #endif
 	NearestNeighbour,
 	Projection,
-	GPUNearestNeighbour,
+#ifdef HAVE_CL_CL_HPP
+	//GPUNearestNeighbour,
 	GPURegularGrid,
+#endif
 	// add more methods here
 	LastVirtualRenderMethod
 };
@@ -341,8 +343,10 @@ static const std::map<std::string, FoMoRenderValue>::value_type RenderMapEntries
 #endif
 	std::map<std::string, FoMoRenderValue>::value_type("NearestNeighbour",NearestNeighbour),
 	std::map<std::string, FoMoRenderValue>::value_type("Projection",Projection),
-	std::map<std::string, FoMoRenderValue>::value_type("GPUNearestNeighbour",GPUNearestNeighbour),
+#ifdef HAVE_CL_CL_HPP
+	//std::map<std::string, FoMoRenderValue>::value_type("GPUNearestNeighbour",GPUNearestNeighbour),
 	std::map<std::string, FoMoRenderValue>::value_type("GPURegularGrid",GPURegularGrid),
+#endif
 	/// [Rendermethods]
 	std::map<std::string, FoMoRenderValue>::value_type("ThisIsNotARealRenderMethod",LastVirtualRenderMethod)
 };
@@ -421,14 +425,16 @@ void FoMo::FoMoObject::render(const std::vector<double> lvec, const std::vector<
 			std::cout << "Using projection for rendering." << std::endl << std::flush;
 			tmprender=FoMo::RenderWithProjection(this->goftcube,x_pixel,y_pixel,z_pixel,lambda_pixel,lambda_width,lvec,bvec, this->outfile);
 			break;
-		case GPUNearestNeighbour:
+#ifdef HAVE_CL_CL_HPP
+		/*case GPUNearestNeighbour:
 			std::cout << "Using GPU nearest-neighbour rendering." << std::endl << std::flush;
 			tmprender=FoMo::RenderWithGPUNearestNeighbour(this->goftcube, x_pixel, y_pixel, z_pixel, lambda_pixel, lambda_width, lvec, bvec, this->outfile);
-			break;
+			break;*/
 		case GPURegularGrid:
 			std::cout << "Using GPU regular grid rendering." << std::endl << std::flush;
 			tmprender=FoMo::RenderWithGPURegularGrid(this->goftcube, x_pixel, y_pixel, z_pixel, lambda_pixel, lambda_width, lvec, bvec, this->outfile);
 			break;
+#endif
 		case LastVirtualRenderMethod: // this should not be reached, since it is excluded from the map
 		default:
 			std::cerr << "Error: unknown rendering method." << std::endl << std::flush;

@@ -43,6 +43,7 @@ else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/../../debug/ -lFoMo
 else:unix: LIBS += -L$$PWD/../../build/src/.libs -lFoMo
 
 INCLUDEPATH += $$PWD/../../src/
+INCLUDEPATH += $$PWD/../../build/
 DEPENDPATH += $$PWD/../../
 
 DISTFILES +=
