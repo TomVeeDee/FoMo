@@ -33,17 +33,18 @@ public:
 private:
 
 	// Constants
-	const std::string configPath = "../config.json";
+	const std::string configPath = "config.json";
 	static constexpr double minAllowedValue = 1e-9; // Used for strictly positive values
 	static constexpr double maxAllowedValue = 1e9;
+	static constexpr int views_amount = 3;
 
 	// General
 	std::chrono::time_point<std::chrono::high_resolution_clock> start;
 	json config;
-	QImage image;
 	bool updatedRenderingSettings = true;
 	bool updatedViewParameters = true;
-	double time = 0;
+	double renderTimeLastSecond = 0;
+	int framesLastSecond = 0;
 
 	// State variables
 	int rendererState = 0;
@@ -55,7 +56,8 @@ private:
 
 	// Managed by Qt, no need to call destructor
 	Logger *logger;
-	View *view;
+	View *views[views_amount];
+	QTimer *renderTimer;
 	QTabWidget *controlPanel;
 	QWidget *currentTab;
 	QFormLayout *currentTabLayout;
@@ -85,8 +87,5 @@ private:
 	inline void log(const std::string &text);
 	inline void logProcessStart();
 	inline void logProcessFinished(std::string name);
-
-private slots:
-	void printTest();
 
 };

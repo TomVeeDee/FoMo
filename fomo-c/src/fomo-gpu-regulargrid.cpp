@@ -26,7 +26,7 @@
 #include <boost/geometry/index/rtree.hpp>
 
 #define GPU_REGULAR_GRID_DEBUG 0
-#define GPU_REGULAR_GRID_DEBUG_BUFFER_SIZE 200
+#define GPU_REGULAR_GRID_DEBUG_BUFFER_SIZE 20
 
 // Wrapper class
 
@@ -48,8 +48,8 @@ void FoMo::RegularGridRendererWrapper::constructRegularGrid(const int gridx, con
 }
 
 void FoMo::RegularGridRendererWrapper::setRenderingSettings(const int x_pixel, const int y_pixel, const int lambda_pixel, const float lambda_width,
-	const RegularGridRendererDisplayMode displayMode, const float max_intensity) {
-	renderer->setRenderingSettings(x_pixel, y_pixel, lambda_pixel, lambda_width, displayMode, max_intensity);
+	const RegularGridRendererDisplayMode displayMode, const float max_emissivity, const float max_doppler_shift, const float max_spectral_width) {
+	renderer->setRenderingSettings(x_pixel, y_pixel, lambda_pixel, lambda_width, displayMode, max_emissivity, max_doppler_shift, max_spectral_width);
 }
 
 void FoMo::RegularGridRendererWrapper::renderToBuffer(const float l, const float b, const float view_width, const float view_height, unsigned char *data) {
@@ -104,7 +104,8 @@ FoMo::RegularGridRenderer::RegularGridRenderer(FoMo::GoftCube *goftCube) {
 	// Allocate constant buffers
 	cl_buffer_parameters = cl::Buffer(cl_context, CL_MEM_READ_ONLY | CL_MEM_ALLOC_HOST_PTR, sizeof(Parameters)); // Various constant parameters
 	#if (GPU_REGULAR_GRID_DEBUG == 1)
-		cl_buffer_debug = cl::Buffer(cl_context, CL_MEM_READ_WRITE | CL_MEM_ALLOC_HOST_PTR, GPU_REGULAR_GRID_DEBUG_BUFFER_SIZE*sizeof(cl_float)); // Used to communicate data for kernel debugging
+		// Used to communicate data for kernel debugging
+		cl_buffer_debug = cl::Buffer(cl_context, CL_MEM_READ_WRITE | CL_MEM_ALLOC_HOST_PTR, GPU_REGULAR_GRID_DEBUG_BUFFER_SIZE*sizeof(cl_float));
 	#endif
 	// Create queues
 	queues[0] = cl::CommandQueue(cl_context, cl_devices[0], 0, &err); // Used for first kernel and general stuff
@@ -134,7 +135,7 @@ FoMo::RegularGridRenderer::RegularGridRenderer(FoMo::GoftCube *goftCube) {
 	finish_timing("Finished preparing coordinates in ");
 	
 	// Build an rtree with the quadratic packing algorithm, it takes (slightly) more time to build, but queries are faster for large renderings
-	rtree = boost::geometry::index::rtree<value, boost::geometry::index::quadratic<16>>(input_values.begin(), input_values.end());
+	rtree_var = boost::geometry::index::rtree<value, boost::geometry::index::quadratic<16>>(input_values.begin(), input_values.end());
 	finish_timing("Finished building R-tree in ");
 	
 	// Compute bounds
@@ -199,10 +200,27 @@ void FoMo::RegularGridRenderer::constructRegularGrid(const int gridx, const int 
 	
 	// Allocate OpenCL buffers
 	int input_size = gridx*gridy*gridz;
-	cl_buffer_points = cl::Buffer(cl_context, CL_MEM_READ_ONLY | CL_MEM_ALLOC_HOST_PTR, sizeof(cl_float8)*input_size);
-	cl_buffer_emissivity = cl::Buffer(cl_context, CL_MEM_READ_ONLY | CL_MEM_ALLOC_HOST_PTR, sizeof(cl_float)*input_size);
-	cl_float8 *points = (cl_float8*) queues[0].enqueueMapBuffer(cl_buffer_points, CL_FALSE, CL_MAP_WRITE, 0, sizeof(cl_float8)*input_size);
-	cl_float *emissivity = (cl_float*) queues[0].enqueueMapBuffer(cl_buffer_points, CL_FALSE, CL_MAP_WRITE, 0, sizeof(cl_float)*input_size);
+	cl_buffer_points = cl::Buffer(cl_context, CL_MEM_READ_ONLY | CL_MEM_ALLOC_HOST_PTR, sizeof(cl_float8)*input_size, &err);
+	if(err != CL_SUCCESS) {
+		std::cerr << "Error: Could not create points buffer! Error code: " << err << std::endl;
+		exit(1);
+	}
+	// Converts peak and fwhm to emissivity and variance respectively
+	cl_buffer_gaussian_parameters = cl::Buffer(cl_context, CL_MEM_READ_ONLY | CL_MEM_ALLOC_HOST_PTR, sizeof(cl_float8)*input_size, &err);
+	if(err != CL_SUCCESS) {
+		std::cerr << "Error: Could not create Gaussians buffer! Error code: " << err << std::endl;
+		exit(1);
+	}
+	cl_float8 *points = (cl_float8*) queues[0].enqueueMapBuffer(cl_buffer_points, CL_FALSE, CL_MAP_WRITE, 0, sizeof(cl_float8)*input_size, NULL, NULL, &err);
+	if(err != CL_SUCCESS) {
+		std::cerr << "Error: Could not map points buffer! Error code: " << err << std::endl;
+		exit(1);
+	}
+	cl_float8 *gaussian_parameters = (cl_float8*) queues[0].enqueueMapBuffer(cl_buffer_points, CL_FALSE, CL_MAP_WRITE, 0, sizeof(cl_float8)*input_size, NULL, NULL, &err);
+	if(err != CL_SUCCESS) {
+		std::cerr << "Error: Could not map Gaussians buffer! Error code: " << err << std::endl;
+		exit(1);
+	}
 	queues[0].finish();
 	finish_timing("Finished allocating grid-dependent OpenCL buffers in ");
 	
@@ -222,7 +240,7 @@ void FoMo::RegularGridRenderer::constructRegularGrid(const int gridx, const int 
 	int index;
 	int counter = 0;
 	#ifdef _OPENMP
-	#pragma omp parallel for schedule(dynamic) collapse(2) shared (rtree, points, emissivity, counter) private (x, y, z, returnedValues, targetPoint, maxdistancebox, index)
+	#pragma omp parallel for schedule(dynamic) collapse(2) shared (rtree_var, points, gaussian_parameters, counter) private (x, y, z, returnedValues, targetPoint, maxdistancebox, index)
 	#endif
 	for (int i = 0; i < gridy; i++) {
 		for (int j = 0; j < gridx; j++) {
@@ -245,19 +263,22 @@ void FoMo::RegularGridRenderer::constructRegularGrid(const int gridx, const int 
 				// - half the y-resolution in the y-direction
 				// - the maximum of both the previous numbers in the z-direction (sort of improvising a convex hull approach)
 				maxdistancebox = box(point(x - max_distance_x, y - max_distance_y, z - max_distance_z), point(x + max_distance_x, y + max_distance_y, z + max_distance_z));
-				rtree.query(boost::geometry::index::nearest(targetPoint, 1) && boost::geometry::index::within(maxdistancebox), std::back_inserter(returnedValues));
+				rtree_var.query(boost::geometry::index::nearest(targetPoint, 1) && boost::geometry::index::within(maxdistancebox), std::back_inserter(returnedValues));
 				
 				index = i*gridx*gridz + j*gridz + k;
 				if (returnedValues.size() >= 1) {
 					counter++;
 					int nearestindex = returnedValues.at(0).second;
-					points[index] = {float(1e8)*peakvec[nearestindex], fwhmvec[nearestindex], vx[nearestindex], vy[nearestindex], vz[nearestindex], 0, 0, 0};
+					points[index] = {float(1e8*peakvec[nearestindex]), fwhmvec[nearestindex], vx[nearestindex], vy[nearestindex], vz[nearestindex], 0, 0, 0};
 					// Convert peak to emissivity, first constant is to convert from cm to Mm, last constant is sqrt(pi/(4*ln(2)))
-					emissivity[index] = float(1e8)*peakvec[nearestindex]*fwhmvec[nearestindex]*1.064467019;
+					// Convert fwhm to variance, constant is 1/(8*ln(2))
+					float fwhm = fwhmvec[nearestindex];
+					gaussian_parameters[index] = {float(1e8*peakvec[nearestindex]*fwhm*1.064467019), float(fwhm*fwhm*0.18033688), vx[nearestindex], vy[nearestindex], vz[nearestindex],
+						0, 0, 0};
 				} else {
 					// All values must be initialized to deal with NaN and such
 					points[index] = {0, 1, 0, 0, 0, 0, 0, 0};
-					emissivity[index] = 0;
+					gaussian_parameters[index] = {0, 1, 0, 0, 0, 0, 0, 0};
 				}
 				
 			}
@@ -270,7 +291,7 @@ void FoMo::RegularGridRenderer::constructRegularGrid(const int gridx, const int 
 	finish_timing("Finished constructing regular grid in ");
 	
 	queues[0].enqueueWriteBuffer(cl_buffer_points, CL_FALSE, 0, sizeof(cl_float8)*input_size, points);
-	queues[0].enqueueWriteBuffer(cl_buffer_emissivity, CL_FALSE, 0, sizeof(cl_float)*input_size, emissivity);
+	queues[0].enqueueWriteBuffer(cl_buffer_gaussian_parameters, CL_FALSE, 0, sizeof(cl_float8)*input_size, gaussian_parameters);
 	finish_timing("Finished enqueuing grid-dependent OpenCL buffers write in ");
 	
 }
@@ -287,7 +308,7 @@ void FoMo::RegularGridRenderer::constructRegularGrid(const int gridx, const int 
  * @param displayMode The display mode that should be used for rendering.
  */
 void FoMo::RegularGridRenderer::setRenderingSettings(const int x_pixel, const int y_pixel, const int lambda_pixel, const float lambda_width, DisplayMode displayMode,
-	const float max_intensity) {
+	const float max_emissivity, const float max_doppler_shift, const float max_spectral_width) {
 	
 	// Stores and processes the given settings
 	
@@ -305,32 +326,35 @@ void FoMo::RegularGridRenderer::setRenderingSettings(const int x_pixel, const in
 	this->view_width = view_width;
 	this->view_height = view_height;
 	this->lambda_width = lambda_width;
-	this->max_intensity = max_intensity;
+	this->max_emissivity = max_emissivity;
+	this->max_doppler_shift = max_doppler_shift;
+	this->max_spectral_width = max_spectral_width;
 	
 	// Process settings
 	// Allocate buffers
 	ox = x_pixel/2.0;
 	oy = y_pixel/2.0;
 	int pixels = x_pixel*y_pixel;
-	int output_amount = std::min(chunk_size, pixels)*lambda_pixel;
+	int output_amount = std::min(chunk_size, pixels);
+	int output_wavelengths = output_amount*lambda_pixel;
 	cl_buffer_lambdaval = cl::Buffer(cl_context, CL_MEM_READ_ONLY | CL_MEM_ALLOC_HOST_PTR, sizeof(cl_float)*lambda_pixel);
 	cl_buffer_bytes_out[0] = cl::Buffer(cl_context, CL_MEM_WRITE_ONLY | CL_MEM_ALLOC_HOST_PTR, bytes_per_pixel*sizeof(cl_uchar)*output_amount);
 	cl_buffer_bytes_out[1] = cl::Buffer(cl_context, CL_MEM_WRITE_ONLY | CL_MEM_ALLOC_HOST_PTR, bytes_per_pixel*sizeof(cl_uchar)*output_amount);
-	cl_buffer_floats_out[0] = cl::Buffer(cl_context, CL_MEM_WRITE_ONLY | CL_MEM_ALLOC_HOST_PTR, sizeof(cl_float)*output_amount);
-	cl_buffer_floats_out[1] = cl::Buffer(cl_context, CL_MEM_WRITE_ONLY | CL_MEM_ALLOC_HOST_PTR, sizeof(cl_float)*output_amount);
+	cl_buffer_floats_out[0] = cl::Buffer(cl_context, CL_MEM_WRITE_ONLY | CL_MEM_ALLOC_HOST_PTR, sizeof(cl_float)*output_wavelengths);
+	cl_buffer_floats_out[1] = cl::Buffer(cl_context, CL_MEM_WRITE_ONLY | CL_MEM_ALLOC_HOST_PTR, sizeof(cl_float)*output_wavelengths);
 	// Map buffers
 	lambdaval = (cl_float*) queues[0].enqueueMapBuffer(cl_buffer_lambdaval, CL_FALSE, CL_MAP_WRITE, 0, sizeof(cl_float)*lambda_pixel);
 	bytes_out[0] = (cl_uchar*) queues[0].enqueueMapBuffer(cl_buffer_bytes_out[0], CL_FALSE, CL_MAP_READ, 0, bytes_per_pixel*sizeof(cl_uchar)*output_amount);
 	bytes_out[1] = (cl_uchar*) queues[1].enqueueMapBuffer(cl_buffer_bytes_out[1], CL_FALSE, CL_MAP_READ, 0, bytes_per_pixel*sizeof(cl_uchar)*output_amount);
-	floats_out[0] = (cl_float*) queues[0].enqueueMapBuffer(cl_buffer_floats_out[0], CL_FALSE, CL_MAP_READ, 0, sizeof(cl_float)*output_amount);
-	floats_out[1] = (cl_float*) queues[1].enqueueMapBuffer(cl_buffer_floats_out[1], CL_FALSE, CL_MAP_READ, 0, sizeof(cl_float)*output_amount);
+	floats_out[0] = (cl_float*) queues[0].enqueueMapBuffer(cl_buffer_floats_out[0], CL_FALSE, CL_MAP_READ, 0, sizeof(cl_float)*output_wavelengths);
+	floats_out[1] = (cl_float*) queues[1].enqueueMapBuffer(cl_buffer_floats_out[1], CL_FALSE, CL_MAP_READ, 0, sizeof(cl_float)*output_wavelengths);
 	finish_timing("Finished setting and processing rendering settings in ");
 	
 	// Pre-compute and map lambda values
 	float lambda_width_in_A = lambda_width*goftCube->readlambda0()/GSL_CONST_MKSA_SPEED_OF_LIGHT;
 	for(int i = 0; i < lambda_pixel; i++)
 		lambdaval[i] = float(i)/(lambda_pixel - 1)*lambda_width_in_A - lambda_width_in_A/2.0;
-	queues[0].enqueueWriteBuffer(cl_buffer_lambdaval, CL_FALSE, 0, sizeof(float)*lambda_pixel, lambdaval);
+	queues[0].enqueueWriteBuffer(cl_buffer_lambdaval, CL_FALSE, 0, sizeof(cl_float)*lambda_pixel, lambdaval);
 	finish_timing("Finished pre-computing and mapping lambda values in ");
 	
 	// Set display mode
@@ -375,7 +399,8 @@ void FoMo::RegularGridRenderer::renderToBuffer(const float l, const float b, con
  * @param fileName The name of the output file. Data will be stored in text format. If the fileName is empty, no file will be written (only useful if renderCubePointer is given).
  * @param renderCubePointer Optional parameter, if set to a non-null value the generated RenderCube will be stored in here as well.
  */
-void FoMo::RegularGridRenderer::renderToCube(const float l, const float b, const float view_width, const float view_height, std::string fileName, FoMo::RenderCube *renderCubePointer) {
+void FoMo::RegularGridRenderer::renderToCube(const float l, const float b, const float view_width, const float view_height, std::string fileName,
+	FoMo::RenderCube *renderCubePointer) {
 	
 	// Check if output is necessary
 	if (fileName.empty() && renderCubePointer == NULL)
@@ -490,8 +515,10 @@ void FoMo::RegularGridRenderer::setDisplayMode(DisplayMode displayMode) {
 	// Compile program
 	std::string build_options = "-cl-nv-verbose -D DEBUG=" + std::to_string(GPU_REGULAR_GRID_DEBUG)
 		+ " -D ALL_INTENSITIES=" + std::to_string(displayMode == DisplayMode::AllIntensities)
-		+ " -D INTEGRATED_INTENSITY=" + std::to_string(displayMode == DisplayMode::IntegratedIntensity)
-		+ " -D MAX_INTENSITY=" + float_to_string(max_intensity)
+		+ " -D GAUSSIAN_PARAMETERS=" + std::to_string(displayMode == DisplayMode::GaussianParameters)
+		+ " -D MAX_EMISSIVITY=" + float_to_string(max_emissivity)
+		+ " -D MAX_DOPPLER_SHIFT=" + float_to_string(max_doppler_shift)
+		+ " -D MAX_SPECTRAL_WIDTH=" + float_to_string(max_spectral_width)
 		+ " -D X_PIXEL=" + std::to_string(x_pixel)
 		+ " -D LAMBDA_PIXEL=" + std::to_string(lambda_pixel) + " -D LAMBDA0=" + float_to_string(float(goftCube->readlambda0()))
 		+ " -D MINX=" + float_to_string(-grid_size_x/2) + " -D MAXX=" + float_to_string(grid_size_x/2)
@@ -501,6 +528,7 @@ void FoMo::RegularGridRenderer::setDisplayMode(DisplayMode displayMode) {
 		+ " -D GY=" + float_to_string(grid_size_y/gridy) + " -D GSY=" + std::to_string(gridy)
 		+ " -D GZ=" + float_to_string(grid_size_z/gridz) + " -D GSZ=" + std::to_string(gridz)
 		+ " -D OX=" + float_to_string(ox) + " -D OY=" + float_to_string(oy);
+	std::cout << build_options << std::endl;
 	err = cl_program.build(cl_devices, build_options.c_str());
 	if(err != CL_SUCCESS) {
 		std::cerr << "Error: Could not compile OpenCL program! Error code: " << err << std::endl;
@@ -523,18 +551,20 @@ void FoMo::RegularGridRenderer::setDisplayMode(DisplayMode displayMode) {
 	
 	// Set kernel arguments
 	for(int i = 0; i < 2; i++) {
-		if (displayMode == DisplayMode::IntegratedIntensity)
-			kernels[i].setArg(0, cl_buffer_emissivity);
+		int argIndex = 0;
+		if (displayMode == DisplayMode::GaussianParameters)
+			kernels[i].setArg(argIndex++, cl_buffer_gaussian_parameters);
 		else
-			kernels[i].setArg(0, cl_buffer_points);
-		kernels[i].setArg(1, cl_buffer_lambdaval);
-		kernels[i].setArg(2, cl_buffer_parameters);
+			kernels[i].setArg(argIndex++, cl_buffer_points);
 		if (displayMode == DisplayMode::AllIntensities)
-			kernels[i].setArg(3, cl_buffer_floats_out[i]);
+			kernels[i].setArg(argIndex++, cl_buffer_lambdaval);
+		kernels[i].setArg(argIndex++, cl_buffer_parameters);
+		if (displayMode == DisplayMode::AllIntensities)
+			kernels[i].setArg(argIndex++, cl_buffer_floats_out[i]);
 		else
-			kernels[i].setArg(3, cl_buffer_bytes_out[i]);
+			kernels[i].setArg(argIndex++, cl_buffer_bytes_out[i]);
 		#if (GPU_REGULAR_GRID_DEBUG == 1)
-			kernels[i].setArg(4, cl_buffer_debug);
+			kernels[i].setArg(argIndex++, cl_buffer_debug);
 		#endif
 	}
 	finish_timing("Finished settings kernel arguments in ");
@@ -639,7 +669,9 @@ inline void FoMo::RegularGridRenderer::rotateAroundY(float* in, float angle, flo
 
 inline std::string FoMo::RegularGridRenderer::float_to_string(float val) {
 	// Replaces commas with dots
-	std::string s = std::to_string(val);
+	std::stringstream ss;
+	ss << std::setprecision(std::numeric_limits<float>::digits10 + 1) << val;
+	std::string s = ss.str();
 	std::replace(s.begin(), s.end(), ',', '.');
 	return s;
 }
@@ -665,12 +697,17 @@ inline void FoMo::RegularGridRenderer::extractData(int index, int pixels_in_job,
 		int local_offset = offset*lambda_pixel;
 		for(int i = 0; i < pixels_in_job*lambda_pixel; i++)
 			floats[local_offset + i] = floats_out[index][i];
-	} else {
+	} else if (displayMode == DisplayMode::GaussianParameters) {
 		// Load bytes
 		enqueueRead(cl_buffer_bytes_out, index, pixels_in_job*bytes_per_pixel*sizeof(cl_uchar), bytes_out[index]);
-		int local_offset = offset*bytes_per_pixel;
-		for(int i = 0; i < pixels_in_job*bytes_per_pixel; i++)
-			bytes[local_offset + i] = bytes_out[index][i];
+		int input_index = 0;
+		for(int pixel_index = 0; pixel_index < pixels_in_job; pixel_index++) {
+			for(int image_index = 0; image_index < 3; image_index++) {
+				for(int color_index = 2; color_index >= 0; color_index--) {
+					bytes[image_index*x_pixel*y_pixel*4 + (offset + pixel_index)*4 + color_index] = bytes_out[index][input_index++];
+				}
+			}
+		}
 	}
 	
 }

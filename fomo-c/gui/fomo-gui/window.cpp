@@ -90,8 +90,13 @@ Window::Window(QApplication &app, QWidget *parent) : QMainWindow(parent) {
 	addIntegerField("Y pixels", "y_pixel", 2);
 	addIntegerField("Lambda pixels", "lambda_pixel", 1);
 	addDoubleField("Lambda width (m/s)", "lambda_width");
-	addDoubleField("Maximal intensity (ergs/(cm^2*s*sr))", "max_intensity");
+	addDoubleField("Maximal emissivity (ergs/(cm^2*s*sr))", "max_emissivity");
+	addDoubleField("Maximal Doppler shift (Ångström))", "max_doppler_shift");
+	addDoubleField("Maximal spectral width (Ångström))", "max_spectral_width");
 	addDoubleField("Target FPS", "fps");
+	QLabel *renderTimeCounter = new QLabel(currentTab);
+	renderTimeCounter->setText("N/A");
+	currentTabLayout->addRow("Render time per frame (s)", renderTimeCounter);
 	addButton("Update rendering settings", [this] () {
 		updateRenderingSettings();
 	});
@@ -124,17 +129,34 @@ Window::Window(QApplication &app, QWidget *parent) : QMainWindow(parent) {
 	logger = new Logger(centralWidget);
 	centralLayout->addWidget(logger, 2, 1);
 
-	// View
-	image = QImage(512, 512, QImage::Format_ARGB32);
-	view = new View(this, centralWidget);
-	centralLayout->addWidget(view, 0, 0, -1, 1, Qt::Alignment(Qt::AlignCenter));
+	// Views
+	QGridLayout *viewsLayout = new QGridLayout(); // No need to assign parent here, addLayout already assigns ownership
+	centralLayout->addLayout(viewsLayout, 0, 0, -1, 1, Qt::Alignment(Qt::AlignCenter));
+	for(int i = 0; i < views_amount; i++)
+		views[i] = new View(this, centralWidget);
+	viewsLayout->addWidget(views[0], 0, 0, Qt::Alignment(Qt::AlignCenter));
+	viewsLayout->addWidget(views[1], 0, 1, Qt::Alignment(Qt::AlignCenter));
+	viewsLayout->addWidget(views[2], 1, 0, 1, -1, Qt::Alignment(Qt::AlignCenter));
 
 	// Set up render timer
-	QTimer *renderTimer = new QTimer(view);
-	renderTimer->start(16);
+	renderTimer = new QTimer(centralWidget);
 	connect(renderTimer, &QTimer::timeout, this, [this] () {
 		renderToView();
 	});
+
+	// Set up render time counter timer
+	// Displays the average time per frame rendering from the past second
+	QTimer *renderTimeCounterTimer = new QTimer(centralWidget);
+	connect(renderTimeCounterTimer, &QTimer::timeout, this, [this, renderTimeCounter] () {
+		if (framesLastSecond == 0) {
+			renderTimeCounter->setText("N/A");
+		} else {
+			renderTimeCounter->setText(QString::number(renderTimeLastSecond/framesLastSecond));
+			renderTimeLastSecond = 0;
+			framesLastSecond = 0;
+		}
+	});
+	renderTimeCounterTimer->start(1000);
 
 }
 
@@ -246,13 +268,14 @@ void Window::readAndPreprocessDataCube() {
 	int ny = static_cast<int>(config["ny"]);
 	int nz = static_cast<int>(config["nz"]);
 	int ng = static_cast<int>(config["ng"]);
+	std::string datacube_file = static_cast<std::string const&>(config["datacube_file"]);
 	FMO = new FoMo::FoMoObject(dims);
 
 	// Load DataCube
 
 	// Initialization
 	std::string identity;
-	std::ifstream in(static_cast<std::string const&>(config["datacube_file"]));
+	std::ifstream in(datacube_file);
 	in >> identity;
 	std::vector<FoMo::tcoord> grid;
 	FoMo::tcoord xvec(nx);
@@ -287,20 +310,12 @@ void Window::readAndPreprocessDataCube() {
 		}
 	}
 	// Read data
-	//const int bufferSize = 1024;
-	//char *buffer = new char[bufferSize];
-	//in.read(buffer, bufferSize);
-	//int charsRead = in.gcount();
-	//int bufferPos = 0;
 	for (int i = 0; i < nvars - 1; i++) {
 		for (int j = 0; j < ng; j++) {
-			in >> allvar[i][j];// = parseFloat(in, buffer, bufferSize, bufferPos, charsRead);
+			in >> allvar[i][j];
 		}
 	}
-	//delete[] buffer;
 	in.close();
-	for(int i = 0; i < nvars; i++)
-		std::cout << i << " allvar " << allvar[0][i] << std::endl;
 	// Convert data
 	for (int j = 0; j < ng; j++) {
 		// Convert from g/cm^3 to /cm^3 (assuming that mean molecular mass is 1)
@@ -341,6 +356,7 @@ void Window::constructRegularGrid() {
 }
 
 void Window::updateRenderingSettings() {
+	renderTimer->start(int(1000/static_cast<double>(config["fps"])));
 	if (rendererState < WINDOW_RENDERER_STATE_HAS_REGULAR_GRID) {
 		log("Please construct a regular grid before attempting to set the rendering settings.");
 	} else {
@@ -349,14 +365,17 @@ void Window::updateRenderingSettings() {
 		int x_pixel = static_cast<int>(config["x_pixel"]);
 		int y_pixel = static_cast<int>(config["y_pixel"]);
 		// Update the renderer
-		renderer->setRenderingSettings(x_pixel, y_pixel, static_cast<int>(config["lambda_pixel"]), static_cast<double>(config["lambda_width"]), FoMo::RegularGridRendererDisplayMode::IntegratedIntensity,
-				static_cast<double>(config["max_intensity"]));
+		renderer->setRenderingSettings(x_pixel, y_pixel, static_cast<int>(config["lambda_pixel"]), static_cast<double>(config["lambda_width"]),
+				FoMo::RegularGridRendererDisplayMode::GaussianParameters, static_cast<double>(config["max_emissivity"]),
+				static_cast<double>(config["max_doppler_shift"]), static_cast<double>(config["max_spectral_width"]));
 		// Update our own buffer and label sizes
 		if (imageBuffer != NULL)
 			delete[] imageBuffer;
-		imageBuffer = new unsigned char[x_pixel*y_pixel];
-		view->setFixedWidth(x_pixel);
-		view->setFixedHeight(y_pixel);
+		imageBuffer = new unsigned char[12*x_pixel*y_pixel];
+		for(int i = 0; i < views_amount; i++) {
+			views[i]->setFixedWidth(x_pixel);
+			views[i]->setFixedHeight(y_pixel);
+		}
 		updatedRenderingSettings = true;
 		rendererState = WINDOW_RENDERER_STATE_HAS_RENDERING_SETTINGS;
 		logProcessFinished("updating rendering settings");
@@ -379,17 +398,21 @@ void Window::renderToView() {
 	if (rendererState == WINDOW_RENDERER_STATE_HAS_RENDERING_SETTINGS) {
 		// Only render to the view if correct state has been reached
 		if (updatedRenderingSettings || updatedViewParameters) {
-			logProcessStart();
 			// Only re-render if any relevant settings have been updated
+			auto frameStart = time_now();
 			int x_pixel = static_cast<int>(config["x_pixel"]);
 			int y_pixel = static_cast<int>(config["y_pixel"]);
+			// Render frame to buffer
 			renderer->renderToBuffer(toRadians(static_cast<double>(config["l"])), toRadians(static_cast<double>(config["b"])), static_cast<double>(config["view_width"]),
 					static_cast<double>(config["view_height"]), imageBuffer);
-			image = QImage(imageBuffer, x_pixel, y_pixel, 1*x_pixel, QImage::Format_Grayscale8);
-			view->setPixmap(QPixmap::fromImage(image));
+			// Display buffer on screen
+			for(int i = 0; i < views_amount; i++)
+				views[i]->setPixmap(QPixmap::fromImage(QImage(&(imageBuffer[i*x_pixel*y_pixel*4]), x_pixel, y_pixel, 4*x_pixel, QImage::Format_RGB32)));
+			// Update some parameters
 			updatedRenderingSettings = false;
 			updatedViewParameters = false;
-			logProcessFinished("rendering frame");
+			renderTimeLastSecond += std::chrono::duration<double>(time_now() - frameStart).count();
+			framesLastSecond++;
 		}
 	}
 }
@@ -501,22 +524,4 @@ inline void Window::logProcessFinished(std::string name) {
 	log(std::string("Finished ") + name + std::string(" in ")
 		+ std::to_string(std::round(std::chrono::duration<double>(time_now() - start).count()*1000000)/1000000.0) + std::string(" seconds."));
 	start = time_now();
-}
-
-void Window::printTest() {
-	time += 0.016;
-	//delete image;
-	int width = 512;
-	int height = 512;
-	//image = new QImage(width, height, QImage::Format_ARGB32);
-	for(int y = 0; y < height; y++) {
-		for(int x = 0; x < width; x++) {
-			int value = int((time*512 + x + y)/512.0*256)%256;
-			image.setPixel(x, y, qRgb(value, value, value));
-		}
-	}
-	//auto start = std::chrono::high_resolution_clock::now();
-	view->setPixmap(QPixmap::fromImage(image));
-	//auto duration = std::chrono::duration<double>(std::chrono::high_resolution_clock::now() - start).count();
-	//log(std::to_string(duration));
 }

@@ -27,8 +27,10 @@ typedef struct __attribute__ ((packed)) Parameters {
 // Macro variables that should be defined at compile-time:
 // DEBUG: Specifies whether or not a debug buffer will be present
 // ALL_INTENSITIES: Specifies whether or not the intensity for every wavelength should be calculated. If so, a float buffer should be used as output instead of a byte buffer.
-// INTEGRATED_INTENSITY: Specifies whether or not only the integrated intensity needs to be calculated. If so, a float buffer (emissivity) should be given instead of a float8 buffer (points).
-// MAX_INTENSITY: Used for INTEGRATED_INTENSITY display mode.
+// GAUSSIAN_PARAMETERS: Specifies whether or not only the integrated intensity needs to be calculated. If so, a float buffer (emissivity) should be given instead of a float8 buffer (points).
+// MAX_EMISSIVITY: Used for GAUSSIAN_PARAMETERS display mode.
+// MAX_DOPPLER_SHIFT: Used for GAUSSIAN_PARAMETERS display mode.
+// MAX_SPECTRAL_WIDTH: Used for GAUSSIAN_PARAMETERS display mode.
 // X_PIXEL: Amount of pixels along axes.
 // LAMBDA_PIXEL, LAMBDA0
 // MINX, MINY, MINZ, MAXX, MAXY, MAXZ: (non-integer) bounds of grid in global coordinates.
@@ -211,12 +213,15 @@ inline int calculate_intersection(float4 pos, float* distance, float4 rz) {
 }
 
 kernel void calculate_ray(
-#if (INTEGRATED_INTENSITY == 1)
-	global const float* emissivity,
+#if (GAUSSIAN_PARAMETERS == 1)
+	global const float8* gaussian_parameters,
 #else
 	global const float8* points,
 #endif
-constant const float* lambdaval, constant const Parameters* parameters,
+#if (ALL_INTENSITIES == 1)
+	constant const float* lambdaval,
+#endif
+	constant const Parameters* parameters,
 #if (ALL_INTENSITIES == 1)
 	global float* floats_out
 #else
@@ -233,9 +238,11 @@ constant const float* lambdaval, constant const Parameters* parameters,
 	float local_x = (convert_float(id%X_PIXEL) + (0.5 - OX))*parameters->pixel_width;
 	float local_y = (convert_float(id/X_PIXEL) + (0.5 - OY))*parameters->pixel_height;
 	
-	// Initialize intensities
-	#if (INTEGRATED_INTENSITY == 1)
-		float intensity = 0;
+	// Initialize quantities
+	#if (GAUSSIAN_PARAMETERS == 1)
+		float emissivity = 0;
+		float mu = 0; // We calculate the average relative to lambda0, so 0 means no Doppler shift
+		float variance = 0;
 	#else
 		float intensity[LAMBDA_PIXEL];
 		#pragma unroll
@@ -320,9 +327,24 @@ constant const float* lambdaval, constant const Parameters* parameters,
 			//	prefetch(&(points[y*(GSX*GSZ) + x*GSZ + z]), 1);
 			
 			float distance = event_distance[axis] - t;
-			#if (INTEGRATED_INTENSITY == 1)
-				intensity += emissivity[index]*distance;
+			
+			#if (GAUSSIAN_PARAMETERS == 1)
+				float8 point = gaussian_parameters[index];
+				if (point.s0 != 0) {
+					// Calculate Gaussian parameters using incremental formulas
+					float input_emissivity = point.s0*distance;
+					float emissivity2 = emissivity + input_emissivity;
+					float input_mu = (rz.x*point.s2 + rz.y*point.s3 + rz.z*point.s4)*(-LAMBDA0/SPEEDOFLIGHT);
+					float mu2 = (mu*emissivity + input_mu*input_emissivity)/emissivity2;
+					float mu_diff1 = mu - mu2;
+					float mu_diff2 = input_mu - mu2;
+					variance = ((variance + mu_diff1*mu_diff1)*emissivity + (point.s1 + mu_diff2*mu_diff2)*input_emissivity)/emissivity2;
+					emissivity = emissivity2;
+					mu = mu2;
+				}
+				
 			#else
+			
 				#if (LAMBDA_PIXEL > 1)
 				
 					// Pre-compute values for intensity calculations
@@ -358,15 +380,64 @@ constant const float* lambdaval, constant const Parameters* parameters,
 		
 	}
 	
-	#if (INTEGRATED_INTENSITY == 1)
-		// Write out grayscale value
-		int index = local_id;
-		bytes_out[index] = max(0, min(255, convert_int(round(intensity*(255/MAX_INTENSITY)))));
-		#if (DEBUG == 1)
-			if (id < 200) {
-				debug_buffer[id] = counter;
-			}
-		#endif
+	#if (GAUSSIAN_PARAMETERS == 1)
+	
+		// Write out Gaussian parameters
+		int index = 9*local_id;
+		
+		// Write out emissivity
+		emissivity *= (3.0/MAX_EMISSIVITY);
+		if (emissivity < 1) {
+			bytes_out[index++] = max(0, min(255, convert_int(round(emissivity*255))));
+			bytes_out[index++] = 0;
+			bytes_out[index++] = 0;
+		} else if (emissivity < 2) {
+			bytes_out[index++] = 255;
+			bytes_out[index++] = max(0, min(255, convert_int(round((emissivity - 1)*255))));
+			bytes_out[index++] = 0;
+		} else {
+			bytes_out[index++] = 255;
+			bytes_out[index++] = 255;
+			bytes_out[index++] = max(0, min(255, convert_int(round((emissivity - 2)*255))));
+		}
+		
+		// Write out Doppler shift
+		mu *= (1.0/MAX_DOPPLER_SHIFT);
+		if (mu < 0) {
+			// Blue shift
+			int val = max(0, min(255, convert_int(round((1 + mu)*255))));
+			bytes_out[index++] = val;
+			bytes_out[index++] = val;
+			bytes_out[index++] = 255;
+		} else {
+			// Red shift
+			int val = max(0, min(255, convert_int(round((1 - mu)*255))));
+			bytes_out[index++] = 255;
+			bytes_out[index++] = val;
+			bytes_out[index++] = val;
+		}
+		
+		// Write out spectral line width
+		float spectral_width = sqrt(variance)*(3.0/MAX_SPECTRAL_WIDTH);
+		if (emissivity == 0) {
+			// Spectral line width is undefined, so set color to white
+			bytes_out[index++] = 255;
+			bytes_out[index++] = 255;
+			bytes_out[index++] = 255;
+		} else if (spectral_width < 1) {
+			bytes_out[index++] = 0;
+			bytes_out[index++] = 0;
+			bytes_out[index++] = max(0, min(255, convert_int(round(spectral_width*255))));
+		} else if (spectral_width < 2) {
+			bytes_out[index++] = 0;
+			bytes_out[index++] = max(0, min(255, convert_int(round((spectral_width - 1)*255))));
+			bytes_out[index++] = 255;
+		} else {
+			bytes_out[index++] = max(0, min(255, convert_int(round((spectral_width - 2)*255))));
+			bytes_out[index++] = 255;
+			bytes_out[index++] = 255;
+		}
+		
 	#else
 		// Write out intensities
 		int index = LAMBDA_PIXEL*local_id;

@@ -46,9 +46,10 @@ namespace FoMo
 		RegularGridRenderer(FoMo::GoftCube *goftcube);
 		~RegularGridRenderer();
 		void readBounds(float &minx, float &maxx, float &miny, float &maxy, float &minz, float &maxz);
-		void constructRegularGrid(const int gridx, const int gridy, const int gridz, const float max_distance_x, const float max_distance_y, const float max_distance_z);
-		void setRenderingSettings(const int x_pixel, const int y_pixel, const int lambda_pixel, const float lambda_width, const RegularGridRendererDisplayMode displayMode,
-			const float max_intensity = 1.0);
+		void constructRegularGrid(const int gridx, const int gridy, const int gridz, const float max_distance_x, const float max_distance_y,
+			const float max_distance_z);
+		void setRenderingSettings(const int x_pixel, const int y_pixel, const int lambda_pixel, const float lambda_width,  DisplayMode displayMode,
+			const float max_emissivity = 1.0, const float max_doppler_shift = 1.0, const float max_spectral_width = 1.0);
 		void renderToBuffer(const float l, const float b, const float view_width, const float view_height, unsigned char *data);
 		void renderToCube(const float l, const float b, const float view_width, const float view_height, std::string fileName,
 			FoMo::RenderCube *renderCubePointer = NULL);
@@ -74,7 +75,7 @@ namespace FoMo
 		
 		// Constants
 		const int chunk_size = 1024*2; // Amount of jobs submitted to the GPU simultaneously
-		const int bytes_per_pixel = 1; // Only grayscale for now
+		const int bytes_per_pixel = 9; // 3 images, 3 channels. The alpha channel is added during extraction
 		
 		// Temporary variables
 		std::chrono::time_point<std::chrono::high_resolution_clock> start;
@@ -83,16 +84,16 @@ namespace FoMo
 		cl_int err;
 		cl::Context cl_context;
 		std::vector<cl::Device> cl_devices;
+		// Index: y*gridx*gridz + x*gridz + z
+		// The peak and emissivity values stored here are already converted from per Mm to per cm (multiplied by 1e8)
 		cl::Buffer cl_buffer_points;
-		cl::Buffer cl_buffer_emissivity;
+		cl::Buffer cl_buffer_gaussian_parameters;
 		cl::Buffer cl_buffer_lambdaval;
 		cl::Buffer cl_buffer_parameters;
 		cl::Buffer cl_buffer_bytes_out[2];
 		cl::Buffer cl_buffer_floats_out[2];
 		cl::Buffer cl_buffer_debug;
 		cl::CommandQueue queues[2];
-		// Index: y*gridx*gridz + x*gridz + z
-		// The peak values stored here are already converted from per Mm to per cm (multiplied by 1e8)
 		cl_float *lambdaval;
 		Parameters *parameters;
 		cl_uchar *bytes_out[2];
@@ -103,7 +104,7 @@ namespace FoMo
 		int commrank;
 		FoMo::GoftCube *goftCube;
 		float minx, maxx, miny, maxy, minz, maxz;
-		boost::geometry::index::rtree<value, boost::geometry::index::quadratic<16>> rtree;
+		boost::geometry::index::rtree<value, boost::geometry::index::quadratic<16>> rtree_var;
 		
 		// Variables known from regular grid construction onward
 		bool hasRegularGrid = false;
@@ -115,7 +116,9 @@ namespace FoMo
 		bool hasRenderingSettings = false;
 		int x_pixel, y_pixel, lambda_pixel;
 		float view_width, view_height, lambda_width;
-		float max_intensity; // Used for IntegratedIntensity display mode
+		float max_emissivity; // Used for GaussianParameters display mode
+		float max_doppler_shift; // Used for GaussianParameters display mode
+		float max_spectral_width; // Used for GaussianParameters display mode
 		float ox, oy;
 		DisplayMode displayMode;
 		cl::Kernel kernels[2];

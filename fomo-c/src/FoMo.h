@@ -221,9 +221,19 @@ namespace FoMo
 	};
 	
 #ifdef HAVE_CL_CL_HPP
+	/**
+	 * @brief This enum describes what quantities the RegularGridRenderer should render.
+	 * 
+	 * - AllIntensities: Can only be used for renderToCube. Calculates intensities for all wavelengths to be used as a RenderCube or stored in a file.
+	 * - GaussianParameters: Can only be used for renderToBuffer. Calculates the integrated intensity, Doppler shift and spectral width.
+	 * 		Each quantity is represented by 3 bytes per pixel (black-red-yellow-white, blue-white-red and black-blue-cyan-white respectively).
+	 * 		The color value is calculated by clamping the high dynamic range, doing linear interpolation in RGB-space and rounding.
+	 * 		The provided buffer should contain 3*x_pixel*y_pixel*4 and will be indexed as follows: buffer[image_index][y][x][color_channel],
+	 * 		with color channel indexing: B, G, R, A = 0, 1, 2, 3 respectively. The alpha channel is never set but space is provided for compatibility with e.g. Qt.
+	 */
 	enum RegularGridRendererDisplayMode {
 		AllIntensities, // Store all wavelengths
-		IntegratedIntensity // Only store total intensity along ray, one byte per pixel
+		GaussianParameters // Only store total intensity along ray, one byte per pixel
 	};
 	class RegularGridRenderer;
 	/**
@@ -235,9 +245,9 @@ namespace FoMo
 	 * 
 	 * - RegularGridRenderer(FoMo::GoftCube *goftcube): constructs the renderer by storing the goftcube and constructing an R-tree for the data points.
 	 * - constructRegularGrid(const int gridx, const int gridy, const int gridz): constructs a regular grid.
-	 * - setRenderingSettings(const int x_pixel, const int y_pixel, const int lambda_pixel, const float lambda_width,
-			const RegularGridRendererDisplayMode displayMode, const float max_intensity = 1.0):
-	 * 		sets the rendering settings.
+	 * - setRenderingSettingssetRenderingSettings(const int x_pixel, const int y_pixel, const int lambda_pixel, const float lambda_width,
+	 *		const RegularGridRendererDisplayMode displayMode, const float max_intensity = 1.0, const max_doppler_shift = 1.0,
+	 * 		const max_spectral_width = 1.0): sets the rendering settings.
 	 * 
 	 * - renderToBuffer(const float l, const float b, const float view_width, const float view_height, unsigned char *data): does the rendering.
 	 * OR
@@ -249,9 +259,11 @@ namespace FoMo
 		RegularGridRendererWrapper(FoMo::GoftCube *goftcube);
 		~RegularGridRendererWrapper();
 		void readBounds(float &minx, float &maxx, float &miny, float &maxy, float &minz, float &maxz);
-		void constructRegularGrid(const int gridx, const int gridy, const int gridz, const float max_distance_x, const float max_distance_y, const float max_distance_z);
+		void constructRegularGrid(const int gridx, const int gridy, const int gridz, const float max_distance_x, const float max_distance_y,
+			const float max_distance_z);
 		void setRenderingSettings(const int x_pixel, const int y_pixel, const int lambda_pixel, const float lambda_width,
-			const RegularGridRendererDisplayMode displayMode, const float max_intensity = 1.0);
+			const RegularGridRendererDisplayMode displayMode, const float max_emissivity = 1.0, const float max_doppler_shift = 1.0,
+			const float max_spectral_width = 1.0);
 		void renderToBuffer(const float l, const float b, const float view_width, const float view_height, unsigned char *data);
 		void renderToCube(const float l, const float b, const float view_width, const float view_height, std::string fileName,
 			FoMo::RenderCube *renderCubePointer = NULL);

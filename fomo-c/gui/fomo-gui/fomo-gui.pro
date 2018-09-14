@@ -46,4 +46,4 @@ INCLUDEPATH += $$PWD/../../src/
 INCLUDEPATH += $$PWD/../../build/
 DEPENDPATH += $$PWD/../../
 
-DISTFILES +=
+OTHER_FILES +=
