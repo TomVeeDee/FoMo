@@ -230,10 +230,13 @@ namespace FoMo
 	 * 		The color value is calculated by clamping the high dynamic range, doing linear interpolation in RGB-space and rounding.
 	 * 		The provided buffer should contain 3*x_pixel*y_pixel*4 and will be indexed as follows: buffer[image_index][y][x][color_channel],
 	 * 		with color channel indexing: B, G, R, A = 0, 1, 2, 3 respectively. The alpha channel is never set but space is provided for compatibility with e.g. Qt.
+	 * 		It should be noted that this method does not calculate these parameters by calculating an approximate intensity function (by sampling it only at the values specified by lambda_pixel
+	 * 		and lambda_width) and using numerical integration to approximate the parameters, but instead calculates these directly by using the Gaussian parameters of the individual grid cells.
+	 * 		As such, the numerical outcome may differ compared to a Gaussian fit on the output from the AllIntensities display mode.
 	 */
 	enum RegularGridRendererDisplayMode {
-		AllIntensities, // Store all wavelengths
-		GaussianParameters // Only store total intensity along ray, one byte per pixel
+		AllIntensities,
+		GaussianParameters
 	};
 	class RegularGridRenderer;
 	/**

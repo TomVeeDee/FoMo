@@ -2,12 +2,11 @@
 
 #include <vector>
 #include <string>
-#include <chrono>
-
-#include <boost/geometry/index/rtree.hpp>
 
 #ifdef HAVE_CL_CL_HPP
 #include <CL/cl.hpp>
+#include <chrono>
+#include <boost/geometry/index/rtree.hpp>
 #endif
 
 namespace FoMo
