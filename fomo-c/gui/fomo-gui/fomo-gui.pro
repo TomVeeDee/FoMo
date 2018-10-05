@@ -40,10 +40,10 @@ FORMS +=
 
 win32:CONFIG(release, debug|release): LIBS += -L$$PWD/../../release/ -lFoMo
 else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/../../debug/ -lFoMo
-else:unix: LIBS += -L$$PWD/../../build/src/.libs -lFoMo
+else:unix: LIBS += -L$$PWD/../../ -lFoMo -Wl,-rpath -Wl,$$PWD/../../
 
-INCLUDEPATH += $$PWD/../../src/
-INCLUDEPATH += $$PWD/../../build/
+INCLUDEPATH += $$PWD/../../
+INCLUDEPATH += $$PWD/../../
 DEPENDPATH += $$PWD/../../
 
 OTHER_FILES +=

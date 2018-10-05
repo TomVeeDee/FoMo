@@ -1,5 +1,5 @@
 m4_define(FOMOVERSION,3.3)
-AC_INIT(FoMo,FOMOVERSION,tom.vandoorsselaere@wis.kuleuven.be)
+AC_INIT(FoMo,FOMOVERSION,tom.vandoorsselaere@kuleuven.be)
 AC_SUBST(fomoversion,FOMOVERSION)
 AC_PREREQ(2.59)
 AM_INIT_AUTOMAKE(1.9)
@@ -76,7 +76,61 @@ AC_CHECK_HEADERS([iomanip])
 AC_CHECK_HEADERS([map])
 AC_CHECK_HEADERS([cassert])
 AC_CHECK_HEADERS([climits])
-AC_CHECK_HEADERS([bitset])
+AC_CHECK_HEADERS([bitset chrono])
+
+# Checks for OpenCL
+# Copied from CGAL code above
+AC_ARG_WITH([opencl],
+	    [AS_HELP_STRING([--with-opencl=path/yes/no],
+			    [OpenCL for GPU-accelerated rendering (found in non-default location path) @<:@default=yes@:>@])],
+	    [opencl=$withval],
+	    [opencl=yes])
+link_opencl=false
+if test "a$opencl" != "ano" ; then
+	CLDIRS="/usr/lib64/nvidia /usr/lib /usr/lib64 /usr/lib/nvidia "
+	if test "a$opencl" != "ayes" ; then
+		CPPFLAGS+=" -I$opencl/include"
+		LDFLAGS+=" -L$opencl/lib -Wl,-rpath -Wl,$opencl/lib"
+		CLDIRS+=" $opencl/lib $opencl/lib64"
+	fi
+	AC_CHECK_HEADERS([CL/cl.hpp],[],AC_MSG_ERROR([OpenCL header not found]))
+	# headers have been found successfully, now check the linking
+	tmp_LDFLAGS=$LDFLAGS
+	for CLDIR in $CLDIRS; do
+		LDFLAGS+=" -L$CLDIR -Wl,-rpath -Wl,$CLDIR"
+		AC_SEARCH_LIBS(clCompileProgram,[OpenCL nvidia-opencl],[
+						 link_opencl=true
+						 ],[
+						    unset ac_cv_search_clCompileProgram
+						    LDFLAGS=$tmp_LDFLAGS])
+		if $link_opencl; then 
+			break
+		fi
+	done
+	if ! $link_opencl; then
+		AC_MSG_ERROR([OpenCL libraries not found])
+	fi
+fi
+
+# checks for building gui, depends on QT5
+AC_ARG_WITH([qt5],
+	    [AS_HELP_STRING([--with-qt5=yes/no],
+			    [Enable Qt5 for GUI (add correct qmake to PATH) @<:@default=yes@:>@])],
+	    [qt5=$withval],
+	    [qt5=yes])
+have_qt=no
+if test "a$qt5" = "ayes"; then
+	# fail if the OpenCL libraries have not been found
+	if ! $link_opencl; then
+		AC_MSG_ERROR([OpenCL needed for GUI])
+	fi
+	AX_HAVE_QT
+	if test "a$have_qt" = "ano" ; then
+		AC_MSG_ERROR([Qt5 not found])
+	fi
+fi
+AC_DEFINE(HAVE_QT5,,[Qt5 libraries are available])
+AM_CONDITIONAL(HAVE_QT5,[test "a$qt5" = "ayes" -a "a$have_qt" = "ayes"])
 
 AX_BOOST_BASE([1.54])
 CPPFLAGS="$CPPFLAGS $BOOST_CPPFLAGS"
@@ -93,17 +147,7 @@ AC_CHECK_HEADER(boost/iostreams/filter/gzip.hpp,[],[AC_MSG_ERROR(Boost zlib head
 
 PKG_PROG_PKG_CONFIG
 
-# Check for OpenCL
-# Copied from CGAL code above
-AC_ARG_WITH([opencl],
-	    [AS_HELP_STRING([--with-opencl=yes/no],
-			    [link with OpenCL for GPU-accelerated rendering @<:@default=yes@:>@])],
-	    [opencl=$withval],
-	    [opencl=yes])
-if test "a$opencl" = "ayes" ; then
-	AC_CHECK_HEADERS([CL/cl.hpp],[],AC_MSG_ERROR([OpenCL header not found]))
-	LDFLAGS+=" -lOpenCL"
-fi
+
 
 #check if MPI is available
 if test "a$mpi" = "ayes" ; then
@@ -196,4 +240,4 @@ DX_PDF_FEATURE(ON)
 DX_INIT_DOXYGEN($PACKAGE_NAME,docfiles/fomo-doxygen.cfg,doc)
 
 # write the Makefiles
-AC_OUTPUT(Makefile src/Makefile example/Makefile example/example_FLASH/Makefile example/example_mpi_amrvac/Makefile)
+AC_OUTPUT(Makefile src/Makefile example/Makefile example/example_FLASH/Makefile example/example_mpi_amrvac/Makefile gui/fomo-gui/Makefile)

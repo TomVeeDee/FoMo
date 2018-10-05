@@ -8,4 +8,6 @@ autoheader
 automake --add-missing 
 CXXFLAGS="-O2 -g -Wall -march=core2 -fopenmp" ./configure --prefix=`pwd` --libdir=`pwd` --includedir=`pwd` --bindir=`pwd`
 # on ESAT machines, it may be necessary to add --with-boost=/users/cpa/tomvd/extrasoft/boost/boost_1_61_0
-
+# I also need to run to get a higher gcc: scl enable devtoolset-7 /bin/bash
+# also make sure that the correct qmake is first in the path!
+PATH="/usr/lib64/qt5/bin/:$PATH" CXXFLAGS="-O2 -g -Wall -march=core2 -fopenmp" ./configure --prefix=`pwd` --libdir=`pwd` --includedir=`pwd` --bindir=`pwd` --with-boost=/users/cpa/tomvd/extrasoft/boost/boost_1_61_0

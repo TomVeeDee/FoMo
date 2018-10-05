@@ -44,8 +44,15 @@ Window::Window(QApplication &app, QWidget *parent) : QMainWindow(parent) {
 	// Load config
 	// Values are sanity checked by the same methods that add them to the lay-out
 	std::ifstream in(configPath);
-	in >> config;
-	in.close();
+	if (in)
+	{
+		in >> config;
+		in.close();
+	}
+	else
+	{
+		std::cerr << "No config file " << configPath << " found!" << std::endl;
+	}
 
 	// Top-level layout
 	QWidget *centralWidget = new QWidget(this);
