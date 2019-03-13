@@ -25,10 +25,10 @@ if keyword_set(w0) then begin
    if w0 lt 1.e3 and keyword_set(channel) then w0nm = string(round(w0),format='(i3.3)')
    if w0 lt 1.e3 and ~keyword_set(channel) then w0nm = string(round(w0),format='(i4.4)')
    if w0 gt 1.e3 and w0 lt 1.e4 then w0nm = string(round(w0),format='(i4.4)')
-   if w0 gt 1.e4 then w0nm = string(round(w0),format='(i5)')
+   if w0 gt 1.e4 then w0nm = string(round(w0),format='(i5.5)')
 endif
 
-; by default looks for tables with coronal abundances:
+; by default it looks for tables in which coronal abundances are included:
 if ~keyword_set(nab) then begin
    print,'Abundance package not specified. Adopting coronal abundances.'
    nab = '_abco'
@@ -37,6 +37,7 @@ endif
 if keyword_set(filenm) then filegot = 'goft_table_'+filenm+w0nm+nab+'.dat' 
 if keyword_set(channel) then filegot = 'goft_table_'+channel+w0nm+nab+'.dat' 
 if (~keyword_set(filenm) and ~keyword_set(channel)) then filegot = 'goft_table_'+ion+'_'+w0nm+nab+'.dat'
+;if wayemi eq 5 then filegot = 'goft_table_'+ion+'_'+w0nm+'small'+nab+'.dat'
 
 if file_test(gotdir+filegot) eq 0 then begin
    print,'G(T,n) table could not be found'
@@ -46,14 +47,14 @@ endif else begin
 endelse
 if ~keyword_set(silent) then print,'G(n,T) table: '+filegot
 
-  watom = 0 & lv1 = 0 & lv2 = 0
-
+  watom = 0
   openr,unit,filename,/get_lun
   readf,unit,ion
   readf,unit,cw0
   readf,unit,watom
-  readf,unit,lv1
-  readf,unit,lv2
+  readf,unit,lv1,lv2
+  readf,unit,units
+  readf,unit,vchianti
   readf,unit,numn,numt
   logt = fltarr(numt)
   readf,unit,logt
@@ -62,16 +63,14 @@ if ~keyword_set(silent) then print,'G(n,T) table: '+filegot
   g_t = fltarr(numt)
   i = 0
 
-  if w0 ne cw0 then begin
-     print,'Warning: input wavelength (Angs.):',w0
-     print,'G(T) wavelength (Angs.): ',cw0
-  endif
-  if ~keyword_set(quiet) then begin
-     if keyword_set(channel) then begin
+  if cw0 ne w0 and ~keyword_set(channel) then print,'Warning: the wavelength of this line is '+ string(cw0)+' while the one specified in w0 is'+string(w0)
+
+  if ~keyword_set(silent) then begin
+     if keyword_Set(channel) then  begin
         print,'Channel: ',ion
         print,'Representative wavelength (Angs.): ',cw0
         wvrng = strcompress('['+string(lv1)+','+string(lv2)+']',/remove_all)
-        print,'Wavelength range of channel (FHWHM in Angs.): '+wvrng
+        print,'Wavelength range of channel (down to 1% of peak, in Angs.): '+wvrng
      endif
      if ~keyword_set(channel) then begin
         print,'Ion of line transition: ',ion
@@ -81,7 +80,6 @@ if ~keyword_set(silent) then print,'G(n,T) table: '+filegot
         print,'Index of upper level of line transition: ',lv2
      endif
   endif
-
   while(eof(unit) eq 0) do begin
      readf,unit,n_e_0
      readf,unit,g_t

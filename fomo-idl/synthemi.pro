@@ -75,7 +75,6 @@ proton = 1.67262158*10^(-24.)
 if keyword_set(file_abund) then begin
    if file_abund eq 'photospheric' then fnhne = 0.848 ; ratio of protons to electrons number (= proton_dens(6.0) from Chianti, with photospheric abundances)
    if file_abund eq 'coronal' then fnhne = 0.887 ; ratio of protons to electrons number (= proton_dens(6.0) from Chianti, with coronal abundances)
-   endif
    if file_abund eq 'other' then begin
       if ~keyword_set(ext_abund) then begin
          print,'Please provide the name and full path of the abundance file in the keyword "ext_abund". Note: ratio of protons to electrons taken as 0.887. Modify accordingly.'
@@ -96,7 +95,6 @@ if keyword_set(nem) then ne_s = nem/(1.+fnhne)
 
 direction = 4
 nang = n_elements(mua_d)
-width = 0.
 
 if ~keyword_set(imaging) and ~keyword_set(channel) then begin
    velx = v1m

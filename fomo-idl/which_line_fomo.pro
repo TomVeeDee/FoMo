@@ -1,10 +1,10 @@
 
 
-PRO which_line_fomo,ion=ion,w0=w0,cw0=cw0,lv1=lv1,lv2=lv2,all=all,silent=silent
+PRO which_line_fomo,ion=ion,w0=w0,cw0=cw0,lv1=lv1,lv2=lv2,all=all,fact=fact,num=num,enum=enum,silent=silent
 
 
 ;  Given an ion name and wavelength, it provides the Chianti
-;  wavelength, the lower and upper levels of a line transition within 0.02% of the
+;  wavelength, the lower and upper levels of a line transition within 0.2% of the
 ;  input wavelength are searched for. This routine is based on the
 ;  routine 'which_line' of the Chianti distribution.
 ;
@@ -28,6 +28,10 @@ PRO which_line_fomo,ion=ion,w0=w0,cw0=cw0,lv1=lv1,lv2=lv2,all=all,silent=silent
 ;
 ; ALL: If set, then lines with theoretical wavelengths are
 ;              included in the check.
+; FACT: provide a factor to further reduce the wavelength
+;range in which the search is made: w0*[1-0.002/fact,1+0.002/fact]
+; NUM: In case of multiple lines within the range give the index
+;number of the desired line through this keyword.
 ;
 ; EXAMPLE
 ;
@@ -55,7 +59,12 @@ elvlcname=filename+'.elvlc'
 read_wgfa2,wgfaname,lvl1,lvl2,wavel,gf,a_value,ref
 read_elvlc,elvlcname,l1,term,conf,ss,ll,jj,ecm,eryd,ecmth,erydth,ref
 
-factor=0.002
+factor1=0.002
+if n_elements(fact) ne 0 then begin
+   factor = factor1/fact
+endif else begin
+   factor = factor1
+endelse
 
 chck=w0*factor
 
@@ -73,33 +82,43 @@ IF NOT keyword_set(all) AND n_ind NE 0 THEN BEGIN
 ENDIF 
 
 IF n_ind EQ 0 THEN BEGIN
-  print,'% WHICH_LINE: no lines found within 0.02% of the wavelength '+string(w0)
+  print,'% WHICH_LINE: no lines found within '+string(factor,format="(d0)")+'% of the wavelength '+string(w0)
   return
 ENDIF
 
-if n_ind GT 1 then begin
-   print,'more than 1 line found within 0.02% of the wavelength '+string(w0)
+if n_ind GT 1 and n_elements(num) eq 0 then begin
+   print,'more than 1 line found within '+string(factor,format="(d0)")+'% of the wavelength '+string(w0)
+   print,abs(wavel[ind[sort(abs(wavel[ind]))]])
    return
 endif
-k = sort(abs(wavel[ind]))
-ind = ind[k[0]]
-cw0 = wavel[ind]
-
-lv1 =lvl1[ind[0]]
-lv2 =lvl2[ind[0]]
-
-if ~keyword_set(silent) then begin
-   print,'     cw0   lv1   lv2  Lower level           Upper level             A-value'
-   j=ind
-   term1=strpad(term[lvl1[j]-1],20,/after,fill=' ')
-   term2=strpad(term[lvl2[j]-1],20,/after,fill=' ')
-   print,format='(f14.3,2i4,"  ",a20,"- ",a20,e11.2)', $
-         wavel[j],lvl1[j],lvl2[j], $
-         term1,term2,a_value[j]
+if n_ind gt 1 and n_elements(num) ne 0 then begin
+   k = sort(abs(wavel[ind]))
+   ind = ind[k[num]]
+   cw0 = abs(wavel[ind])
 endif
-IF NOT keyword_set(all) and ~keyword_set(silent) THEN BEGIN
-  print,''
-  print,'Use keyword /all to include lines with theoretical wavelengths.'
-ENDIF 
+if n_ind eq 1 then begin
+   k = sort(abs(wavel[ind]))
+   ind = ind[k[0]]
+   cw0 = abs(wavel[ind])
+endif
+
+if n_ind eq 1 or (n_ind gt 1 and n_elements(num) ne 0) then begin
+   lv1 =lvl1[ind]
+   lv2 =lvl2[ind]
+
+   if ~keyword_set(silent) then begin
+      print,'     cw0   lv1   lv2  Lower level           Upper level             A-value'
+      j=ind
+      term1=strpad(term[lvl1[j]-1],20,/after,fill=' ')
+      term2=strpad(term[lvl2[j]-1],20,/after,fill=' ')
+      print,format='(f14.3,2i4,"  ",a20,"- ",a20,e11.2)', $
+            abs(wavel[j]),lvl1[j],lvl2[j], $
+            term1,term2,a_value[j]
+   endif
+   IF NOT keyword_set(all) and ~keyword_set(silent) THEN BEGIN
+      print,''
+      print,'Use keyword /all to include lines with theoretical wavelengths.'
+   ENDIF
+endif
 
 END

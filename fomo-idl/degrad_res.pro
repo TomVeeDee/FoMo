@@ -21,7 +21,7 @@ pro degrad_res,oslice=oslice,wave=wave,w0=w0,dlx=dlx,dly=dly,gridx=gridx,gridy=g
 ;      and provide centre wavelength of emission w0 (Angstrom)
 
 ; If provided data has spectral data then set keyword 'spdata'
-; For spectral data (no /spdata):
+; For spectral data ( /spdata):
 ;     w0 : centre wavelength of emission line (in Angstrom)
 ;     if no /imaging then vres : in units of km/s
 ;     wave : wavelength array of emission line

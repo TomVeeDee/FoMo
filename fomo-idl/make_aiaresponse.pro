@@ -1,7 +1,7 @@
-pro make_aiaresponse, sngfilter=sngfilter, wvlmin=wvlmin, wvlmax=wvlmax, gotdir=gotdir, file_abund=file_abund,extname=extname
+pro make_aiaresponse,sngfilter=sngfilter,wvlmin=wvlmin,wvlmax=wvlmax,gotdir=gotdir,file_abund=file_abund,extname=extname,silent=silent
 
 if ~keyword_set(sngfilter) then begin
-   print,'make_aiaresponse, sngfilter=sngfilter, wvlmin=wvlmin, wvlmax=wvlmax, gotdir=gotdir, file_abund=file_abund'
+   print,'make_aiaresponse,sngfilter=sngfilter,wvlmin=wvlmin,wvlmax=wvlmax,gotdir=gotdir,file_abund=file_abund,extname=extname,silent=silent'
    return
 endif
 
@@ -89,8 +89,8 @@ n_e_max_sml = 1.e11
 n_e_max_big = 1.e12
 
 steplg = 0.015
-numn_sml = alog10(n_e_max_sml/n_e_min)/steplg
-numn_big = alog10(n_e_max_big/n_e_min)/steplg
+numn_sml = round(alog10(n_e_max_sml/n_e_min)/steplg)
+numn_big = round(alog10(n_e_max_big/n_e_min)/steplg)
 
 n_e_lg_sml = dindgen(numn_sml+1)/numn_sml*alog10(n_e_max_sml/n_e_min)+alog10(n_e_min)
 n_e_lg_big = dindgen(numn_big+1)/numn_big*alog10(n_e_max_big/n_e_min)+alog10(n_e_min)
@@ -103,6 +103,8 @@ n_e_big = 10.^(n_e_lg_big)
 ; normalised over the sphere:
 sterad_arc = 1.
 watom = 0.
+units = 'cm^5 DN s^{-1} sr^{-1}'
+vchianti = 'CHIANTI8.0'
 
 if sngfilter eq 'all' then aiarr = ['304','1600','1700','4500','171','193','211','335','094','131'] else aiarr = sngfilter
 naiar = n_elements(aiarr)
@@ -140,14 +142,15 @@ for k=0,naiar-1 do begin
    printf,unit,ion
    printf,unit,w0
    printf,unit,watom
-   printf,unit,wvlmin
-   printf,unit,wvlmax
+   printf,unit,wvlmin,wvlmax
+   printf,unit,units
+   printf,unit,vchianti
    printf,unit,numn,numt
    printf,unit,alogt
 
    for i=0,numn-1 do begin
       print,'AIA '+filt+' - doing density number ',i,' of ',numn
-      isothermal, wvlmin, wvlmax, 0.1, temp, lambda, spectrum, list_wvl,list_ident, edensity=n_e[i] ,/photons,/cont,/all,ioneq_name=ioneq_name,abund_name=abund_file
+      isothermal, wvlmin, wvlmax, 0.1, temp, lambda, spectrum, list_wvl,list_ident, edensity=n_e[i] ,/photons,/cont,/all,ioneq_name=ioneq_name,abund_name=abund_file,noverbose=silent
       ex = 'eff = interpol(aia_resp.a'+filt2+'.ea,aia_resp.a'+filt2+'.wave,lambda,/spline)'
       void = execute(ex)
       sp_conv = spectrum & sp_conv[*,*]=0.

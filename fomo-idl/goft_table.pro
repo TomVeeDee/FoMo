@@ -1,6 +1,6 @@
 
 
-pro goft_table,w0=w0,ion=ion,gotdir=gotdir,file_abund=file_abund,silent=silent
+pro goft_table,w0=w0,ion=ion,gotdir=gotdir,file_abund=file_abund,silent=silent,fact=fact,num=num
 
 if keyword_set(w0) eq 0 or keyword_set(ion) eq 0 then begin
    print,'goft_table, w0=w0, ion=ion,gotdir=gotdir,file_abund=file_abund,silent=silent'
@@ -74,43 +74,57 @@ ioneq_name = concat_dir(concat_dir(!xuvtop,'ioneq'),'chianti.ioneq')
 ;method1:
 ;elements,w0=w0,cw0=cw0,ion=ion,enum=enum,inum=inum,ind=ind,lv1=lv1,lv2=lv2
 
-; method 2 (slightly faster):
-which_line_fomo,ion=ion,w0=w0,cw0=cw0,lv1=lv1,lv2=lv2,all=all,silent=silent
+; method 2:
+
+which_line_fomo,ion=ion,w0=w0,cw0=cw0,lv1=lv1,lv2=lv2,all=all,silent=silent,fact=fact,num=num,enum=enum
 
 if w0 ne cw0 then begin
    print,'Warning: input wavelength (Angs.):',w0
-   print,'Corresponding wavelength in Chianti (Angs.):',cw0
-endif
+   print,'Corresponding wavelength in Chianti (Angstrom):',cw0
+endif else begin
+   print,'Corresponding wavelength in Chianti (Angstrom):',cw0
+endelse
+
 ne_lg = 9
 gofnt,ion,cw0-0.0001,cw0+0.0001,temp,goft0,desc,dens=10.^ne_lg,ioneq_name=ioneq_name,abund_name=abund_name,lower_levels=lv1,upper_levels=lv2,verbose=silent
 
-alogt0 = findgen(101)/20+4. ; same range as that defined by Chianti
+;alogt0 = findgen(101)/20+4. ; same range as that defined by Chianti
+alogt0 = alog10(temp)
 lclgtm = ([max(goft0),!c])[1]
 logTm = alogt0[lclgtm]
 
-; get atomic weight:
+  ; get atomic weight:
 watom = get_atomic_weight(enum)
 
 n_e_min = 1.e8
-if logtm lt 5 then n_e_max = 1.e11 else n_e_max = 1.e12
+if logtm lt 5 then n_e_max = 1.e12 else n_e_max = 1.e11
 
 steplg = 0.001
+;steplg = 0.002
 
-numn = alog10(n_e_max/n_e_min)/steplg
+units = 'erg cm^3 s^{-1}'
+vchianti = 'CHIANTI8.0'
+
+numn = round(alog10(n_e_max/n_e_min)/steplg)
 
 n_e_lg = dindgen(numn+1)/numn*alog10(n_e_max/n_e_min)+alog10(n_e_min)
 
 if round(w0) lt 9999 then w0nm = string(round(w0),format='(i4.4)') else w0nm = string(round(w0),format='(i5.5)') 
 openw,unit,gotdir+'goft_table_'+ion+'_'+w0nm+'_'+nab+'.dat',/get_lun
 printf,unit,ion
-printf,unit,w0
+printf,unit,cw0
 printf,unit,watom
-printf,unit,lv1
-printf,unit,lv2
+printf,unit,lv1,lv2
+printf,unit,units
+printf,unit,vchianti
 
+;tmin = (logTm-wte)>4.           ;define wanted range
 wte = 0.75
-tmin = (logTm-wte)>3.5
+if logTm-wte lt 4 then tmin = 3.5 else tmin = (logTm-wte)>4.
 alogt0 = findgen(101)/20+4. ; same range as that defined by Chianti
+tmax = (logTm+wte)<7.
+pts = where(alogt0 ge tmin and alogt0 le tmax,npts)
+;alogt1 = alogt0[pts]
 numt = 200
 alogt2 = findgen(numt)/(numt-1)*2*wte+tmin
 
@@ -118,9 +132,12 @@ printf,unit,numn,numt
 printf,unit,alogt2
 for i=0,numn do begin
    if ~keyword_set(silent) then print,'doing density ', i, ' of ',numn
-   gofnt,ion,cw0-0.0001,cw0+0.0001,temp,goft0,desc,dens=10.^ne_lg[i],ioneq_name=ioneq_name,abund_name=abund_name,lower_levels=lv1,upper_levels=lv2,verbose=silent
+   gofnt,ion,cw0-0.0001,cw0+0.0001,temp,goft0,desc,dens=10.^n_e_lg[i],ioneq_name=ioneq_name,abund_name=abund_name,lower_levels=lv1,upper_levels=lv2,verbose=silent
 
-   goft2 = (interpol(goft0,alogt0,alogt2,/spline))>0.
+;   goft1 = goft0[pts]
+;   ion_interp,alogt1,goft1,alogt2,goft2
+   alogt = alog10(temp)
+   goft2 = (interpol(goft0,alogt,alogt2,/spline))>0.
 
    printf,unit,n_e_lg[i]
    printf,unit,goft2

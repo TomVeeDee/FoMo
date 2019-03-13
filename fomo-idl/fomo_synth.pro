@@ -8,7 +8,9 @@ pro fomo_synth,dir=dir,gotdir=gotdir,w0=w0,ion=ion,idcase=idcase,imaging=imaging
 ; forward modelling is done by taking slices in the (x,y)
 ; plane. Specifically wavetube contains (all in CGS and all have
 ; dimensions (dimx,dimy,dimz) ):
-; - ndens: total number density
+; - ndens: total number density (converted to electron number density
+;   during calculation, assuming ratio of protons to electrons is
+;   0.887 and 0.848, respectively, for coronal and photospheric abundances)
 ; - temperature
 ; 
 ; In this example we further assume that we have 50 positions along z
@@ -17,7 +19,7 @@ pro fomo_synth,dir=dir,gotdir=gotdir,w0=w0,ion=ion,idcase=idcase,imaging=imaging
 ; where 0 degrees corresponds to the x-axis, 90 degrees to the 
 ; y-axis (positive).
 
-; Numerical data needed: total number density, temperature and velocity
+; Numerical data needed: number density, temperature and velocity
 ; components in the LOS planes.
 
 ; KEYWORDS:
@@ -59,7 +61,7 @@ endif
 file_abund = 'coronal'
 
 ; CHOOSE LINE TO SYNTHESIZE:
-
+; examples:
 ; for Fe IX 171.073 (about 1MK)
 ;w0 = 171.073 & ion = 'fe_9'
 
@@ -201,14 +203,14 @@ for i=0,num-1 do begin
    for j=nz0,dimz-1 do begin
       jnm = STRING(j, FORMAT = "(I5.5)")
       lcx3 = j
-      if dimz gt 1 then checkfile = name+'_z='+jnm+'_t='+inm+'.done' else checkfile = name+'_z='+jnm+'_t='+inm+'.done'
+      checkfile = name+'_z='+jnm+'_t='+inm+'.done'
       if (file_test(savedir+checkfile) eq 0) then begin
          OPENW, lun, savedir+checkfile, /get_lun
          free_lun, lun
          print,'Doing slice_time:',checkfile
 ; ndens, temperature, v_x, v_y are 3d-arrays (dimx,dimy,dimz)
-         nem = ndens[*,*,j]
-         tem = temperature[*,*,j] ; 
+         nem = ndens[*,*,j] ; total density (CGS)
+         tem = temperature[*,*,j] ; in K
          if ~keyword_set(imaging) and ~keyword_set(channel) then begin
             v1m = v_x[*,*,j]/1.e5 ; convert to km/s
             v2m = v_y[*,*,j]/1.e5 ; convert to km/s
@@ -220,7 +222,7 @@ for i=0,num-1 do begin
 
          if keyword_set(save) then begin
             if i eq 0 and j eq nz0 then begin
-               exp = 'save,gridx,gridy,wave,w0,ion,mua_d,'+dllin+','+nglin+','+ngxlin+','+ngylin+',filename=savedir+"params_"+name+".sav"'
+               exp = 'save,gridx,gridy,wave,w0,ion,mua_d,dimz,num,'+dllin+','+nglin+','+ngxlin+','+ngylin+',filename=savedir+"params_"+name+".sav"'
                void = execute(exp)
             endif
             exs = 'save,tstep,'+savlin+',filename=savedir+name+"_z="+jnm+"_t="+inm+".sav"'
