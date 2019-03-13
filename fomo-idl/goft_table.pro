@@ -103,7 +103,11 @@ steplg = 0.001
 ;steplg = 0.002
 
 units = 'erg cm^3 s^{-1}'
-vchianti = 'CHIANTI8.0'
+openr,unitversion, !xuvtop+'/VERSION',/get_lun
+str=''
+readf,unitversion, str
+free_lun,unitversion
+vchianti = 'CHIANTI'+str
 
 numn = round(alog10(n_e_max/n_e_min)/steplg)
 
