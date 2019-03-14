@@ -104,7 +104,11 @@ n_e_big = 10.^(n_e_lg_big)
 sterad_arc = 1.
 watom = 0.
 units = 'cm^5 DN s^{-1} sr^{-1}'
-vchianti = 'CHIANTI8.0'
+openr,unitversion, !xuvtop+'/VERSION',/get_lun
+str=''
+readf,unitversion, str
+free_lun,unitversion
+vchianti = 'CHIANTI'+str
 
 if sngfilter eq 'all' then aiarr = ['304','1600','1700','4500','171','193','211','335','094','131'] else aiarr = sngfilter
 naiar = n_elements(aiarr)

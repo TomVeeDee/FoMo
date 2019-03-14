@@ -141,7 +141,10 @@ for i=0,numn do begin
 ;   goft1 = goft0[pts]
 ;   ion_interp,alogt1,goft1,alogt2,goft2
    alogt = alog10(temp)
-   goft2 = (interpol(goft0,alogt,alogt2,/spline))>0.
+; previously this line just interpolated, but then removed negative elements
+;   goft2 = (interpol(goft0,alogt,alogt2,/spline))>0.
+; it is more elegant to interpolate the alog10 of the goft0, automatically enforcing the positive values of goft2
+   goft2 = 10^(interpol(alog10(goft0),alogt,alogt2,/spline))
 
    printf,unit,n_e_lg[i]
    printf,unit,goft2

@@ -29,7 +29,7 @@ if keyword_set(spectral_lines) then begin
 			; sun_coronal_2012_schmelz.abund (because it is normalised in FoMo is other 
 			; abundances are needed), let's check if the file name has abco. 
 			if (strmatch(specfiles[i],'*abco*')) then begin
-				goft_table,ion=ion,w0=w0,gotdir=path+'/'
+				goft_table,ion=ion,w0=w0,gotdir=path+'/',fact=100
 				; the goft_table routine immediately overwrites the old file, and if this script fails, then we're left with an empty file
 				; should we therefore store the result in a temp directory and then move it to this location?
 			endif
@@ -41,9 +41,22 @@ if keyword_set(spectral_lines) then begin
 endif
 
 if keyword_set(aia) then begin
+	listofwvl=['304', '171', '193', '211', '335', '094', '131', '1600', '1700', '4500']
+	listofabund=['coronal','photospheric']
+	listofabundext=['abco','abph']
 	; estimated time, around 4 days
-	make_aiaresponse, wvlmin=91, wvlmax=400, sngfilter='all',gotdir=path+'/',file_abund='coronal'
-	make_aiaresponse, wvlmin=91, wvlmax=400, sngfilter='all',gotdir=path+'/',file_abund='photospheric'
+	for i=0,n_elements(listofabund)-1 do begin
+		for j=0,n_elements(listofwvl)-1 do begin
+			filename=path+'/'+'goft_table_aia'+listofwvl[j]+'_'+listofabundext[i]+'.dat'
+			if ~(file_test(filename+'.working') || file_test(filename+'.updated')) then begin
+				spawn,'touch '+filename+'.working'
+				print,'Updating AIA ', listofwvl[j], ' for ',listofabund[i]
+				make_aiaresponse, sngfilter=listofwvl[j],gotdir=path+'/',file_abund=listofabund[i]
+				spawn,'touch '+filename+'.updated'
+				spawn,'rm -f '+filename+'.working'
+			endif
+		endfor
+	endfor
 endif
 
 end
