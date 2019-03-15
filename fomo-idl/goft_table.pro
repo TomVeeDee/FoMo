@@ -134,7 +134,7 @@ alogt2 = findgen(numt)/(numt-1)*2*wte+tmin
 
 printf,unit,numn,numt
 printf,unit,alogt2
-for i=0,numn do begin
+for i=0,numn-1 do begin
    if ~keyword_set(silent) then print,'doing density ', i, ' of ',numn
    gofnt,ion,cw0-0.0001,cw0+0.0001,temp,goft0,desc,dens=10.^n_e_lg[i],ioneq_name=ioneq_name,abund_name=abund_name,lower_levels=lv1,upper_levels=lv2,verbose=silent
 
