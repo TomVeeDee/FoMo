@@ -66,8 +66,8 @@ FoMo::tphysvar goft(const FoMo::tphysvar logT, const FoMo::tphysvar logrho, cons
 
 	FoMo::tgrid grid=gofttab.readgrid();
 	// this is sorted by a slowly varying density and quickly varying temperature
-	FoMo::tphysvar tempgrid=grid[0];
-	FoMo::tphysvar rhogrid=grid[1];
+	FoMo::tphysvar tempgrid=grid.at(0);
+	FoMo::tphysvar rhogrid=grid.at(1);
 	// we can find the elementary vector length by using std::count
 	unsigned int nrho=std::count(tempgrid.begin(),tempgrid.end(),tempgrid.at(0));
 	unsigned int nt=std::count(rhogrid.begin(),rhogrid.end(),rhogrid.at(0));
@@ -148,23 +148,25 @@ FoMo::DataCube FoMo::readgoftfromchianti(const std::string chiantifile, std::str
 	}
 
 	double templogrho;
-	double nrhotemp;
 	int nrho, nt;
 	double field;
 	double minlevel, maxlevel;
+	std::string unitstr,chiantiversion;
 	FoMo::tphysvar temprho, tempt, tempgoft;
 
-	std::cout << "Reading G(T) from " << chiantifile << "... " << std::flush;
-	// read in header (ion name, rest wavelength, atomic weight, number of grid points in density direction, number of grid points in temperature direction)
+	std::cout << "Reading G(T) from " << chiantifile << " ... " << std::flush;
+	// read in header, see docfiles/filespecifications.dox
 	in >> ion;
 	in >> lambda0;
 	in >> atweight;
 	in >> minlevel;
 	in >> maxlevel;
-	in >> nrhotemp;
-	nrho=round(nrhotemp);
+	in.ignore(std::numeric_limits<std::streamsize>::max(),'\n');
+	std::getline(in,unitstr);
+	std::getline(in,chiantiversion);
+	in >> nrho;
 	in >> nt;
-
+	
 	// read in the temperature grid points
 	FoMo::tphysvar tvec;
 
@@ -201,7 +203,11 @@ FoMo::DataCube FoMo::readgoftfromchianti(const std::string chiantifile, std::str
 	
 	FoMo::tvars tempvars{tempgoft};
 	
-	gofttab.setdata(tempgrid,tempvars);
+	std::vector<std::string> unitstrvec;
+	unitstrvec.push_back("log(T)");
+	unitstrvec.push_back("log(rho)");
+	unitstrvec.push_back(unitstr);
+	gofttab.setdata(tempgrid,tempvars,&unitstrvec);
 
 	in.close();
 

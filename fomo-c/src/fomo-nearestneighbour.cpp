@@ -239,7 +239,12 @@ FoMo::RenderCube nearestneighbourinterpolation(FoMo::GoftCube goftcube, const do
 	}
 	intens=FoMo::operator*(pathlength*1e8,intens); // assume that the coordinates are given in Mm, and convert to cm
 	newdata.push_back(intens);
-	rendercube.setdata(newgrid,newdata);
+	std::vector<std::string> unitvec;
+	unitvec.push_back("Mm");
+	unitvec.push_back("Mm");
+	unitvec.push_back("\\AA{}");
+	unitvec.push_back("erg cm^{-2} s^{-1} sr^{-1} \\AA{}^{-1}");
+	rendercube.setdata(newgrid,newdata,&unitvec);
 	rendercube.setrendermethod("NearestNeighbour");
 	rendercube.setresolution(x_pixel,y_pixel,z_pixel,lambda_pixel,lambda_width);
 	if (lambda_pixel == 1)

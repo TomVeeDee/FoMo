@@ -12,9 +12,21 @@ def readgoftcube_txt(filename,compress=0):
     else:
         f=open(filename,"r")
     alllines=f.readlines()
-    chiantifile=alllines[3]
-    abundfile=alllines[4]
-    textlines=alllines[5:]
+    version=alllines[0]
+    # if version is a string, see what follows after FoMo-v
+    # then set the header information, depending on the FoMo version (>=3.4)
+    if ('FoMo-v' in str(version)):
+        # compute the version number from the version string, then filter on the string 3.4
+        # for now, we don't need to do this, because <=3.3 will set version to an integer, and >=3.4 will set version to a string
+        units=alllines[4]
+        chiantifile=alllines[5]
+        abundfile=alllines[6]
+        textlines=alllines[7:]
+    else:
+        units=""
+        chiantifile=alllines[3]
+        abundfile=alllines[4]
+        textlines=alllines[5:]
     data=[]
     for line in textlines:
         values=line.split()
@@ -29,7 +41,9 @@ def readgoftcube_txt(filename,compress=0):
     # data[:][3] = intensity
     
     f.close()
-    return np.array(data),chiantifile
+    return np.array(data),units,chiantifile
+
+maxsize_version=40
     
 def readgoftcube_dat(filename,compress=0):
     if (compress):
@@ -37,18 +51,57 @@ def readgoftcube_dat(filename,compress=0):
     else:
         f=open(filename,"rb")
     
-    int_in=f.read(4)
-    dim=struct.unpack('i',int_in)[0]
-    int_in=f.read(4)
-    ng=struct.unpack('i',int_in)[0]
-    int_in=f.read(4)
-    nvars=struct.unpack('i',int_in)[0]
-    int_in=f.read(8)
-    chiantisize=struct.unpack('q',int_in)[0]
-    chiantifile=f.read(chiantisize)
-    int_in=f.read(8)
-    abundsize=struct.unpack('q',int_in)[0]
-    abundfile=f.read(abundsize)
+    # read file until \0 is encountered, or at maximum maxsize_version characters
+    lastchar=b''
+    count=0
+    versionstring=''
+    # the marker byte is £
+    while lastchar.decode()!='#' and count<maxsize_version:
+        lastchar=f.read(1)
+        count+=1
+        try:
+            versionstring+=lastchar.decode()
+        except:
+            print('')
+    versionstring=versionstring[:-1]
+        
+    if 'FoMo-v' not in versionstring:
+        # now we are reading a file from the previous version of FoMo (pre-3.4)
+        print("reading old FoMo file")
+        f.seek(0)
+        int_in=f.read(4)
+        dim=struct.unpack('i',int_in)[0]
+        int_in=f.read(4)
+        ng=struct.unpack('i',int_in)[0]
+        int_in=f.read(4)
+        nvars=struct.unpack('i',int_in)[0]
+        int_in=f.read(8)
+        chiantisize=struct.unpack('q',int_in)[0]
+        chiantifile=f.read(chiantisize)
+        int_in=f.read(8)
+        abundsize=struct.unpack('q',int_in)[0]
+        abundfile=f.read(abundsize)
+        units=""
+    else: 
+        int_in=f.read(4)
+        dim=struct.unpack('i',int_in)[0]
+        int_in=f.read(4)
+        ng=struct.unpack('i',int_in)[0]
+        int_in=f.read(4)
+        nvars=struct.unpack('i',int_in)[0]
+        units=[]
+        for i in range(dim+nvars):
+            int_in=f.read(8)
+            unitsize=struct.unpack('q',int_in)[0]
+            unitstring=f.read(unitsize)
+            units.append(unitstring.decode())
+        
+        int_in=f.read(8)
+        chiantisize=struct.unpack('q',int_in)[0]
+        chiantifile=f.read(chiantisize)
+        int_in=f.read(8)
+        abundsize=struct.unpack('q',int_in)[0]
+        abundfile=f.read(abundsize)
     
     data=[]
     for i in range(ng):
@@ -63,38 +116,38 @@ def readgoftcube_dat(filename,compress=0):
             data[i][j]=struct.unpack('f',float_in)[0]
     
     f.close()
-    return np.array(data),chiantifile
+    return np.array(data),units,chiantifile
     
-def readgoftcubechianti(filename):
+def readgoftcube_units_chianti(filename):
     parts=filename.split(".")
     compress=0
     if parts[-1]=="gz":
         compress=1
     
     if parts[-1-compress]=="txt":
-        data,chiantifile=readgoftcube_txt(filename,compress=compress)
+        data,units,chiantifile=readgoftcube_txt(filename,compress=compress)
     
     if parts[-1-compress]=="dat":
-        data,chiantifile=readgoftcube_dat(filename,compress=compress)
+        data,units,chiantifile=readgoftcube_dat(filename,compress=compress)
         
     # print len(data), len(data[:][0])
         
-    return data,chiantifile
+    return data,units,chiantifile
 
 def readgoftcube(filename):
-    data,chiantifile=readgoftcubechianti(filename)
+    data,units,chiantifile=readgoftcube_units_chianti(filename)
     return data
     
 def regulargoftcube(data):
     ng = len(data)
-    nx = ng/np.shape(np.where(data[:,0]==data[0,0]))[1]
-    ny = ng/np.shape(np.where(data[:,1]==data[0,1]))[1]
+    nx = round(ng/np.shape(np.where(data[:,0]==data[0,0]))[1])
+    ny = round(ng/np.shape(np.where(data[:,1]==data[0,1]))[1])
     if (ng/nx/ny == 1):
 	    nl=1
 	    dim=2
     else:
-            nl = ng/np.shape(np.where(data[:,2]==data[0,2]))[1]
-	    dim=3
+        nl = round(ng/np.shape(np.where(data[:,2]==data[0,2]))[1])
+        dim=3
     
     xvec=np.empty(nx)
     yvec=np.empty(ny)
@@ -106,17 +159,17 @@ def regulargoftcube(data):
             emiss=np.empty([nx,ny,nl])
 
     for i in range(ng):
-        j=i/nl
-        k=i/nl/nx
+        j=int(i/nl)
+        k=int(i/nl/nx)
         j-=k*nx
         l=i%nl
         xvec[j]=data[i,0]
         yvec[k]=data[i,1]
-	if (dim == 3):
-		lvec[l]=data[i,2]
-		emiss[j,k,l]=data[i,dim]
-	if (dim == 2):
-		emiss[j,k]=data[i,dim]
+        if (dim == 3):
+            lvec[l]=data[i,2]
+            emiss[j,k,l]=data[i,dim]
+        if (dim == 2):
+            emiss[j,k]=data[i,dim]
     
     # there's a very weird ordering of the indices, it seems x needs to come last, in order to have an intuitive access with matplotlib
     emiss=np.swapaxes(emiss,0,dim-1)
@@ -143,6 +196,7 @@ def gaussfitgoftcube(emiss,lvec):
     errors=np.mean(emiss)
     for i in range(nx):
         for j in range(ny):
+            print("doing pixel",i,j)
             spectralline=emiss[:,j,i]
             # localmem=np.max(spectralline)
             # p0=[localmem,l0,(np.amax(lvec)-np.amin(lvec))/4.]
