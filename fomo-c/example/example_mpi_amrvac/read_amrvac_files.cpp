@@ -190,10 +190,12 @@ std::vector<std::vector<int>> build_block_info_morton(std::vector<int> nblocks, 
 	// resize the morton curve to the length of a hypothetic cube with sides maxgridlength
 	// later on, we will prune simulation points from the mortoncurve
 	// can this be optimized for 2D data?
+	// If number of blocks is odd, make cube with +1 size
+	if (maxgridlength % 2 !=  0) maxgridlength++;
 	mortoncurve.resize(pow(maxgridlength,3));
-	for (int k=0; k<maxgridlength; k++)
-	for (int j=0; j<maxgridlength; j++)
-	for (int i=0; i<maxgridlength; i++)
+	 for (int k=0; k<maxgridlength; k++)
+	 for (int j=0; j<maxgridlength; j++)
+	 for (int i=0; i<maxgridlength; i++)
 	{
 		mortoncurve.at(mortonEncode_for(i,j,k))={i+1,j+1,k+1};
 	}
