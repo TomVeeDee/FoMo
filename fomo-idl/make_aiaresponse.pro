@@ -151,6 +151,7 @@ for k=0,naiar-1 do begin
    printf,unit,vchianti
    printf,unit,numn,numt
    printf,unit,alogt
+   flush,unit
 
    for i=0,numn-1 do begin
       print,'AIA '+filt+' - doing density number ',i,' of ',numn
@@ -162,6 +163,7 @@ for k=0,naiar-1 do begin
       resp = total(sp_conv,1)
       printf,unit,n_e_lg[i]
       printf,unit,resp
+      flush,unit
    endfor
    free_lun,unit
 endfor

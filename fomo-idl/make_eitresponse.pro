@@ -91,37 +91,59 @@ eit_resp_195 = eit_parms(lambda195,195,units=units)
 eit_resp_284 = eit_parms(lambda284,284,units=units)
 eit_resp_304 = eit_parms(lambda304,304,units=units)
 
+openr,unitversion, !xuvtop+'/VERSION',/get_lun
+str=''
+readf,unitversion, str
+free_lun,unitversion
+vchianti = 'CHIANTI'+str
+
 if sngfilter eq 'all' or sngfilter eq '304' then begin
    openw,unit1,gotdir+'goft_table_eit304_'+nab+extname+'.dat',/get_lun & w0_1 = 304. & ion_1 = '304'
    printf,unit1,ion_1
    printf,unit1,w0_1
    printf,unit1,watom
+   printf,unit1,wmin304,wmax304
+   printf,unit1,units
+   printf,unit1,vchianti
    printf,unit1,numn,numt
    printf,unit1,alogt
+   flush,unit1
 endif
 if sngfilter eq 'all' or sngfilter eq '171' then begin 
    openw,unit5,gotdir+'goft_table_eit171_'+nab+extname+'.dat',/get_lun & w0_5 = 171. & ion_5 = '171'
    printf,unit5,ion_5
    printf,unit5,w0_5
    printf,unit5,watom
+   printf,unit5,wmin171,wmax171
+   printf,unit5,units
+   printf,unit5,vchianti
    printf,unit5,numn,numt
    printf,unit5,alogt
+   flush,unit5
 endif
 if sngfilter eq 'all' or sngfilter eq '195' then begin
    openw,unit6,gotdir+'goft_table_eit195_'+nab+extname+'.dat',/get_lun & w0_6 = 195. & ion_6 = '195'
    printf,unit6,ion_6
    printf,unit6,w0_6
    printf,unit6,watom
+   printf,unit6,wmin195,wmax195
+   printf,unit6,units
+   printf,unit6,vchianti
    printf,unit6,numn,numt
    printf,unit6,alogt
+   flush,unit6
 endif
 if sngfilter eq 'all' or sngfilter eq '284' then begin
    openw,unit7,gotdir+'goft_table_eit284_'+nab+extname+'.dat',/get_lun & w0_7 = 284. & ion_7 = '284'
    printf,unit7,ion_7
    printf,unit7,w0_7
    printf,unit7,watom
+   printf,unit7,wmin284,wmax284
+   printf,unit7,units
+   printf,unit7,vchianti
    printf,unit7,numn,numt
    printf,unit7,alogt
+   flush,unit7
 endif
 
 for i=0,numn-1 do begin
@@ -137,6 +159,7 @@ for i=0,numn-1 do begin
       resp_304=total(sp_conv_304,1)
       printf,unit1,n_e_lg[i]
       printf,unit1,resp_304
+      flush,unit1
    endif
 
    if sngfilter eq 'all' or sngfilter eq '171' then begin
@@ -148,6 +171,7 @@ for i=0,numn-1 do begin
       resp_171=total(sp_conv_171,1)
       printf,unit5,n_e_lg[i]
       printf,unit5,resp_171
+      flush,unit5
    endif
 
    if sngfilter eq 'all' or sngfilter eq '195' then begin
@@ -159,6 +183,7 @@ for i=0,numn-1 do begin
       resp_195=total(sp_conv_195,1)
       printf,unit6,n_e_lg[i]
       printf,unit6,resp_195
+      flush,unit6
    endif    
 
    if sngfilter eq 'all' or sngfilter eq '284' then begin
@@ -170,6 +195,7 @@ for i=0,numn-1 do begin
       resp_284=total(sp_conv_284,1)
       printf,unit7,n_e_lg[i]
       printf,unit7,resp_284
+      flush,unit7
    endif
  
    print,string(13b)+' % finished: ',float(i)*100./(numn-1),format='(a,f4.0,$)'

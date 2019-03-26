@@ -1,4 +1,4 @@
-pro update_tables,path=path,spectral_lines=spectral_lines,aia=aia
+pro update_tables,path=path,spectral_lines=spectral_lines,aia=aia,eit=eit
 
 if (~keyword_set(path)) then path='.'
 
@@ -42,12 +42,32 @@ endif
 
 if keyword_set(aia) then begin
 	listofwvl=['304', '171', '193', '211', '335', '094', '131', '1600', '1700', '4500']
+	listofwvl=['304', '171', '193', '211', '335', '094', '131']
 	listofabund=['coronal','photospheric']
 	listofabundext=['abco','abph']
 	; estimated time, around 4 days
 	for i=0,n_elements(listofabund)-1 do begin
 		for j=0,n_elements(listofwvl)-1 do begin
 			filename=path+'/'+'goft_table_aia'+listofwvl[j]+'_'+listofabundext[i]+'.dat'
+			if ~(file_test(filename+'.working') || file_test(filename+'.updated')) then begin
+				spawn,'touch '+filename+'.working'
+				print,'Updating AIA ', listofwvl[j], ' for ',listofabund[i]
+				make_aiaresponse, sngfilter=listofwvl[j],gotdir=path+'/',file_abund=listofabund[i]
+				spawn,'touch '+filename+'.updated'
+				spawn,'rm -f '+filename+'.working'
+			endif
+		endfor
+	endfor
+endif
+
+if keyword_set(eit) then begin
+	listofwvl=['304', '171', '195', '284']
+	listofabund=['coronal','photospheric']
+	listofabundext=['abco','abph']
+	; estimated time, around 4 days
+	for i=0,n_elements(listofabund)-1 do begin
+		for j=0,n_elements(listofwvl)-1 do begin
+			filename=path+'/'+'goft_table_eit'+listofwvl[j]+'_'+listofabundext[i]+'.dat'
 			if ~(file_test(filename+'.working') || file_test(filename+'.updated')) then begin
 				spawn,'touch '+filename+'.working'
 				print,'Updating AIA ', listofwvl[j], ' for ',listofabund[i]
