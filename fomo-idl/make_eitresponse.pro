@@ -72,7 +72,7 @@ n_e_max = 1.e11
 
 ;steplg = 0.0015
 steplg = 0.03
-numn = alog10(n_e_max/n_e_min)/steplg
+numn = round(alog10(n_e_max/n_e_min)/steplg)
 
 n_e_lg = dindgen(numn+1)/numn*alog10(n_e_max/n_e_min)+alog10(n_e_min)
 n_e = 10.^(n_e_lg)
@@ -96,6 +96,7 @@ str=''
 readf,unitversion, str
 free_lun,unitversion
 vchianti = 'CHIANTI'+str
+units = 'cm^5 DN s^{-1} sr^{-1}'
 
 if sngfilter eq 'all' or sngfilter eq '304' then begin
    openw,unit1,gotdir+'goft_table_eit304_'+nab+extname+'.dat',/get_lun & w0_1 = 304. & ion_1 = '304'
