@@ -288,8 +288,6 @@ FoMo::GoftCube FoMo::emissionfromdatacube(FoMo::DataCube datacube, std::string c
 // for integration *[cm] [D.Y 12 Nov 2014]
 // AIA modelling: Temperature response function K(ne,Te)[cm^5 DN S^-1]*ne[cm^-3]=emis [DN cm^-1 s^-1]; 
 // for integration *[cm] [D.Y 12 Nov 20
-//        std::cout << "normaliseconst" <<normaliseconst << std::endl;
-//        std::cout << "abundratio"<<abundratio<<std::endl;
 	FoMo::tphysvar fittedemission=FoMo::operator *(normaliseconst*abundratio,FoMo::operator *(FoMo::pow(10.,FoMo::operator *(2.,logrho)),fittedgoft));
 	fittedemission=FoMo::operator /(fittedemission,fittedwidth);
 
@@ -299,13 +297,22 @@ FoMo::GoftCube FoMo::emissionfromdatacube(FoMo::DataCube datacube, std::string c
 	exporteddata.push_back(fittedemission);
 	exporteddata.push_back(fittedwidth);
 	
+	std::vector<std::string> dataunits=datacube.readunit();
+	std::vector<std::string> unitvec;
+	for (int i=0; i<datacube.readdim(); i++)
+	{
+		unitvec.push_back(dataunits.at(i));
+	}
+	unitvec.push_back(gofttab.readunit().at(2)); // leave out density and temperature, but keep units of emissivity
+	unitvec.push_back("\\AA{}"); // units for FWHM of spectral line
 	// copy velocity vectors
 	for (int i=2; i<nvars; i++)
 	{
 			FoMo::tphysvar velcomp=datacube.readvar(i);
 			exporteddata.push_back(velcomp);
+			unitvec.push_back(dataunits.at(i));
 	};
-	emission.setdata(grid,exporteddata);
+	emission.setdata(grid,exporteddata,&unitvec);
 	emission.setchiantifile(chiantifile);
 	emission.setabundfile(abundfile);
 	emission.setlambda0(lambda0);
