@@ -1,11 +1,11 @@
-pro update_tables,path=path,spectral_lines=spectral_lines,aia=aia,eit=eit
+pro update_tables,path=path,spectral_lines=spectral_lines,aia=aia,eit=eit,dkist=dkist
 
 if (~keyword_set(path)) then path='.'
 
 ; find list of all files, and look for aia files (need special treatment) and normal chianti files
 listoffiles=file_search(path+'/'+'goft_table_*.dat')
 aiafiles=listoffiles[where(strmatch(listoffiles,'*aia*'))]
-specfiles=listoffiles[where(~strmatch(listoffiles,'*aia*'))]
+specfiles=listoffiles[where(~strmatch(listoffiles,'*aia*') and ~strmatch(listoffiles,'*dkist*') and ~strmatch(listoffiles,'*eit*'))]
 
 if keyword_set(spectral_lines) then begin
 	; estimated time (with 4 cores), 3 days
@@ -70,8 +70,27 @@ if keyword_set(eit) then begin
 			filename=path+'/'+'goft_table_eit'+listofwvl[j]+'_'+listofabundext[i]+'.dat'
 			if ~(file_test(filename+'.working') || file_test(filename+'.updated')) then begin
 				spawn,'touch '+filename+'.working'
-				print,'Updating AIA ', listofwvl[j], ' for ',listofabund[i]
-				make_aiaresponse, sngfilter=listofwvl[j],gotdir=path+'/',file_abund=listofabund[i]
+				print,'Updating EIT ', listofwvl[j], ' for ',listofabund[i]
+				make_eitresponse, sngfilter=listofwvl[j],gotdir=path+'/',file_abund=listofabund[i]
+				spawn,'touch '+filename+'.updated'
+				spawn,'rm -f '+filename+'.working'
+			endif
+		endfor
+	endfor
+endif
+
+if keyword_set(dkist) then begin
+	listofwvl=['10747','39340']
+	listofabund=['coronal','photospheric']
+	listofabundext=['abco','abph']
+	; estimated time, around 4 days
+	for i=0,n_elements(listofabund)-1 do begin
+		for j=0,n_elements(listofwvl)-1 do begin
+			filename=path+'/'+'goft_table_dkist'+listofwvl[j]+'_'+listofabundext[i]+'.dat'
+			if ~(file_test(filename+'.working') || file_test(filename+'.updated')) then begin
+				spawn,'touch '+filename+'.working'
+				print,'Updating DKIST', listofwvl[j], ' for ',listofabund[i]
+				make_dkistresponse, sngfilter=listofwvl[j],gotdir=path+'/',file_abund=listofabund[i]
 				spawn,'touch '+filename+'.updated'
 				spawn,'rm -f '+filename+'.working'
 			endif

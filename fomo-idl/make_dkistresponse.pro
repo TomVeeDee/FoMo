@@ -1,29 +1,31 @@
-pro make_eitresponse, sngfilter=sngfilter,wvlmin=wvlmin,wvlmax=wvlmax,gotdir=gotdir,file_abund=file_abund,extname=extname,silent=silent
+pro make_dkistresponse, sngfilter=sngfilter, wvlmin=wvlmin, wvlmax=wvlmax, gotdir=gotdir, file_abund=file_abund,extname=extname
 
 if ~keyword_set(sngfilter) then begin
-   print,'make_eitresponse, sngfilter=sngfilter,wvlmin=wvlmin,wvlmax=wvlmax,gotdir=gotdir,file_abund=file_abund,extname=extname,silent=silent'
+   print,'make_dkistresponse, sngfilter=sngfilter, wvlmin=wvlmin, wvlmax=wvlmax, gotdir=gotdir, file_abund=file_abund'
    return
 endif
 
-; Generates G(T,n) tables (200 x 200 pts) multiplied with EIT response functions and aperture size.
-; Implies taking (dx/f)^2 in the further code (FoMo-C or FoMo-idl).
+; Generates G(T,n) tables (200 x 200 pts) for the DKIST response functions. 
 ; It assumes the chianti.ioneq CHIANTI file for ionization equilibrium
 ; values. 
 
 ; INPUT:
-; sngfilter = (string) 'all' or  name of filter (ex: '171' for the EIT 171 filter):
-;              EUV:
-;              '304' -> EIT 304
-;              '171' -> EIT 171
-;              '195' -> EIT 195
-;              '284' -> EIT 284
+; sngfilter = (string) 'all' if all filters are to be generated
+
+; '10747' -> Fe XIII 10747 A line (Filter FWHM: 10 A)
+; '39340' -> Si IX 39340 A line (Filter FWHM: 200 A)
+
+; wvlmin = (float) Minimum of desired wavelength range for line
+; transition in Angstroms. Default: w0-5 for 10747 and w0-100 for 39340
+; wvlmax = (float) Maximum of desired wavelength range for line
+; transition in Angstroms. Default: w0+5 for 10747 and w0+100 for 39340
 ; gotdir = (string) directory path where to save the generated table
 ;          (don't forget '/' at end of path) 
 ; file_abund = (string) 'coronal' or 'photospheric' depending on whether
 ;             'sun_coronal.abund' or 'sun_photospheric.abund' CHIANTI packages,
 ;             respectively, are to be used. 
 ; CALLS:
-; eit_parms, isothermal
+; aia_get_response, isothermal
 
 if ~keyword_set(extname) then extname = ''
 if ~keyword_set(file_abund) then begin
@@ -61,6 +63,9 @@ endif else begin
    endif
 endelse
 
+; this is needed for the correct execution of CHIANTI's idl/utilities/proton_dens.pro
+!abund_file = abund_file
+
 ioneq_name = concat_dir(concat_dir(!xuvtop,'ioneq'),'chianti.ioneq')
 
 numt = 200
@@ -69,72 +74,59 @@ alogt = alog10(temp)
 
 n_e_min = 1.e8
 n_e_max_sml = 1.e11
-n_e_max_big = 1.e12
 
 steplg = 0.015
 numn_sml = round(alog10(n_e_max_sml/n_e_min)/steplg)
-numn_big = round(alog10(n_e_max_big/n_e_min)/steplg)
 
 n_e_lg_sml = dindgen(numn_sml+1)/numn_sml*alog10(n_e_max_sml/n_e_min)+alog10(n_e_min)
-n_e_lg_big = dindgen(numn_big+1)/numn_big*alog10(n_e_max_big/n_e_min)+alog10(n_e_min)
 n_e_sml = 10.^(n_e_lg_sml)   
-n_e_big = 10.^(n_e_lg_big)  
 
-;sterad_eit_pix=(1.275e-5)^2 ;;;  EIT pixel - 2.629arcsec; sterad_eit_pix=(1.275e-5)^2=(2.629arcsec)^2
-sterad_eit_pix=1.0
+; solid angle of 1 arcsec^2:
+;sterad_arc=(!pi/180./3600.)^2
+
+; normalised over the sphere:
+sterad_arc = 1.
 watom = 0.
-unitstring = 'cm^5 DN s^{-1} sr^{-1}'
+units = 'cm^5 DN s^{-1} sr^{-1}'
 openr,unitversion, !xuvtop+'/VERSION',/get_lun
 str=''
 readf,unitversion, str
 free_lun,unitversion
 vchianti = 'CHIANTI'+str
 
-if sngfilter eq 'all' then eitarr = ['171','195','284','304'] else eitarr = sngfilter
-neitar = n_elements(eitarr)
-NN = 1000
-wmin171=160.0 & wmax171=250.0 & lambda171=findgen(NN)/(NN-1)*(wmax171-wmin171)+wmin171
-wmin195=160.0 & wmax195=250.0 & lambda195=findgen(NN)/(NN-1)*(wmax195-wmin195)+wmin195
-wmin284=200.0 & wmax284=330.0 & lambda284=findgen(NN)/(NN-1)*(wmax284-wmin284)+wmin284
-wmin304=200.0 & wmax304=350.0 & lambda304=findgen(NN)/(NN-1)*(wmax304-wmin304)+wmin304
+if sngfilter eq 'all' then dkarr = ['10747','39340'] else dkarr = sngfilter
+ndkar = n_elements(dkarr)
 
-for k=0,neitar-1 do begin
-   filt = eitarr[k]
-   print,'Constructing EIT - '+filt+' G(T) table'
-   ex = 'eit_resp = eit_parms(lambda'+filt+',fix(filt),units=units)'
-   void = execute(ex)
-   openw,unit,gotdir+'goft_table_eit'+filt+'_'+nab+extname+'.dat',/get_lun & w0 = float(filt) & ion = filt
-   ex = 'wvlmin = wmin'+filt
-   void = execute(ex)
-   ex = 'wvlmax = wmax'+filt
-   void = execute(ex)
-   if filt eq '304' then begin
-      numn = numn_big 
-      n_e = n_e_big
-      n_e_lg = n_e_lg_big
-   endif else begin
-      numn = numn_sml
-      n_e = n_e_sml
-      n_e_lg = n_e_lg_sml
-   endelse
+for k=0,ndkar-1 do begin
+   filt = dkarr[k]
+   print,'Constructing DKIST - '+filt+' G(T) table'
+   openw,unit,gotdir+'goft_table_dkist'+filt+'_'+nab+extname+'.dat',/get_lun & w0 = float(filt) & ion = filt
+   if ~keyword_set(wvlmin) or ~keyword_set(wvlmax) or keyword_set(all) then begin
+      if filt eq '10747' then begin
+         wvlmin = w0-5.
+         wvlmax = w0+5.
+      endif
+      if filt eq '39340' then begin
+         wvlmin = w0-100.
+         wvlmax = w0+100.
+      endif
+   endif
    printf,unit,ion
    printf,unit,w0
    printf,unit,watom
    printf,unit,wvlmin,wvlmax
-   printf,unit,unitstring
+   printf,unit,units
    printf,unit,vchianti
-   printf,unit,numn,numt
+   printf,unit,numn_sml,numt
    printf,unit,alogt
 
-   for i=0,numn-1 do begin
-      print,'EIT '+filt+' - doing density number ',i,' of ',numn
-      isothermal, wvlmin, wvlmax, 0.1, temp, lambda, spectrum, list_wvl,list_ident, edensity=n_e[i] ,/photons,/cont,/all,ioneq_name=ioneq_name,abund_name=abund_file,noverbose=silent
-      ex = 'eff = interpol(eit_resp_'+filt+',lambda'+filt+',lambda)'
-      void = execute(ex)
-      sp_conv = spectrum & sp_conv[*,*]=0. 
-      for j=0,numt-1 do sp_conv[*,j]=fnhne*sterad_eit_pix*spectrum[*,j]*eff
+   for i=0,numn_sml-1 do begin
+      print,'DKIST '+filt+' - doing density ',i,' of ',numn_sml
+      isothermal, wvlmin, wvlmax, 0.1, temp, lambda, spectrum, list_wvl,list_ident, edensity=n_e_sml[i] ,/photons,/cont,/all,ioneq_name=ioneq_name,abund_name=abund_file,noverbose=silent
+      sp_conv = spectrum & sp_conv[*,*]=0.
+      for j=0,numt-1 do sp_conv[*,j] = fnhne*sterad_arc*spectrum[*,j]
       resp = total(sp_conv,1)
-      printf,unit,n_e_lg[i]
+      printf,unit,n_e_lg_sml[i]
       printf,unit,resp
    endfor
    free_lun,unit

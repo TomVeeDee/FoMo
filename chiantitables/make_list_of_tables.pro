@@ -5,7 +5,7 @@ if (~keyword_set(path)) then path='.'
 ; find list of all files, and look for aia files (need special treatment) and normal chianti files
 listoffiles=file_search(path+'/'+'goft_table_*.dat')
 aiafiles=listoffiles[where(strmatch(listoffiles,'*aia*'))]
-specfiles=listoffiles[where(~strmatch(listoffiles,'*aia*') and ~strmatch(listoffiles,'*dkist*'))]
+specfiles=listoffiles[where(~strmatch(listoffiles,'*aia*') and ~strmatch(listoffiles,'*dkist*') and ~strmatch(listoffiles,'*eit*'))]
 
 openw,out,'list_of_tables.txt',/get_lun
 printf,out,'# element',string(9B),'wavelength (A)',string(9B),'minlevel',string(9B),'maxlevel',string(9B),'filename'
