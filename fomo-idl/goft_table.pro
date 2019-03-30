@@ -1,9 +1,9 @@
 
 
-pro goft_table,w0=w0,ion=ion,gotdir=gotdir,file_abund=file_abund,silent=silent,fact=fact,num=num
+pro goft_table,w0=w0,ion=ion,gotdir=gotdir,file_abund=file_abund,fact=fact,num=num,extname=extname,extro=extro,silent=silent
 
 if keyword_set(w0) eq 0 or keyword_set(ion) eq 0 then begin
-   print,'goft_table, w0=w0, ion=ion,gotdir=gotdir,file_abund=file_abund,silent=silent'
+   print,'goft_table,w0=w0,ion=ion,gotdir=gotdir,file_abund=file_abund,fact=fact,num=num,extname=extname,extro=extro,silent=silent'
    return
 endif
 
@@ -15,6 +15,10 @@ endif
 ; ion = (string) acronym of ion (see elements.pro)
 ; gotdir = (string) directory path where to save the generated table
 ;          (don't forget '/' at end of path) 
+; extro: (string) for G(T,n) tables with extended density range [6,12]
+;        in log. Default is [8,11] for log(T)>5 and [8,12] for log(T)<5
+;        where T is the maximum formation temperature
+
 ; file_abund: (string) file for abundance abundance. 2 kinds are implemented:
 ;            'photospheric' or 'coronal' corresponding, respectively, to the
 ;            CHIANTI packages: sun_coronal.abund and sun_photospheric.abund
@@ -25,6 +29,7 @@ endif
 ; CALLS:
 ; elements, get_atomic_weight, g_of_t
 
+if ~keyword_set(extname) then extname = ''
 if keyword_set(file_abund) then begin
    if file_abund eq 'photospheric' then begin
       abund_name = concat_dir(concat_dir(!xuvtop,'abundance'),'sun_photospheric.abund');!xuvtop+'/abundance/sun_photospheric.abund'
@@ -96,8 +101,14 @@ logTm = alogt0[lclgtm]
   ; get atomic weight:
 watom = get_atomic_weight(enum)
 
-n_e_min = 1.e8
-if logtm lt 5 then n_e_max = 1.e12 else n_e_max = 1.e11
+if keyword_set(extro) then begin
+   n_e_min = 1.e6
+   n_e_max = 1.e12
+   extname = extname+'_extro'
+endif else begin
+   n_e_min = 1.e8
+   if logtm lt 5 then n_e_max = 1.e12 else n_e_max = 1.e11
+endelse
 
 steplg = 0.001
 ;steplg = 0.002
@@ -114,7 +125,7 @@ numn = round(alog10(n_e_max/n_e_min)/steplg)
 n_e_lg = dindgen(numn+1)/numn*alog10(n_e_max/n_e_min)+alog10(n_e_min)
 
 if round(w0) lt 9999 then w0nm = string(round(w0),format='(i4.4)') else w0nm = string(round(w0),format='(i5.5)') 
-openw,unit,gotdir+'goft_table_'+ion+'_'+w0nm+'_'+nab+'.dat',/get_lun
+openw,unit,gotdir+'goft_table_'+ion+'_'+w0nm+'_'+nab+extname+'.dat',/get_lun
 printf,unit,ion
 printf,unit,cw0
 printf,unit,watom

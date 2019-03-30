@@ -1,7 +1,7 @@
-pro make_eitresponse, sngfilter=sngfilter,wvlmin=wvlmin,wvlmax=wvlmax,gotdir=gotdir,file_abund=file_abund,extname=extname,silent=silent
+pro make_eitresponse, sngfilter=sngfilter,wvlmin=wvlmin,wvlmax=wvlmax,gotdir=gotdir,file_abund=file_abund,extname=extname,extro=extro,silent=silent
 
 if ~keyword_set(sngfilter) then begin
-   print,'make_eitresponse, sngfilter=sngfilter,wvlmin=wvlmin,wvlmax=wvlmax,gotdir=gotdir,file_abund=file_abund,extname=extname,silent=silent'
+   print,'make_eitresponse, sngfilter=sngfilter,wvlmin=wvlmin,wvlmax=wvlmax,gotdir=gotdir,file_abund=file_abund,extname=extname,extro=extro,silent=silent'
    return
 endif
 
@@ -22,6 +22,9 @@ endif
 ; file_abund = (string) 'coronal' or 'photospheric' depending on whether
 ;             'sun_coronal.abund' or 'sun_photospheric.abund' CHIANTI packages,
 ;             respectively, are to be used. 
+; extro: (string) for G(T,n) tables with extended density range [6,12]
+;        in log. Default is [8,12] for EIT 304 and [8,11] for the rest
+
 ; CALLS:
 ; eit_parms, isothermal
 
@@ -67,9 +70,16 @@ numt = 200
 temp = 10.d^(findgen(numt)/(numt-1)*4.+4.0)
 alogt = alog10(temp)
 
-n_e_min = 1.e8
-n_e_max_sml = 1.e11
-n_e_max_big = 1.e12
+if keyword_set(extro) then begin
+   n_e_min = 1.e6
+   n_e_max_sml = 1.e12
+   n_e_max_big = 1.e12
+   extname = extname+'_extro'
+endif else begin
+   n_e_min = 1.e8
+   n_e_max_sml = 1.e11
+   n_e_max_big = 1.e12
+endelse
 
 steplg = 0.015
 numn_sml = round(alog10(n_e_max_sml/n_e_min)/steplg)

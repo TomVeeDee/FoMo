@@ -1,7 +1,7 @@
-pro lineongrid_goft_tab, te_s=te_s, ne_s=ne_s, gotdir=gotdir,wave=wave,nwave=nwave,ion=ion, w0=w0, emission_goft=emission_goft, goft=goft, logt=logt, wayemi=wayemi, watom=watom,file_abund=file_abund,ext_abund=ext_abund,nab=nab,abund_name=abund_name,enum=enum,inum=inum,abund_fact=abund_fact,silent=silent
+pro lineongrid_goft_tab, te_s=te_s, ne_s=ne_s, gotdir=gotdir,wave=wave,nwave=nwave,ion=ion, w0=w0, emission_goft=emission_goft, goft=goft, logt=logt, wayemi=wayemi, watom=watom,file_abund=file_abund,ext_abund=ext_abund,nab=nab,abund_name=abund_name,enum=enum,inum=inum,abund_fact=abund_fact,extro=extro,silent=silent
 
 if arg_present(ne_s) lt 1 then begin
-   print,'lineongrid_goft_tab, te_s=te_s, ne_s=ne_s, gotdir=gotdir,wave=wave,nwave=nwave,ion=ion, w0=w0, emission_goft=emission_goft, goft=goft, logt=logt, wayemi=wayemi, watom=watom, file_abund=file_abund,ext_abund=ext_abund,nab=nab,abund_name=abund_name,enum=enum,inum=inum,abund_fact=abund_fact,silent=silent'
+   print,'lineongrid_goft_tab, te_s=te_s, ne_s=ne_s, gotdir=gotdir,wave=wave,nwave=nwave,ion=ion, w0=w0, emission_goft=emission_goft, goft=goft, logt=logt, wayemi=wayemi, watom=watom, file_abund=file_abund,ext_abund=ext_abund,nab=nab,abund_name=abund_name,enum=enum,inum=inum,abund_fact=abund_fact,extro=extro,silent=silent'
    return
 endif
 
@@ -31,6 +31,9 @@ endif
 ;        set keyword wayemi to 1 if emission calculated point by
 ;        point, else set to 2-4 if calculated through binning of
 ;        G(T)*ne^2 term (default = 4) 
+; extro: set for G(T,n) tables with extended density range [6,12]
+;        in log. Default for spectral lines is [8,11] for log(T)>5 and [8,12]
+;        for log(T)<5 where T is the maximum formation temperature. 
 
 ; OUTPUT:
 ; wave = wavelength array set to nwave pts, containing line transition	
@@ -157,7 +160,7 @@ n_e_sorted = ne_s[ne_sort]
 Tlg_sorted = logT[ne_sort]
 
 ; Read tabulated G(ne,T) values for given number density (n_e_lg) and temperature (t_lg) arrays
-lookup_goft,ion=ion,w0=w0,gotdir=gotdir,n_e_lg=n_e_lg,logt=t_lg,goft_mat=goft_mat,watom=watom,nab=nab,silent=silent
+lookup_goft,ion=ion,w0=w0,gotdir=gotdir,n_e_lg=n_e_lg,logt=t_lg,goft_mat=goft_mat,watom=watom,nab=nab,extro=extro,silent=silent
 if n_elements(enum) eq 0 or n_elements(inum) eq 0 then begin
    elements, w0=w0, ion=ion, enum=enum, inum=inum
 endif
