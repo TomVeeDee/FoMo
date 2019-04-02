@@ -1,9 +1,9 @@
 
-pro lookup_goft,ion=ion,w0=w0, gotdir=gotdir,n_e_lg=n_e_lg, logt=logt, goft_mat=goft_mat, watom=watom,filenm=filenm,channel=channel,nab=nab,silent=silent
+pro lookup_goft,ion=ion,w0=w0, gotdir=gotdir,n_e_lg=n_e_lg, logt=logt, goft_mat=goft_mat, watom=watom,filenm=filenm,channel=channel,nab=nab,extname=extname,extro=extro,silent=silent
 
 if keyword_set(ion) eq 0 then begin
    print,'Check input directories'
-   print,'lookup_goft, ion=ion, w0=w0, gotdir=gotdir,n_e_lg=n_e_lg, logt=logt, goft_mat=goft_mat, watom=watom, filenm=filenm,channel=channel,nab=nab,silent=silent'
+   print,'lookup_goft, ion=ion, w0=w0, gotdir=gotdir,n_e_lg=n_e_lg, logt=logt, goft_mat=goft_mat, watom=watom, filenm=filenm,channel=channel,nab=nab,extname=extname,extro=extro,silent=silent'
    return
 endif
 
@@ -14,6 +14,7 @@ endif
 ; w0: (float) wavelength of line center (filter number for SDO/AIA filter)
 ; gotdir: (string) directory path to where the .dat G(T,n) file is.
 ; filenm: (string) name helping defining the .dat file
+; extro: (string) for G(T,n) tables with extended density range [6,12] (log)
 
 ; OUTPUT:
 ; n_e_lg: number density array (logarithm) where G(T,n) is defined
@@ -33,10 +34,11 @@ if ~keyword_set(nab) then begin
    print,'Abundance package not specified. Adopting coronal abundances.'
    nab = '_abco'
 endif
-
-if keyword_set(filenm) then filegot = 'goft_table_'+filenm+w0nm+nab+'.dat' 
-if keyword_set(channel) then filegot = 'goft_table_'+channel+w0nm+nab+'.dat' 
-if (~keyword_set(filenm) and ~keyword_set(channel)) then filegot = 'goft_table_'+ion+'_'+w0nm+nab+'.dat'
+if ~keyword_set(extname) then extname = ''
+if keyword_set(extro) then extname = extname+'_extro'
+if keyword_set(filenm) then filegot = 'goft_table_'+filenm+w0nm+nab+extname+'.dat' 
+if keyword_set(channel) then filegot = 'goft_table_'+channel+w0nm+nab+extname+'.dat' 
+if (~keyword_set(filenm) and ~keyword_set(channel)) then filegot = 'goft_table_'+ion+'_'+w0nm+nab+extname+'.dat'
 ;if wayemi eq 5 then filegot = 'goft_table_'+ion+'_'+w0nm+'small'+nab+'.dat'
 
 if file_test(gotdir+filegot) eq 0 then begin
