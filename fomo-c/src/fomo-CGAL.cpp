@@ -231,7 +231,9 @@ FoMo::RenderCube CGALinterpolation(FoMo::GoftCube goftcube, Delaunay_triangulati
 						{
 							// lambda the relative wavelength around lambda0, with a width of lambda_width
 							lambdaval=double(il)/(lambda_pixel-1)*lambda_width_in_A-lambda_width_in_A/2.;
-							tempintens=intpolpeak*exp(-pow(lambdaval-intpollosvel/speedoflight*lambda0,2)/pow(intpolfwhm,2)*4.*log(2.));
+							tempintens=intpolpeak ? intpolpeak*exp(-pow(lambdaval-intpollosvel/speedoflight*lambda0,2)/pow(intpolfwhm,2)*4.*log(2.)) : 0; // Added this line by Vaibhav pant on 22 Nov, 2018. tempintens as defined below was giving NAN values for odd wavelength bins.
+
+							//tempintens=intpolpeak*exp(-pow(lambdaval-intpollosvel/speedoflight*lambda0,2)/pow(intpolfwhm,2)*4.*log(2.));
 							ind=(i*(x_pixel)+j)*lambda_pixel+il;// 
 							newgrid.at(0).at(ind)=x;
 							newgrid.at(1).at(ind)=y;
