@@ -95,7 +95,7 @@ FoMo::RenderCube nearestneighbourinterpolation(FoMo::GoftCube goftcube, const do
 		input_values.at(i)=boostpair;
 	}
 	if (commrank==0) std::cout << "Done!" << std::endl;
-	if (commrank==0) std::cout << "Building R-tree... " << std::flush;
+	if (commrank==0) std::cout << "Building R-tree... added by vaibhav" << std::flush;
 	// take an rtree with the quadratic packing algorithm, it takes (slightly) more time to build, but queries are faster for large renderings
 	bgi::rtree< value, bgi::quadratic<16> > rtree(input_values.begin(),input_values.end());
 	
@@ -179,18 +179,19 @@ FoMo::RenderCube nearestneighbourinterpolation(FoMo::GoftCube goftcube, const do
 				maxdistancebox=box(point(p.at(0)-maxdistance,p.at(1)-maxdistance,p.at(2)-maxdistance),point(p.at(0)+maxdistance,p.at(1)+maxdistance,p.at(2)+maxdistance));
 				//numberofpoints=
 				rtree.query(bgi::nearest(targetpoint, 1) && bgi::within(maxdistancebox), std::back_inserter(returned_values));
+				
 				if (returned_values.size() >= 1)
 				{
 					nearestindex=returned_values.at(0).second;
 					intpolpeak=peakvec.at(nearestindex);
-					intpolfwhm=fwhmvec.at(nearestindex);
+					intpolfwhm=fwhmvec.at(nearestindex);	
 					intpollosvel=losvel.at(nearestindex);
 				}
 				else
 				{
 					intpolpeak=0;
 				}
-					
+				
 				if (lambda_pixel>1)// spectroscopic study
 				{
 					for (int il=0; il<lambda_pixel; il++) // changed index from global variable l into il [D.Y. 17 Nov 2014]
@@ -200,8 +201,10 @@ FoMo::RenderCube nearestneighbourinterpolation(FoMo::GoftCube goftcube, const do
 						// here a ternary operator may be used
 						// if intpolpeak is not zero then the correct expression is used. otherwise, the intensity is just 0
 						// it remains to be tested if this is faster than just the direct computation
-						//tempintens=intpolpeak ? intpolpeak*exp(-pow(lambdaval-intpollosvel/speedoflight*lambda0,2)/pow(intpolfwhm,2)*4.*log(2.)) : 0;
-						tempintens=intpolpeak*exp(-pow(lambdaval-intpollosvel/speedoflight*lambda0,2)/pow(intpolfwhm,2)*4.*log(2.));
+						tempintens=intpolpeak ? intpolpeak*exp(-pow(lambdaval-intpollosvel/speedoflight*lambda0,2)/pow(intpolfwhm,2)*4.*log(2.)) : 0; // Uncommented this line by Vaibhav pant on 22 Nov, 2018. tempintens as defined below was giving NAN values for odd wavelength bins. 
+
+						//tempintens=intpolpeak*exp(-pow(lambdaval-intpollosvel/speedoflight*lambda0,2)/pow(intpolfwhm,2)*4.*log(2.));
+
 						ind=(i*(x_pixel)+j)*lambda_pixel+il;// 
 						newgrid.at(0).at(ind)=x;
 						newgrid.at(1).at(ind)=y;
