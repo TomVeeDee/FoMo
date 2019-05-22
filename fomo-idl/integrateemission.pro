@@ -95,6 +95,7 @@ endelse
 
 if (direction le dims) then begin
 	image=total(doppleremission,direction)*dl*apix
+        if direction eq 1 then image = reverse(image,1) ; preserve same LOS orientation as for 0 degree (left of plane-of-the-sky corresponds to first index)
 endif else begin
    if direction eq 4 then begin
       if dims eq 2 then image = dblarr(n_elements(ngrid)-1,nwave) else image = dblarr(nx,n_elements(ngrid)-1,nwave)

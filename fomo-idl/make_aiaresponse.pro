@@ -1,7 +1,7 @@
-pro make_aiaresponse,sngfilter=sngfilter,wvlmin=wvlmin,wvlmax=wvlmax,gotdir=gotdir,file_abund=file_abund,extname=extname,silent=silent
+pro make_aiaresponse,sngfilter=sngfilter,wvlmin=wvlmin,wvlmax=wvlmax,gotdir=gotdir,file_abund=file_abund,extname=extname,silent=silent,extro=extro
 
 if ~keyword_set(sngfilter) then begin
-   print,'make_aiaresponse,sngfilter=sngfilter,wvlmin=wvlmin,wvlmax=wvlmax,gotdir=gotdir,file_abund=file_abund,extname=extname,silent=silent'
+   print,'make_aiaresponse,sngfilter=sngfilter,wvlmin=wvlmin,wvlmax=wvlmax,gotdir=gotdir,file_abund=file_abund,extname=extname,silent=silent,extro=extro'
    return
 endif
 
@@ -36,6 +36,10 @@ endif
 ; file_abund = (string) 'coronal' or 'photospheric' depending on whether
 ;             'sun_coronal.abund' or 'sun_photospheric.abund' CHIANTI packages,
 ;             respectively, are to be used. 
+; extro: (string) for G(T,n) tables with extended density range [6,12]
+;        in log. Default is [8,12] for AIA 304, 1600, 1700, 4500 and
+;        [8,11] for the rest
+
 ; CALLS:
 ; aia_get_response, isothermal
 
@@ -84,9 +88,16 @@ numt = 200
 temp = 10.d^(findgen(numt)/(numt-1)*4.+4.0)
 alogt = alog10(temp)
 
-n_e_min = 1.e8
-n_e_max_sml = 1.e11
-n_e_max_big = 1.e12
+if keyword_set(extro) then begin
+   n_e_min = 1.e6
+   n_e_max_sml = 1.e12
+   n_e_max_big = 1.e12
+   extname = extname+'_extro'
+endif else begin
+   n_e_min = 1.e8
+   n_e_max_sml = 1.e11
+   n_e_max_big = 1.e12
+endelse
 
 steplg = 0.015
 numn_sml = round(alog10(n_e_max_sml/n_e_min)/steplg)
@@ -104,9 +115,13 @@ n_e_big = 10.^(n_e_lg_big)
 sterad_arc = 1.
 watom = 0.
 units = 'cm^5 DN s^{-1} sr^{-1}'
-vchianti = 'CHIANTI8.0'
+openr,unitversion, !xuvtop+'/VERSION',/get_lun
+str=''
+readf,unitversion, str
+free_lun,unitversion
+vchianti = 'CHIANTI'+str
 
-if sngfilter eq 'all' then aiarr = ['304','1600','1700','4500','171','193','211','335','094','131'] else aiarr = sngfilter
+if sngfilter[0] eq 'all' then aiarr = ['304','1600','1700','4500','171','193','211','335','094','131'] else aiarr = sngfilter
 naiar = n_elements(aiarr)
 
 ; make the default to look for the EUV channels
@@ -147,6 +162,7 @@ for k=0,naiar-1 do begin
    printf,unit,vchianti
    printf,unit,numn,numt
    printf,unit,alogt
+   flush,unit
 
    for i=0,numn-1 do begin
       print,'AIA '+filt+' - doing density number ',i,' of ',numn
@@ -158,6 +174,7 @@ for k=0,naiar-1 do begin
       resp = total(sp_conv,1)
       printf,unit,n_e_lg[i]
       printf,unit,resp
+      flush,unit
    endfor
    free_lun,unit
 endfor
