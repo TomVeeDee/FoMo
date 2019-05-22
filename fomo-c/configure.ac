@@ -1,5 +1,5 @@
-m4_define(FOMOVERSION,3.3)
-AC_INIT(FoMo,FOMOVERSION,tom.vandoorsselaere@wis.kuleuven.be)
+m4_define(FOMOVERSION,3.4)
+AC_INIT(FoMo,FOMOVERSION,tom.vandoorsselaere@kuleuven.be)
 AC_SUBST(fomoversion,FOMOVERSION)
 AC_PREREQ(2.59)
 AM_INIT_AUTOMAKE(1.9)
@@ -12,7 +12,7 @@ LT_INIT
 AC_PROG_LIBTOOL(libtool)
 # check if mpi is wanted
 AC_ARG_WITH(mpi,
-[AC_HELP_STRING([--with-mpi],[build MPI version of POLLUX])],
+[AC_HELP_STRING([--with-mpi],[build MPI version of FoMo])],
 mpi=$withval,mpi="no")
 # search for the fortran compiler
 if test "a$mpi" = "ayes" ; then
@@ -25,6 +25,29 @@ AC_PROG_CXXCPP([cpp])
 AC_LANG(C++)
 AC_LANG_CPLUSPLUS
 AX_CXX_COMPILE_STDCXX_11
+
+# set the version number of FoMo
+# part of the code is copied from GIT_VERSION_GEN
+AC_MSG_CHECKING([for FoMo version])
+VN='
+'
+TEMPVN='
+'
+# check if the ../.git is a file or directory
+if [test -d ../.git -o -f ../.git]; then
+	# if that is the case, get the version number from git
+	VN=$(git describe --dirty --always --tags 2>/dev/null)
+	method="git"
+fi
+# if the git command failed, or if there is no git repository, use the default version of FoMo
+if [test "$VN" = "$TEMPVN"]; then
+	method="default"
+	VN=v"FOMOVERSION"
+fi
+CFLAGS+=" -DFOMOVERSION=$VN"
+CXXFLAGS+=" -DFOMOVERSION=$VN"
+AC_MSG_RESULT([($method method) $VN])
+
 
 # check for HDF5 for the hdf5 example
 AX_LIB_HDF5([serial])

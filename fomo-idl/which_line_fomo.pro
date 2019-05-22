@@ -78,7 +78,8 @@ ind=where(abs(abs(wavel)-w0) LE chck,n_ind)
 ;
 IF NOT keyword_set(all) AND n_ind NE 0 THEN BEGIN
   k=where(wavel[ind] GT 0.,nk)
-  IF nk NE 0 THEN ind=ind[k] ELSE n_ind=0
+  IF nk NE 0 THEN ind=ind[k]
+  n_ind=nk
 ENDIF 
 
 IF n_ind EQ 0 THEN BEGIN

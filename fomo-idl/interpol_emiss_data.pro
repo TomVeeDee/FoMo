@@ -1,8 +1,8 @@
 
-pro interpol_emiss_data,ne_s=ne_s,te=te,ion=ion,gotdir=gotdir,w0=w0,emission_goft=emission_goft,g_logte=g_logte,g_logne=g_logne,tstep=tstep,sav=sav,sdir=sdir,filenm=filenm,file_abund=file_abund,channel=channel,silent=silent
+pro interpol_emiss_data,ne_s=ne_s,te=te,ion=ion,gotdir=gotdir,w0=w0,emission_goft=emission_goft,g_logte=g_logte,g_logne=g_logne,tstep=tstep,sav=sav,sdir=sdir,filenm=filenm,file_abund=file_abund,channel=channel,extro=extro,silent=silent
 
 if keyword_set(ion) eq 0 then begin
-   print,'interpol_emiss_data,ne_s=ne_s,te=te,ion=ion,gotdir=gotdir,w0=w0,emission_goft=emission_goft,g_logte=g_logte,g_logne=g_logne,tstep=tstep,sav=sav,sdir=sdir,filenm=filenm,file_abund=file_abund,channel=channelsilent=silent'
+   print,'interpol_emiss_data,ne_s=ne_s,te=te,ion=ion,gotdir=gotdir,w0=w0,emission_goft=emission_goft,g_logte=g_logte,g_logne=g_logne,tstep=tstep,sav=sav,sdir=sdir,filenm=filenm,file_abund=file_abund,channel=channel,extro=extro,silent=silent'
    return
 endif
 
@@ -27,6 +27,13 @@ endif
 ; sav: set it for saving the calculated emissivity values.
 ; filenm & tstep: (string & float, resp.) used for naming the
 ;           emissivity sav file.  
+; extro: set for G(T,n) tables with extended density range [6,12]
+;        in log. Default for spectral lines is [8,11] for log(T)>5 and [8,12]
+;        for log(T)<5 where T is the maximum formation temperature. 
+;        Default for AIA 304,1600,1700,4500 is [8,12] and [8,11] for rest.
+;        Default for EIT 304 is [8,12] and [8,11] for rest.
+;        Default for DKIST is [8,11].
+
 ; sdir: (string) path to where to save the emissivity table. 
 
 ; CALLS:
@@ -57,7 +64,7 @@ emission_goft = ne_s*0.d & interp_goft = ne_s*0.d
 siz = size(ne_s)
 dimx = siz[1] & dimy = siz[2]
 
-lookup_goft,ion=ion,w0=w0,gotdir=gotdir,n_e_lg=g_logne,logt=g_logte,goft_mat=goft_mat,watom= watom,nab=nab,filenm=filenm,channel=channel,silent=silent
+lookup_goft,ion=ion,w0=w0,gotdir=gotdir,n_e_lg=g_logne,logt=g_logte,goft_mat=goft_mat,watom= watom,nab=nab,filenm=filenm,channel=channel,extro=extro,silent=silent
 
 logne = alog10(ne_s)
 logte = alog10(te)

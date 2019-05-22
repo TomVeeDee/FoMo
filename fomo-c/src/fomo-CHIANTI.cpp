@@ -66,8 +66,8 @@ FoMo::tphysvar goft(const FoMo::tphysvar logT, const FoMo::tphysvar logrho, cons
 
 	FoMo::tgrid grid=gofttab.readgrid();
 	// this is sorted by a slowly varying density and quickly varying temperature
-	FoMo::tphysvar tempgrid=grid[0];
-	FoMo::tphysvar rhogrid=grid[1];
+	FoMo::tphysvar tempgrid=grid.at(0);
+	FoMo::tphysvar rhogrid=grid.at(1);
 	// we can find the elementary vector length by using std::count
 	unsigned int nrho=std::count(tempgrid.begin(),tempgrid.end(),tempgrid.at(0));
 	unsigned int nt=std::count(rhogrid.begin(),rhogrid.end(),rhogrid.at(0));
@@ -148,23 +148,25 @@ FoMo::DataCube FoMo::readgoftfromchianti(const std::string chiantifile, std::str
 	}
 
 	double templogrho;
-	double nrhotemp;
 	int nrho, nt;
 	double field;
 	double minlevel, maxlevel;
+	std::string unitstr,chiantiversion;
 	FoMo::tphysvar temprho, tempt, tempgoft;
 
-	std::cout << "Reading G(T) from " << chiantifile << "... " << std::flush;
-	// read in header (ion name, rest wavelength, atomic weight, number of grid points in density direction, number of grid points in temperature direction)
+	std::cout << "Reading G(T) from " << chiantifile << " ... " << std::flush;
+	// read in header, see docfiles/filespecifications.dox
 	in >> ion;
 	in >> lambda0;
 	in >> atweight;
 	in >> minlevel;
 	in >> maxlevel;
-	in >> nrhotemp;
-	nrho=round(nrhotemp);
+	in.ignore(std::numeric_limits<std::streamsize>::max(),'\n');
+	std::getline(in,unitstr);
+	std::getline(in,chiantiversion);
+	in >> nrho;
 	in >> nt;
-
+	
 	// read in the temperature grid points
 	FoMo::tphysvar tvec;
 
@@ -201,7 +203,11 @@ FoMo::DataCube FoMo::readgoftfromchianti(const std::string chiantifile, std::str
 	
 	FoMo::tvars tempvars{tempgoft};
 	
-	gofttab.setdata(tempgrid,tempvars);
+	std::vector<std::string> unitstrvec;
+	unitstrvec.push_back("log(T)");
+	unitstrvec.push_back("log(rho)");
+	unitstrvec.push_back(unitstr);
+	gofttab.setdata(tempgrid,tempvars,&unitstrvec);
 
 	in.close();
 
@@ -282,8 +288,6 @@ FoMo::GoftCube FoMo::emissionfromdatacube(FoMo::DataCube datacube, std::string c
 // for integration *[cm] [D.Y 12 Nov 2014]
 // AIA modelling: Temperature response function K(ne,Te)[cm^5 DN S^-1]*ne[cm^-3]=emis [DN cm^-1 s^-1]; 
 // for integration *[cm] [D.Y 12 Nov 20
-//        std::cout << "normaliseconst" <<normaliseconst << std::endl;
-//        std::cout << "abundratio"<<abundratio<<std::endl;
 	FoMo::tphysvar fittedemission=FoMo::operator *(normaliseconst*abundratio,FoMo::operator *(FoMo::pow(10.,FoMo::operator *(2.,logrho)),fittedgoft));
 	fittedemission=FoMo::operator /(fittedemission,fittedwidth);
 
@@ -293,13 +297,22 @@ FoMo::GoftCube FoMo::emissionfromdatacube(FoMo::DataCube datacube, std::string c
 	exporteddata.push_back(fittedemission);
 	exporteddata.push_back(fittedwidth);
 	
+	std::vector<std::string> dataunits=datacube.readunit();
+	std::vector<std::string> unitvec;
+	for (int i=0; i<datacube.readdim(); i++)
+	{
+		unitvec.push_back(dataunits.at(i));
+	}
+	unitvec.push_back(gofttab.readunit().at(2)); // leave out density and temperature, but keep units of emissivity
+	unitvec.push_back("\\AA{}"); // units for FWHM of spectral line
 	// copy velocity vectors
 	for (int i=2; i<nvars; i++)
 	{
 			FoMo::tphysvar velcomp=datacube.readvar(i);
 			exporteddata.push_back(velcomp);
+			unitvec.push_back(dataunits.at(i));
 	};
-	emission.setdata(grid,exporteddata);
+	emission.setdata(grid,exporteddata,&unitvec);
 	emission.setchiantifile(chiantifile);
 	emission.setabundfile(abundfile);
 	emission.setlambda0(lambda0);

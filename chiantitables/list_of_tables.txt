@@ -1,0 +1,26 @@
+# element	wavelength (A)	minlevel	maxlevel	filename
+c_2	      1334.58	       1	       6	goft_table_c_2_1335_abco.dat
+c_2	      1335.71	       2	       6	goft_table_c_2_1336_abco.dat
+c_3	      977.020	       1	       5	goft_table_c_3_0977_abco.dat
+c_3	      1174.93	       3	       8	goft_table_c_3_1175_abco.dat
+c_4	      1548.19	       1	       3	goft_table_c_4_1548_abco.dat
+c_4	      1550.77	       1	       2	goft_table_c_4_1551_abco.dat
+fe_12	      186.887	       3	      39	goft_table_fe_12_0187_abco.dat
+fe_12	      193.509	       1	      29	goft_table_fe_12_0194_abco.dat
+fe_12	      195.119	       1	      27	goft_table_fe_12_0195_abco.dat
+fe_13	      10749.0	       1	       2	goft_table_fe_13_10749_abco.dat
+fe_15	      284.163	       1	       5	goft_table_fe_15_0284_abco.dat
+fe_19	      1118.06	       1	       3	goft_table_fe_19_1118_abco.dat
+fe_9	      171.073	       1	      13	goft_table_fe_9_0171_abco.dat
+he_2	      303.781	       1	       4	goft_table_he_2_0304_abco.dat
+mg_12	      8.41920	       1	       4	goft_table_mg_12_0008_abco.dat
+mg_2	      2796.35	       1	       3	goft_table_mg_2_2796_abco.dat
+mg_2	      2803.53	       1	       2	goft_table_mg_2_2804_abco.dat
+ne_8	      770.428	       1	       3	goft_table_ne_8_0770_abco.dat
+o_4	      1399.78	       1	       3	goft_table_o_4_1400_abco.dat
+o_4	      1401.16	       2	       5	goft_table_o_4_1401_abco.dat
+o_4	      1404.81	       2	       4	goft_table_o_4_1405_abco.dat
+si_4	      1393.76	       1	       3	goft_table_si_4_1394_abco.dat
+si_4	      1402.77	       1	       2	goft_table_si_4_1403_abco.dat
+si_7	      197.768	       1	       9	goft_table_si_7_0198_abco.dat
+si_9	      39277.4	       1	       2	goft_table_si_9_39277_abco.dat

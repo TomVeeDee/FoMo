@@ -1,5 +1,10 @@
 
-pro fomo_synth,dir=dir,gotdir=gotdir,w0=w0,ion=ion,idcase=idcase,imaging=imaging,channel=channel,filenm=filenm,silent=silent,save=save
+pro fomo_synth,dir=dir,gotdir=gotdir,w0=w0,ion=ion,idcase=idcase,imaging=imaging,channel=channel,filenm=filenm,extro=extro,silent=silent,save=save
+
+if keyword_set(dir) eq 0 then begin
+   print,'fomo_synth,dir=dir,gotdir=gotdir,w0=w0,ion=ion,idcase=idcase,imaging=imaging,channel=channel,filenm=filenm,extro=extro,silent=silent,save=save'
+   return
+endif
 
 ; WRAPPER AROUND FOMO:
 ; This example assumes that you have 2 IDL save files (wavetube0.idl &
@@ -35,6 +40,12 @@ pro fomo_synth,dir=dir,gotdir=gotdir,w0=w0,ion=ion,idcase=idcase,imaging=imaging
 ; CHANNEL: set to 'aia' for AIA channels. See below
 ; for details on how to select the appropriate channel
 ; FILENM = optional keyword for additional labelling
+; EXTRO: set for G(T,n) tables with extended density range [6,12]
+;        in log. Default for spectral lines is [8,11] for log(T)>5 and [8,12]
+;        for log(T)<5 where T is the maximum formation temperature. 
+;        Default for AIA 304,1600,1700,4500 is [8,12] and [8,11] for rest.
+;        Default for EIT 304 is [8,12] and [8,11] for rest.
+;        Default for DKIST is [8,11].
 ; SAVE: Set this keyword to save all output
 
 if keyword_set(dir) eq 0 then begin
@@ -218,7 +229,7 @@ for i=0,num-1 do begin
          tstep = t ; t is scalar indicating time step in sec
 
          ; CALCULATE INTENSITIES
-         synthemi,rho=rho,nem=nem,tem=tem,v1m=v1m,v2m=v2m,ion=ion,mua_d=mua_d,gridx=gridx,gridy=gridy,emission_goft=emission_goft,wave=wave,nwave=nwave,w0=w0,n_gridx_1=n_gridx_1,n_gridy_1=n_gridy_1,ngrid_1=ngrid_1,n_gridx_2=n_gridx_2,n_gridy_2=n_gridy_2,ngrid_2=ngrid_2,n_gridx_3=n_gridx_3,n_gridy_3=n_gridy_3,ngrid_3=ngrid_3,n_gridx_4=n_gridx_4,n_gridy_4=n_gridy_4,ngrid_4=ngrid_4,n_gridx_5=n_gridx_5,n_gridy_5=n_gridy_5,ngrid_5=ngrid_5,n_gridx_6=n_gridx_6,n_gridy_6=n_gridy_6,ngrid_6=ngrid_6,n_gridx_7=n_gridx_7,n_gridy_7=n_gridy_7,ngrid_7=ngrid_7,dl_1=dl_1,dl_2=dl_2,dl_3=dl_3,dl_4=dl_4,dl_5=dl_5,dl_6=dl_6,dl_7=dl_7,line_1=line_1,line_2=line_2,line_3=line_3,line_4=line_4,line_5=line_5,line_6=line_6,line_7=line_7,wayemi=wayemi,filenm=filenm,gotdir=gotdir,file_abund=file_abund,imaging=imaging,channel=channel,nab=nab,abund_name=abund_name,enum=enum,inum=inum,abund_fact=abund_fact,silent=silent
+         synthemi,rho=rho,nem=nem,tem=tem,v1m=v1m,v2m=v2m,ion=ion,mua_d=mua_d,gridx=gridx,gridy=gridy,emission_goft=emission_goft,wave=wave,nwave=nwave,w0=w0,n_gridx_1=n_gridx_1,n_gridy_1=n_gridy_1,ngrid_1=ngrid_1,n_gridx_2=n_gridx_2,n_gridy_2=n_gridy_2,ngrid_2=ngrid_2,n_gridx_3=n_gridx_3,n_gridy_3=n_gridy_3,ngrid_3=ngrid_3,n_gridx_4=n_gridx_4,n_gridy_4=n_gridy_4,ngrid_4=ngrid_4,n_gridx_5=n_gridx_5,n_gridy_5=n_gridy_5,ngrid_5=ngrid_5,n_gridx_6=n_gridx_6,n_gridy_6=n_gridy_6,ngrid_6=ngrid_6,n_gridx_7=n_gridx_7,n_gridy_7=n_gridy_7,ngrid_7=ngrid_7,dl_1=dl_1,dl_2=dl_2,dl_3=dl_3,dl_4=dl_4,dl_5=dl_5,dl_6=dl_6,dl_7=dl_7,line_1=line_1,line_2=line_2,line_3=line_3,line_4=line_4,line_5=line_5,line_6=line_6,line_7=line_7,wayemi=wayemi,filenm=filenm,gotdir=gotdir,file_abund=file_abund,imaging=imaging,channel=channel,nab=nab,abund_name=abund_name,enum=enum,inum=inum,abund_fact=abund_fact,extro=extro,silent=silent
 
          if keyword_set(save) then begin
             if i eq 0 and j eq nz0 then begin
