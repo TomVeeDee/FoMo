@@ -1,5 +1,5 @@
 
-pro synthemi,rho=rho,nem=nem,tem=tem,v1m=v1m,v2m=v2m,ion=ion,mua_d=mua_d,gridx=gridx,gridy=gridy,emission_goft=emission_goft,wave=wave,nwave=nwave,w0=w0,n_gridx_1=n_gridx_1,n_gridy_1=n_gridy_1,ngrid_1=ngrid_1,n_gridx_2=n_gridx_2,n_gridy_2=n_gridy_2,ngrid_2=ngrid_2,n_gridx_3=n_gridx_3,n_gridy_3=n_gridy_3,ngrid_3=ngrid_3,n_gridx_4=n_gridx_4,n_gridy_4=n_gridy_4,ngrid_4=ngrid_4,n_gridx_5=n_gridx_5,n_gridy_5=n_gridy_5,ngrid_5=ngrid_5,n_gridx_6=n_gridx_6,n_gridy_6=n_gridy_6,ngrid_6=ngrid_6,n_gridx_7=n_gridx_7,n_gridy_7=n_gridy_7,ngrid_7=ngrid_7,dl_1=dl_1,dl_2=dl_2,dl_3=dl_3,dl_4=dl_4,dl_5=dl_5,dl_6=dl_6,dl_7=dl_7,line_1=line_1,line_2=line_2,line_3=line_3,line_4=line_4,line_5=line_5,line_6=line_6,line_7=line_7,wayemi=wayemi,filenm=filenm,gotdir=gotdir,file_abund=file_abund,ext_abund=ext_abund,imaging=imaging,revvel=revvel,channel=channel,nab=nab,abund_name=abund_name,enum=enum,inum=inum,abund_fact=abund_fact,extro=extro,silent=silent
+pro synthemi,rho=rho,nem=nem,tem=tem,v1m=v1m,v2m=v2m,ion=ion,mua_d=mua_d,gridx=gridx,gridy=gridy,gridz=gridz,emission_goft=emission_goft,wave=wave,nwave=nwave,w0=w0,n_gridx_1=n_gridx_1,n_gridy_1=n_gridy_1,ngrid_1=ngrid_1,n_gridx_2=n_gridx_2,n_gridy_2=n_gridy_2,ngrid_2=ngrid_2,n_gridx_3=n_gridx_3,n_gridy_3=n_gridy_3,ngrid_3=ngrid_3,n_gridx_4=n_gridx_4,n_gridy_4=n_gridy_4,ngrid_4=ngrid_4,n_gridx_5=n_gridx_5,n_gridy_5=n_gridy_5,ngrid_5=ngrid_5,n_gridx_6=n_gridx_6,n_gridy_6=n_gridy_6,ngrid_6=ngrid_6,n_gridx_7=n_gridx_7,n_gridy_7=n_gridy_7,ngrid_7=ngrid_7,dl_1=dl_1,dl_2=dl_2,dl_3=dl_3,dl_4=dl_4,dl_5=dl_5,dl_6=dl_6,dl_7=dl_7,line_1=line_1,line_2=line_2,line_3=line_3,line_4=line_4,line_5=line_5,line_6=line_6,line_7=line_7,wayemi=wayemi,filenm=filenm,gotdir=gotdir,file_abund=file_abund,ext_abund=ext_abund,imaging=imaging,revvel=revvel,channel=channel,nab=nab,abund_name=abund_name,enum=enum,inum=inum,abund_fact=abund_fact,extro=extro,silent=silent
 
 if arg_present(rho) lt 1 and arg_present(nem) lt 1 then begin
    print,'synthemi,rho=rho,nem=nem,tem=tem,v1m=v1m,v2m=v2m,ion=ion,mua_d=mua_d,gridx=gridx,gridy=gridy,emission_goft=emission_goft,wave=wave,nwave=nwave,w0=w0,n_gridx_1=n_gridx_1,n_gridy_1=n_gridy_1,ngrid_1=ngrid_1,n_gridx_2=n_gridx_2,n_gridy_2=n_gridy_2,ngrid_2=ngrid_2,n_gridx_3=n_gridx_3,n_gridy_3=n_gridy_3,ngrid_3=ngrid_3,n_gridx_4=n_gridx_4,n_gridy_4=n_gridy_4,ngrid_4=ngrid_4,n_gridx_5=n_gridx_5,n_gridy_5=n_gridy_5,ngrid_5=ngrid_5,n_gridx_6=n_gridx_6,n_gridy_6=n_gridy_6,ngrid_6=ngrid_6,n_gridx_7=n_gridx_7,n_gridy_7=n_gridy_7,ngrid_7=ngrid_7,dl_1=dl_1,dl_2=dl_2,dl_3=dl_3,dl_4=dl_4,dl_5=dl_5,dl_6=dl_6,dl_7=dl_7,line_1=line_1,line_2=line_2,line_3=line_3,line_4=line_4,line_5=line_5,line_6=line_6,line_7=line_7,wayemi=wayemi,filenm=filenm,gotdir=gotdir,file_abund=file_abund,ext_abund=ext_abund,imaging=imaging,revvel=revvel,channel=channel,nab=nab,abund_name=abund_name,enum=enum,inum=inum,abund_fact=abund_fact,extro=extro,silent=silent'
@@ -11,7 +11,10 @@ endif
 ; rho (or nem): (2d float array) total density (or total number density) in CGS
 ; tem: (2d float array) temperature in CGS 
 ; v1m, v2m: (2d float arrays) x and y components of velocity, in km/s 
-; gridx, gridy: (floats) x and y axes in cgs. Note: they are assumed uniform
+; gridx, gridy: (floats) x and y axes in cgs, corresponding to plane
+; of slice passed to fomo. Note: they are assumed uniform
+; gridz: (float) z axis in cgs, corresponding to perpendicular plane
+; to slice passed to fomo (assumed uniform).
 ; ion: (string) acronym of the ion
 ; w0: (float) wavelength of line center 
 ; mua_d: (floats) array of line-of-sight angles. The routine is set to return
@@ -110,6 +113,8 @@ ngridsx = n_elements(gridx)
 ngridsy = n_elements(gridy)
 dx = gridx[1]-gridx[0]
 dy = gridy[1]-gridy[0]
+dz = gridz[1]-gridz[0]
+d_perp = dz
 
 if keyword_set(imaging) or keyword_set(channel) then begin
    ; Channel imaging (filters) or line imaging:
@@ -122,9 +127,9 @@ if keyword_set(imaging) or keyword_set(channel) then begin
       if mua eq 0. then direction = 2
       if mua eq 90. then direction = 1
       if mua ne 0. and mua ne 90. then direction = 4
-      gridlos, gridx=gridx, gridy=gridy, mua_d=mua, dx=dx, dy=dy, n_gridx=n_gridx, n_gridy=n_gridy, ngrid=ngrid, dl=dl
+      gridlos, gridx=gridx, gridy=gridy, mua_d=mua, dx=dx, dy=dy, n_gridx=n_gridx, n_gridy=n_gridy, ngrid=ngrid, dl=dl,ds=ds
 
-      integrateemission,emission=emission_goft,logt=logt,n_gridx=n_gridx,n_gridy=n_gridy,ngrid=ngrid,w0=w0,direction=direction,imaging=imaging,channel=channel,image=image,dl=dl,dx=dx,dy=dy,wayemi=wayemi,silent=silent
+      integrateemission,emission=emission_goft,logt=logt,n_gridx=n_gridx,n_gridy=n_gridy,ngrid=ngrid,w0=w0,direction=direction,imaging=imaging,channel=channel,image=image,dl=dl,ds=ds,d_perp=d_perp,wayemi=wayemi,silent=silent
       dlos = (size(image))[1]
       inan = string(i+1,format="(i1)")
       exe1 = 'line_'+inan+' = image'
@@ -148,7 +153,7 @@ endif else begin
       if mua eq 0. then direction = 2
       if mua eq 90. then direction = 1
       if mua ne 0. and mua ne 90. then direction = 4
-      gridlos, gridx=gridx, gridy=gridy, mua_d=mua, velx=velx, vely=vely, dx=dx, dy=dy, n_gridx=n_gridx, n_gridy=n_gridy, ngrid=ngrid, dl=dl, losvel=losvel
+      gridlos, gridx=gridx, gridy=gridy, mua_d=mua, velx=velx, vely=vely, dx=dx, dy=dy, n_gridx=n_gridx, n_gridy=n_gridy, ngrid=ngrid, dl=dl,ds=ds, losvel=losvel
 
       if keyword_set(revvel) then begin
          losvel = -losvel
@@ -156,7 +161,7 @@ endif else begin
          losvel = losvel
       endelse
 
-      integrateemission,emission=emission_goft,logt=logt,n_gridx=n_gridx,n_gridy=n_gridy,ngrid=ngrid,wave=wave,w0=w0,direction=direction,losvel=losvel,imaging=imaging,image=image,watom=watom,wayemi=wayemi,dl=dl,dx=dx,dy=dy,silent=silent
+      integrateemission,emission=emission_goft,logt=logt,n_gridx=n_gridx,n_gridy=n_gridy,ngrid=ngrid,wave=wave,w0=w0,direction=direction,losvel=losvel,imaging=imaging,image=image,watom=watom,wayemi=wayemi,dl=dl,ds=ds,d_perp=d_perp,silent=silent
 
       dlos = (size(image))[1]
       inan = string(i+1,format="(i1)")

@@ -1,6 +1,6 @@
 
-pro degrad_res,oslice=oslice,wave=wave,w0=w0,dlx=dlx,dly=dly,gridx=gridx,gridy=gridy,dt=dt,time=time,xres=xres,fwhm_xres=fwhm_xres,yres=yres,fwhm_yres=fwhm_yres,vres=vres,cad=cad,noise=noise,effarea=effarea,dslice_cgn=dslice_cgn,grx_cg=grx_cg,gry_cg=gry_cg,wav_cg=wav_cg,imaging=imaging,spdata=spdata,wfluc=wfluc
-
+pro degrad_res,oslice=oslice,wave=wave,w0=w0,dlx=dlx,dly=dly,gridx=gridx,gridy=gridy,dt=dt,time=time,t_cad=t_cad,xres=xres,fwhm_xres=fwhm_xres,yres=yres,fwhm_yres=fwhm_yres,vres=vres,cad=cad,noise=noise,effarea=effarea,dslice_cgn=dslice_cgn,int_dslice=int_dslice,grx_cg=grx_cg,gry_cg=gry_cg,wav_cg=wav_cg,imaging=imaging,spdata=spdata,wfluc=wfluc,jitter=jitter,wjit=wjit
+ 
 ; INPUT:
 
 ; oslice : data in format: (x,wavelength,time) or
@@ -35,7 +35,9 @@ pro degrad_res,oslice=oslice,wave=wave,w0=w0,dlx=dlx,dly=dly,gridx=gridx,gridy=g
 ; gridy : y-grid
 ; wfluc : amplitude of random fluctuations for noise at each
 ;        wavelength position. Default is 0.1 (=10% of intensity)
-
+; jitter: apply jitter to each position: Gaussian distributed with
+;        sigma = wjit
+  
 ; OUTPUT:
 ;
 ; dslice_cgn : degraded data, with dimensions
@@ -66,7 +68,7 @@ pro degrad_res,oslice=oslice,wave=wave,w0=w0,dlx=dlx,dly=dly,gridx=gridx,gridy=g
      locw = 3
      slice = total(oslice,locw)
   endif
-  if dims[0] eq 3 and ~keyword_set(imaging) and keyword_set(spdata) then begin
+  if dims[0] eq 3 and ~keyword_set(imaging) and keyword_set(spdata) and n_elements(time) ne 0 then begin
 ; old_array(dimx,dimw,dimt) -> new_array(new_dimx,new_dimw,new_dimt)
      dimx = dims[1]
      dimy = 0
@@ -75,7 +77,7 @@ pro degrad_res,oslice=oslice,wave=wave,w0=w0,dlx=dlx,dly=dly,gridx=gridx,gridy=g
      locw = 2
      slice = oslice
   endif
-  if dims[0] eq 3 and ~keyword_set(spdata) then begin
+  if dims[0] eq 3 and ~keyword_set(spdata) and n_elements(time) ne 0 then begin
 ; old_array(dimx,dimy,dimt) -> new_array(new_dimx,new_dimy,new_dimt)
      dimx = dims[1]
      dimy = dims[2]
@@ -83,7 +85,16 @@ pro degrad_res,oslice=oslice,wave=wave,w0=w0,dlx=dlx,dly=dly,gridx=gridx,gridy=g
      dimt = dims[3]
      slice = oslice
   endif
-  if dims[0] eq 3 and keyword_set(imaging) and keyword_set(spdata) then begin
+  if dims[0] eq 3 and keyword_set(spdata) and n_elements(time) eq 0 then begin
+; old_array(dimx,dimy,dimw) -> new_array(new_dimx,new_dimy,new_dimw)
+     dimx = dims[1]
+     dimy = dims[2]
+     dimw = dims[3]
+     dimt = 1
+     locw = 3
+     slice = oslice
+  endif
+  if dims[0] eq 3 and keyword_set(imaging) and keyword_set(spdata) and n_elements(time) ne 0 then begin
 ; old_array(dimx,dimw,dimt) -> new_array(new_dimx,new_dimt)
      dimx = dims[1]
      dimy = 0
@@ -92,15 +103,15 @@ pro degrad_res,oslice=oslice,wave=wave,w0=w0,dlx=dlx,dly=dly,gridx=gridx,gridy=g
      locw = 2
      slice = total(oslice,locw)
   endif
-  if dims[0] eq 2 then begin
+  if dims[0] eq 2 and n_elements(time) ne 0 then begin
 ; old_array(dimx,dimt) -> new_array(new_dimx,new_dimt)
      dimx = dims[1]
      dimy = 0
      dimw = 0
      dimt = dims[2]
      slice = oslice
-  endif
-  
+  endif  
+
   c = 299792.458
   if dimw ne 0 then begin
      cf = h_cgs*c_cgs/(wave*1.e-8)
@@ -120,31 +131,34 @@ pro degrad_res,oslice=oslice,wave=wave,w0=w0,dlx=dlx,dly=dly,gridx=gridx,gridy=g
 
 ;  apix = xres^2*2.35d-11
 
-  if n_elements(vres) ne 0 then begin
-  endif
-
   if ~keyword_set(fwhm_xres) then fwhm_xres = xres*2
   if ~keyword_set(fwhm_yres) and n_elements(yres) ne 0. then fwhm_yres = yres*2
-  numpix_x = xres/dlx
-  numpix_x_fwhm = fwhm_xres/dlx
+  numpix_x = (xres/dlx)>1
+  numpix_x_fwhm = (fwhm_xres/dlx)>1
   nx_cg = round(dimx/numpix_x)
+  if keyword_set(jitter) then nx_jit = wjit/dlx
   if n_elements(gridx) ne 0 then grx_cg = congrid(gridx,nx_cg,/center,/interp)
 
   if dimy ne 0 then begin
-     numpix_y = yres/dly
-     numpix_y_fwhm = fwhm_yres/dly
+     numpix_y = (yres/dly)>1
+     numpix_y_fwhm = (fwhm_yres/dly)>1
      ny_cg = round(dimy/numpix_y)     
+     if keyword_set(jitter) then ny_jit = wjit/dly
      if n_elements(gridy) ne 0 then gry_cg = congrid(gridy,ny_cg,/center,/interp)
   endif
 
-  if ~keyword_set(cad) then begin
+  if ~keyword_set(cad) and n_elements(time) ne 0 then begin
      num_t = dimt
      cad_eff = dt
-     time_cad = time
+     t_cad = time
   endif else begin
-     num_t = round(dimt/(cad/dt))
-     time_cad = congrid(time,num_t,/interp)
-     cad_eff = time_cad[1]
+     if keyword_set(cad) then begin
+        num_t = round(dimt/(cad/dt))
+        t_cad = congrid(time,num_t,/interp)
+        cad_eff = t_cad[1]
+     endif else begin
+        num_t = dimt
+     endelse
   endelse
 
   if dims[0] eq 4 and ~keyword_set(imaging) then begin
@@ -153,19 +167,22 @@ pro degrad_res,oslice=oslice,wave=wave,w0=w0,dlx=dlx,dly=dly,gridx=gridx,gridy=g
   if dims[0] eq 4 and keyword_set(imaging) then begin
      dslice_cg = fltarr(nx_cg,ny_cg,num_t)
   endif
-  if dims[0] eq 3 and ~keyword_set(imaging) then begin
+  if dims[0] eq 3 and ~keyword_set(imaging) and n_elements(time) ne 0 then begin
      dslice_cg = fltarr(nx_cg,nw_cg,num_t)
   endif
-  if dims[0] eq 3 and keyword_set(imaging) and keyword_set(spdata) then begin
+  if dims[0] eq 3 and keyword_set(imaging) and keyword_set(spdata) and n_elements(time) ne 0 then begin
      dslice_cg = fltarr(nx_cg,num_t)
   endif
-  if dims[0] eq 3 and ~keyword_set(spdata) then begin
+  if dims[0] eq 3 and ~keyword_set(spdata) and n_elements(time) ne 0 then begin
      dslice_cg = fltarr(nx_cg,ny_cg,num_t)
   endif
-  if dims[0] eq 3 and ~keyword_set(imaging) and keyword_set(spdata) then begin
+  if dims[0] eq 3 and keyword_set(spdata) and n_elements(time) eq 0 then begin
+     dslice_cg = fltarr(nx_cg,ny_cg,nw_cg)
+  endif
+  if dims[0] eq 3 and ~keyword_set(imaging) and keyword_set(spdata) and n_elements(time) ne 0 then begin
      dslice_cg = fltarr(nx_cg,nw_cg,num_t)
   endif
-  if dims[0] eq 2 then begin
+  if dims[0] eq 2 and n_elements(time) ne 0 then begin
      dslice_cg = fltarr(nx_cg,num_t)
   endif
      
@@ -174,6 +191,12 @@ pro degrad_res,oslice=oslice,wave=wave,w0=w0,dlx=dlx,dly=dly,gridx=gridx,gridy=g
         if dimy eq 0 then begin
            slice_t = fltarr(dimx,dimw,num_t)
            for i=0,dimx-1 do slice_t[i,*,*] = frebin(reform(slice[i,*,*]),nwave,num_t,/total)/cad_eff
+           if keyword_set(jitter) then begin
+              for k=0,num_t-1 do begin
+                 rx = randomn(253+k,dimx)*nx_jit+findgen(dimx)
+                 slice_t[*,*,k] = slice_t[round(rx)<(dimx-1)>0,*,k]
+              endfor
+           endif
         endif else begin
            slice_t = fltarr(dimx,dimy,dimw,num_t)
            for j=0,dimy-1 do begin
@@ -182,17 +205,37 @@ pro degrad_res,oslice=oslice,wave=wave,w0=w0,dlx=dlx,dly=dly,gridx=gridx,gridy=g
               endfor
               print,string(13b)+' % finished: ',float(j)*100./((dimy-1)>1),format='(a,f4.0,$)'
            endfor
+           if keyword_set(jitter) then begin
+              for k=0,num_t-1 do begin
+                 rx = randomn(253+k,dimx)*nx_jit+findgen(dimx)
+                 ry = randomn(357+k,dimy)*nx_jit+findgen(dimy)
+                 slice_t[*,*,*,k] = slice_t[round(rx)<(dimx-1)>0,round(ry)<(dimy-1)>0,*,k]
+              endfor
+           endif
         endelse
      endif else begin
         if dimy eq 0 then begin
            slice_t = frebin(slice,dimx,num_t,/total)/cad_eff
+           if keyword_set(jitter) then begin
+              for k=0,num_t-1 do begin
+                 rx = randomn(253+k,dimx)*nx_jit+findgen(dimx)
+                 slice_t[*,k] = slice_t[round(rx)<(dimx-1)>0,k]
+              endfor
+           endif
         endif else begin
            slice_t = fltarr(dimx,dimy,num_t)
            for i=0,dimx-1 do slice_t[i,*,*] = frebin(reform(slice[i,*,*]),dimy,num_t,/total)/cad_eff
+           if keyword_set(jitter) then begin
+              for k=0,num_t-1 do begin
+                 rx = randomn(253+k,dimx)*nx_jit+findgen(dimx)
+                 ry = randomn(357+k,dimy)*nx_jit+findgen(dimy)
+                 slice_t[*,*,k] = slice_t[round(rx)<(dimx-1)>0,round(ry)<(dimy-1)>0,k]
+              endfor
+           endif
         endelse
      endelse        
   endif else begin
-     slice_t = slice/cad_eff
+     if n_elements(time) ne 0 then slice_t = slice/cad_eff else slice_t = slice
   endelse
 
   if dimw ne 0 then begin
@@ -210,8 +253,11 @@ pro degrad_res,oslice=oslice,wave=wave,w0=w0,dlx=dlx,dly=dly,gridx=gridx,gridy=g
         endfor
         for i=0,dimx-1 do begin
            for j=0,dimy-1 do begin
-              if max(slice_s[i,j,*,*]) gt 0 then begin
+              if max(slice_s[i,j,*,*]) gt 0 and num_t gt 1 then begin
                  slice_w[i,j,*,*] = filter_image(reform(slice_s[i,j,*,*]),FWHM=[numpix_w,1],/all)
+              endif
+              if max(slice_s[i,j,*,*]) gt 0 and num_t eq 1 then begin
+                 slice_w[i,j,*] = gauss_smooth(reform(slice_s[i,j,*]),numpix_w/(2.*sqrt(2.*alog(2.))))
               endif
            endfor
            print,string(13b)+' % finished: ',float(i)*100./((dimx-1)>1),format='(a,f4.0,$)'
@@ -224,7 +270,7 @@ pro degrad_res,oslice=oslice,wave=wave,w0=w0,dlx=dlx,dly=dly,gridx=gridx,gridy=g
         endfor
         for i=0,nx_cg-1 do begin
            for j=0,ny_cg-1 do begin
-              dslice_cg[i,j,*,*] = frebin(reform(dslice_cgw[i,j,*,*]),nw_cg,num_t,/total)
+              if num_t gt 1 then dslice_cg[i,j,*,*] = frebin(reform(dslice_cgw[i,j,*,*]),nw_cg,num_t,/total) else dslice_cg[i,j,*] = frebin(reform(dslice_cgw[i,j,*]),nw_cg,/total)
            endfor
            print,string(13b)+' % finished: ',float(i)*100./((nx_cg-1)>1),format='(a,f4.0,$)'
         endfor
@@ -293,8 +339,9 @@ pro degrad_res,oslice=oslice,wave=wave,w0=w0,dlx=dlx,dly=dly,gridx=gridx,gridy=g
      endif else begin
         dslice_cgn = int_dslice_n
      endelse
+     int_dslice = int_dslice_n
   endif else begin
-     if dimw eq 0 then dslice_cgn = int_dslice else dslice_cgn = dslice_cg/cf
+     if dimw eq 0 then dslice_cgn = int_dslice else dslice_cgn = dslice_cg/cf[nwave/2-1]
   endelse
 
 end

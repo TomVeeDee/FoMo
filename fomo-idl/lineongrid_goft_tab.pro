@@ -177,7 +177,7 @@ if n_elements(abund_fact) eq 0 then begin
    line_abunds_dflt = ab_dflt[enum-1]
    abund_fact = line_abunds/line_abunds_dflt
 endif
-
+ 
 goft=ne_s*0.
 ; calculate emission point by point:
 if wayemi eq 1 then begin
