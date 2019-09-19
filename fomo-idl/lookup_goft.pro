@@ -50,6 +50,8 @@ endelse
 if ~keyword_set(silent) then print,'G(n,T) table: '+filegot
 
   watom = 0
+  units = ''
+  vchianti = ''
   openr,unit,filename,/get_lun
   readf,unit,ion
   readf,unit,cw0

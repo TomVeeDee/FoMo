@@ -121,7 +121,7 @@ readf,unitversion, str
 free_lun,unitversion
 vchianti = 'CHIANTI'+str
 
-if sngfilter eq 'all' then aiarr = ['304','1600','1700','4500','171','193','211','335','094','131'] else aiarr = sngfilter
+if sngfilter[0] eq 'all' then aiarr = ['304','1600','1700','4500','171','193','211','335','094','131'] else aiarr = sngfilter
 naiar = n_elements(aiarr)
 
 ; make the default to look for the EUV channels

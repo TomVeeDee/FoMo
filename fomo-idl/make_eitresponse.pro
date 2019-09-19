@@ -100,7 +100,7 @@ readf,unitversion, str
 free_lun,unitversion
 vchianti = 'CHIANTI'+str
 
-if sngfilter eq 'all' then eitarr = ['171','195','284','304'] else eitarr = sngfilter
+if sngfilter[0] eq 'all' then eitarr = ['171','195','284','304'] else eitarr = sngfilter
 neitar = n_elements(eitarr)
 NN = 1000
 wmin171=160.0 & wmax171=250.0 & lambda171=findgen(NN)/(NN-1)*(wmax171-wmin171)+wmin171
@@ -111,7 +111,7 @@ wmin304=200.0 & wmax304=350.0 & lambda304=findgen(NN)/(NN-1)*(wmax304-wmin304)+w
 for k=0,neitar-1 do begin
    filt = eitarr[k]
    print,'Constructing EIT - '+filt+' G(T) table'
-   ex = 'eit_resp = eit_parms(lambda'+filt+',fix(filt),units=units)'
+   ex = 'eit_resp_'+filt+' = eit_parms(lambda'+filt+',fix(filt),units=units)'
    void = execute(ex)
    openw,unit,gotdir+'goft_table_eit'+filt+'_'+nab+extname+'.dat',/get_lun & w0 = float(filt) & ion = filt
    ex = 'wvlmin = wmin'+filt

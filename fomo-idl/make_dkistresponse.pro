@@ -103,7 +103,7 @@ readf,unitversion, str
 free_lun,unitversion
 vchianti = 'CHIANTI'+str
 
-if sngfilter eq 'all' then dkarr = ['10747','39340'] else dkarr = sngfilter
+if sngfilter[0] eq 'all' then dkarr = ['10747','39340'] else dkarr = sngfilter
 ndkar = n_elements(dkarr)
 
 for k=0,ndkar-1 do begin
