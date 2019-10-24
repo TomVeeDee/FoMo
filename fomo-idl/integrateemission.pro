@@ -24,7 +24,8 @@ pro integrateemission,emission=emission,logt=logt,n_gridx=n_gridx,n_gridy=n_grid
 ; image	= (2d float array) intensity along line-of-sight (n_elements(ngrid),nwave)
 
 ; solid angle of 1 simulation pixel in arcsec
-apix = (dl/1.e5/715.)*(d_perp/1.e5/715.)*(!pi/180./3600.)^2
+
+if keyword_set(channel) then apix = (dl/1.e5/715.)*(d_perp/1.e5/715.)*(!pi/180./3600.)^2 else apix = 1
 
 sizes=size(emission)
 dims = sizes[0]

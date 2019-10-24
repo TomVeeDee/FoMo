@@ -1,5 +1,5 @@
 
-pro degrad_res,oslice=oslice,wave=wave,w0=w0,dlx=dlx,dly=dly,gridx=gridx,gridy=gridy,dt=dt,time=time,t_cad=t_cad,xres=xres,fwhm_xres=fwhm_xres,yres=yres,fwhm_yres=fwhm_yres,vres=vres,cad=cad,noise=noise,effarea=effarea,dslice_cgn=dslice_cgn,int_dslice=int_dslice,grx_cg=grx_cg,gry_cg=gry_cg,wav_cg=wav_cg,imaging=imaging,spdata=spdata,wfluc=wfluc,jitter=jitter,wjit=wjit
+pro degrad_res,oslice=oslice,wave=wave,w0=w0,dlx=dlx,dly=dly,gridx=gridx,gridy=gridy,dt=dt,time=time,t_cad=t_cad,xres=xres,fwhm_xres=fwhm_xres,yres=yres,fwhm_yres=fwhm_yres,vres=vres,cad=cad,noise=noise,effarea=effarea,dslice_cgn=dslice_cgn,int_dslice=int_dslice,grx_cg=grx_cg,gry_cg=gry_cg,wav_cg=wav_cg,imaging=imaging,spdata=spdata,wfluc=wfluc,jitter=jitter,wjit=wjit,channel=channel
  
 ; INPUT:
 
@@ -7,9 +7,13 @@ pro degrad_res,oslice=oslice,wave=wave,w0=w0,dlx=dlx,dly=dly,gridx=gridx,gridy=g
 ;                          (x,y,wavelength,time) or
 ;                          (x,y,time) or
 ;                          (x,time)
-;         in units of erg cm^-2 s^-1 sr^-1
+; if keyword 'channel' is set then the units are assumed to be DN /
+; simulation pixel / s 
+; if keyword 'channel' is not set then the units are assumed to be:
+;  erg cm^-2 s^-1 sr^-1 (intensity) or erg cm^-2 s^-1 sr^-1 A^-1
+;  (specific intensity)
   
-; x(y)res, x(y)res_fwhm : in units of arcsec
+; x(y)res : target resolution in units of arcsec
 ; dlx : x-grid size in arcsec
 ; (dly : y-grid size in arcsec)
 ; cad : cadence of target instrument
@@ -31,8 +35,8 @@ pro degrad_res,oslice=oslice,wave=wave,w0=w0,dlx=dlx,dly=dly,gridx=gridx,gridy=g
 ;               default: fwhm_xres = x_res*2
 ; fwhm_yres : target y-resolution of the PSF (taken as the FWHM)
 ;               default: fwhm_yres = y_res*2
-; gridx : x-grid
-; gridy : y-grid
+; gridx : x-grid of plane-of-the-sky 
+; gridy : y-grid of plane-of-the-sky
 ; wfluc : amplitude of random fluctuations for noise at each
 ;        wavelength position. Default is 0.1 (=10% of intensity)
 ; jitter: apply jitter to each position: Gaussian distributed with
@@ -129,6 +133,7 @@ pro degrad_res,oslice=oslice,wave=wave,w0=w0,dlx=dlx,dly=dly,gridx=gridx,gridy=g
 
   if ~keyword_set(wfluc) and dimw ne 0 then wfluc = 0.1
 
+  if keyword_set(channel) then apix = 1 else apix = dlx*dly*(!pi/180./3600.)^2
 ;  apix = xres^2*2.35d-11
 
   if ~keyword_set(fwhm_xres) then fwhm_xres = xres*2
@@ -284,7 +289,7 @@ pro degrad_res,oslice=oslice,wave=wave,w0=w0,dlx=dlx,dly=dly,gridx=gridx,gridy=g
         endfor
         for i=0,num_t-1 do dslice_cg[*,*,i] = frebin(reform(slice_s[*,*,i]),nx_cg,nw_cg,/total)
      endelse
-     dslice_cg = dslice_cg*dw*effarea;*apix
+     dslice_cg = dslice_cg*dw*effarea*apix
   endif else begin
      if dimy ne 0 then begin
         slice_s = slice_t*0.
@@ -299,7 +304,7 @@ pro degrad_res,oslice=oslice,wave=wave,w0=w0,dlx=dlx,dly=dly,gridx=gridx,gridy=g
         slice_s = filter_image(slice_t,FWHM=[numpix_x_fwhm,1],/all)
         dslice_cg = frebin(slice_s,nx_cg,num_t,/total)
      endelse
-     dslice_cg = dslice_cg*dw*effarea;*apix
+     dslice_cg = dslice_cg*dw*effarea*apix
   endelse        
 
   if dimw ne 0 then int_dslice = total(dslice_cg,locw)/cf[nwave/2] else int_dslice = dslice_cg/cf

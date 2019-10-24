@@ -17,7 +17,8 @@ endif
 ;   during calculation, assuming ratio of protons to electrons is
 ;   0.887 and 0.848, respectively, for coronal and photospheric abundances)
 ; - temperature
-; 
+;
+
 ; In this example we further assume that we have 50 positions along z
 ; (leading to 50 slices for each time step)
 ; The angles provided below correspond to angles in this plane, 
@@ -47,6 +48,14 @@ endif
 ;        Default for EIT 304 is [8,12] and [8,11] for rest.
 ;        Default for DKIST is [8,11].
 ; SAVE: Set this keyword to save all output
+
+; OUTPUT UNITS of FOMO:
+; Channel imaging (such as AIA channels): DN simulation pixel^{-1} s^{-1}
+; Line imaging (specific spectral line): erg cm^{-2} s^{-1} sr^{-1}
+; spectroscopy (specific spectral line): erg cm^{-2} s^{-1} sr^{-1} A^{-1}
+
+; For Data post-processing (targetting specific instrument) see
+; routine 'degrad_res.pro'
 
 if keyword_set(dir) eq 0 then begin
     print,'fomo_synth,dir=dir,gotdir=gotdir,w0=w0,ion=ion,idcase=idcase,imaging=imaging,channel=channel,filenm=filenm,silent=silent,save=save'
@@ -212,6 +221,7 @@ for i=0,num-1 do begin
    gridx = x ; x-grid
    gridy = y ; y-grid
    gridz = z ; z-grid
+   d_perp = gridz[1]-gridz[0] ; perpendicular axis w.r.t. fomo slices (x,y)
    for j=nz0,dimz-1 do begin
       jnm = STRING(j, FORMAT = "(I5.5)")
       lcx3 = j
@@ -234,7 +244,7 @@ for i=0,num-1 do begin
 
          if keyword_set(save) then begin
             if i eq 0 and j eq nz0 then begin
-               exp = 'save,gridx,gridy,gridz,wave,w0,ion,mua_d,dimz,num,'+dllin+','+nglin+','+ngxlin+','+ngylin+',filename=savedir+"params_"+name+".sav"'
+               exp = 'save,gridx,gridy,gridz,wave,w0,ion,mua_d,dimz,d_perp,num,'+dllin+','+nglin+','+ngxlin+','+ngylin+',filename=savedir+"params_"+name+".sav"'
                void = execute(exp)
             endif
             exs = 'save,tstep,'+savlin+',filename=savedir+name+"_z="+jnm+"_t="+inm+".sav"'

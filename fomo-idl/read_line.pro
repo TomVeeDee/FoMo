@@ -1,7 +1,7 @@
-pro read_line, dir=dir,idcase=idcase,w0=w0,ion=ion,gridx=gridx,gridy=gridy,line1_t=line1_t,line2_t=line2_t,line3_t=line3_t,time=time,dl_1=dl_1,dl_2=dl_2,dl_3=dl_3,grid_1=grid_1,grid_2=grid_2,grid_3=grid_3,npixlos_1=npixlos_1,npixlos_2=npixlos_2,npixlos_3=npixlos_3,wave=wave,mua_d=mua_d,emission_goft_t=emission_goft_t,channel=channel,imaging=imaging,lcx=lcx,lct=lct,box=box
+pro read_line, dir=dir,idcase=idcase,w0=w0,ion=ion,gridx=gridx,gridy=gridy,line1_t=line1_t,line2_t=line2_t,line3_t=line3_t,time=time,dl_1=dl_1,dl_2=dl_2,dl_3=dl_3,d_perp=d_perp,grid_1=grid_1,grid_2=grid_2,grid_3=grid_3,npixlos_1=npixlos_1,npixlos_2=npixlos_2,npixlos_3=npixlos_3,wave=wave,mua_d=mua_d,emission_goft_t=emission_goft_t,channel=channel,imaging=imaging,lcx=lcx,lct=lct,box=box
 
 if ~keyword_set(dir) then begin
-   print,'read_line, dir=dir,idcase=idcase,w0=w0,ion=ion,gridx=gridx,gridy=gridy,line1_t=line1_t,line2_t=line2_t,line3_t=line3_t,time=time,dl_1=dl_1,dl_2=dl_2,dl_3=dl_3,grid_1=grid_1,grid_2=grid_2,grid_3=grid_3,npixlos_1=npixlos_1,npixlos_2=npixlos_2,npixlos_3=npixlos_3,wave=wave,mua_d=mua_d,emission_goft_t=emission_goft_t,channel=channel,imaging=imaging,lcx=lcx,lct=lct,box=box'
+   print,'read_line, dir=dir,idcase=idcase,w0=w0,ion=ion,gridx=gridx,gridy=gridy,line1_t=line1_t,line2_t=line2_t,line3_t=line3_t,time=time,dl_1=dl_1,dl_2=dl_2,dl_3=dl_3,d_perp=d_perp,grid_1=grid_1,grid_2=grid_2,grid_3=grid_3,npixlos_1=npixlos_1,npixlos_2=npixlos_2,npixlos_3=npixlos_3,wave=wave,mua_d=mua_d,emission_goft_t=emission_goft_t,channel=channel,imaging=imaging,lcx=lcx,lct=lct,box=box'
    return
 endif
 
