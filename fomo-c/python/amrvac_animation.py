@@ -2,24 +2,23 @@ import matplotlib.animation as animation
 import numpy as np
 import pylab as plt
 import matplotlib.cm as cm
-from readfomo import readgoftcube, readgoftcubechianti, regulargoftcube, gaussfitgoftcube
+from readfomo import readgoftcube, readgoftcube_units_chianti, regulargoftcube, gaussfitgoftcube
 import glob
 import sys
 import os
-import sunpy.cm
-
+import sunpy.visualization.colormaps.cm
 
 # store filenames as a sorted list
 unsorted=glob.glob(sys.argv[1])
 filelist=sorted(unsorted)
 
 # create data cube from file list
-print 'Reading file',filelist[0]
-data,chiantifile=readgoftcubechianti(filelist[0])
+print("Reading file:",filelist[0])
+data,units,chiantifile=readgoftcube_units_chianti(filelist[0]) #modified by Krishna
 emiss,xvec,yvec,lvec=regulargoftcube(data)
 allemiss=emiss
 for filename in filelist[1:]:
-    print 'Reading file',filename
+    print("Reading file:",filename)
     data=readgoftcube(filename)
     emiss,xvec,yvec,lvec=regulargoftcube(data)
     allemiss=np.dstack((allemiss,emiss))
@@ -28,12 +27,13 @@ for filename in filelist[1:]:
 fig = plt.figure(figsize=(10,10))
 ax = fig.add_subplot(111)
 ax.set_aspect('auto')
-ax.set_xlabel('x (Mm)')
-ax.set_ylabel('y (Mm)')
+ax.set_xlabel('x ('+units[0]+')')
+ax.set_ylabel('y ('+units[1]+')')
 
 # set colour map
 cmap=cm.hot
 aiafilter=os.path.basename(chiantifile)
+aiafilter=aiafilter.decode('ascii') #added by Krishna
 if ('goft_table_aia094' in aiafilter): cmap=plt.get_cmap('sdoaia094')
 if ('goft_table_aia131' in aiafilter): cmap=plt.get_cmap('sdoaia131')
 if ('goft_table_aia171' in aiafilter): cmap=plt.get_cmap('sdoaia171')
