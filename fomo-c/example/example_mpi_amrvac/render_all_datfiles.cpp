@@ -5,6 +5,7 @@
 #include <fstream>
 #include <iomanip>
 #include <sstream>
+#include <filesystem>
 #include <boost/filesystem/path.hpp>
 #include <boost/filesystem/operations.hpp>
 #include <boost/program_options.hpp>
@@ -113,13 +114,13 @@ int main(int argc, char* argv[])
 		pathstring = compstring.substr(0,lastslash);
 	}
 	
-	boost::filesystem::directory_iterator end_itr; // default construction yields past-the-end
+	std::filesystem::directory_iterator end_itr; // default construction yields past-the-end
 	vector<string> filelist;
-	for ( boost::filesystem::directory_iterator itr( pathstring ); itr != end_itr; ++itr )
+	for ( auto & itr : std::filesystem::directory_iterator{pathstring})
 	{
-		if ( boost::filesystem::is_regular_file(itr->status()) && MatchTextWithWildcards(itr->path().string(),compstring) )
+		if ( std::filesystem::is_regular_file(itr) && MatchTextWithWildcards(itr.path(),compstring) )
 		{
-			string filename=itr->path().string();
+			string filename=itr.path();
 			filelist.push_back( filename );
 		}
 	}

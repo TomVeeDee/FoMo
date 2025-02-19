@@ -1,7 +1,7 @@
 m4_define(FOMOVERSION,3.4)
-AC_INIT(FoMo,FOMOVERSION,tom.vandoorsselaere@kuleuven.be)
+AC_INIT([FoMo],[FOMOVERSION],[tom.vandoorsselaere@kuleuven.be])
 AC_SUBST(fomoversion,FOMOVERSION)
-AC_PREREQ(2.59)
+AC_PREREQ([2.72])
 AM_INIT_AUTOMAKE(1.9)
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_HEADERS(config.h)
@@ -9,10 +9,10 @@ AC_PROG_CXX
 AC_ENABLE_SHARED
 AC_DISABLE_STATIC
 LT_INIT
-AC_PROG_LIBTOOL(libtool)
+LT_INIT([libtool])
 # check if mpi is wanted
 AC_ARG_WITH(mpi,
-[AC_HELP_STRING([--with-mpi],[build MPI version of FoMo])],
+[AS_HELP_STRING([--with-mpi],[build MPI version of FoMo])],
 mpi=$withval,mpi="no")
 # search for the fortran compiler
 if test "a$mpi" = "ayes" ; then
@@ -23,7 +23,7 @@ fi
 AC_PROG_CXX($CXXCOMP)
 AC_PROG_CXXCPP([cpp])
 AC_LANG(C++)
-AC_LANG_CPLUSPLUS
+AC_LANG([C++])
 AX_CXX_COMPILE_STDCXX_11
 
 # set the version number of FoMo
@@ -87,7 +87,9 @@ if test "x$with_hdf5" = "xyes"; then
 fi
 AM_CONDITIONAL(HAVE_HDF5, [test -n "$HDF5_CXX"])
 
-AC_HEADER_STDC
+AC_CHECK_INCLUDES_DEFAULT
+AC_PROG_EGREP
+
 AC_CHECK_HEADERS([string])
 AC_CHECK_HEADERS([iostream])
 AC_CHECK_HEADERS([vector])
@@ -206,4 +208,5 @@ DX_PDF_FEATURE(ON)
 DX_INIT_DOXYGEN($PACKAGE_NAME,docfiles/fomo-doxygen.cfg,doc)
 
 # write the Makefiles
-AC_OUTPUT(Makefile src/Makefile example/Makefile example/example_FLASH/Makefile example/example_mpi_amrvac/Makefile)
+AC_CONFIG_FILES([Makefile src/Makefile example/Makefile example/example_FLASH/Makefile example/example_mpi_amrvac/Makefile])
+AC_OUTPUT
