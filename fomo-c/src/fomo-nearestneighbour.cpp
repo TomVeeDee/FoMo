@@ -32,7 +32,7 @@ FoMo::RenderCube nearestneighbourinterpolation(FoMo::GoftCube goftcube, const do
 {
 //
 // results is an array of at least dimension (x2-x1+1)*(y2-y1+1)*lambda_pixel and must be initialized to zero
-// 
+//
 // determine contributions per pixel
 
 	int commrank;
@@ -56,18 +56,18 @@ FoMo::RenderCube nearestneighbourinterpolation(FoMo::GoftCube goftcube, const do
 	zacc.resize(ng);
 	losvel.resize(ng);
 	// Read the physical variables
-	FoMo::tphysvar peakvec=goftcube.readvar(0);//Peak intensity 
+	FoMo::tphysvar peakvec=goftcube.readvar(0);//Peak intensity
 	FoMo::tphysvar fwhmvec=goftcube.readvar(1);// line width, =1 for AIA imaging
-	FoMo::tphysvar vx=goftcube.readvar(2);  
+	FoMo::tphysvar vx=goftcube.readvar(2);
 	FoMo::tphysvar vy=goftcube.readvar(3);
 	FoMo::tphysvar vz=goftcube.readvar(4);
-	
+
 	// initialisations for boost nearest neighbour
 	point boostpoint, targetpoint;
 	value boostpair;
 	std::vector<value> input_values(ng),returned_values;
 	box maxdistancebox;
-	
+
 // No openmp possible here
 // Because of the insertions at the end of the loop, we get segfaults :(
 #ifdef _OPENMP
@@ -78,7 +78,7 @@ FoMo::RenderCube nearestneighbourinterpolation(FoMo::GoftCube goftcube, const do
 		std::vector<double> gridpoint;
 		gridpoint.resize(dim);
 		for (int j=0; j<dim; j++)	gridpoint.at(j)=grid[j][i];
-		// if dim==2, then set all z-coordinates to 0. 
+		// if dim==2, then set all z-coordinates to 0.
 		if (dim==2) gridpoint.push_back(0.);
 		xacc.at(i)=gridpoint.at(0)*cos(b)*cos(l)-gridpoint.at(1)*cos(b)*sin(l)-gridpoint.at(2)*sin(b);// rotated grid
 		yacc.at(i)=gridpoint.at(0)*sin(l)+gridpoint.at(1)*cos(l);
@@ -88,17 +88,17 @@ FoMo::RenderCube nearestneighbourinterpolation(FoMo::GoftCube goftcube, const do
 		std::vector<double> velvec = {vx[i], vy[i], vz[i]};// velocity vector
 		double losvelval = inner_product(unit.begin(),unit.end(),velvec.begin(),0.0);//velocity along line of sight for position [i]/[ng]
 		losvel.at(i)=losvelval;
-		
+
 		// build r-tree from gridpoints, this part is not parallel
 		boostpoint = point(gridpoint.at(0), gridpoint.at(1), gridpoint.at(2));
 		boostpair=std::make_pair(boostpoint,i);
 		input_values.at(i)=boostpair;
 	}
 	if (commrank==0) std::cout << "Done!" << std::endl;
-	if (commrank==0) std::cout << "Building R-tree... " << std::flush;
+	if (commrank==0) std::cout << "Building R-tree..." << std::flush;
 	// take an rtree with the quadratic packing algorithm, it takes (slightly) more time to build, but queries are faster for large renderings
 	bgi::rtree< value, bgi::quadratic<16> > rtree(input_values.begin(),input_values.end());
-	
+
 	// compute the bounds of the input data points, so that we can equidistantly distribute the target pixels
 	double minz=*(min_element(zacc.begin(),zacc.end()));
 	double maxz=*(max_element(zacc.begin(),zacc.end()));
@@ -114,11 +114,11 @@ FoMo::RenderCube nearestneighbourinterpolation(FoMo::GoftCube goftcube, const do
 	std::string chiantifile=goftcube.readchiantifile();
 	double lambda0=goftcube.readlambda0();// lambda0=AIA bandpass for AIA imaging
 	double lambda_width_in_A=lambda_width*lambda0/speedoflight;
-	   	
+
 	if (commrank==0) std::cout << "Building frame: " << std::flush;
 	double x,y,z,intpolpeak,intpolfwhm,intpollosvel,lambdaval,tempintens;
 	int ind;
-	
+
 	//initialize grids
 	FoMo::tgrid newgrid;
 	FoMo::tcoord xvec(x_pixel*y_pixel*lambda_pixel),yvec(x_pixel*y_pixel*lambda_pixel),lambdavec(x_pixel*y_pixel*lambda_pixel);
@@ -126,11 +126,11 @@ FoMo::RenderCube nearestneighbourinterpolation(FoMo::GoftCube goftcube, const do
 	newgrid.push_back(yvec);
 	if (lambda_pixel > 1) newgrid.push_back(lambdavec);
 	FoMo::tphysvar intens(x_pixel*y_pixel*lambda_pixel,0);
-	
+
 	// maxdistance is the furthest distance between a grid point and a simulation point at which the emission is interpolated
 	// it is computed as the half diagonal of the rectangle around this ray, with the sides equal to the x and y distance between rays
 	// i.e. it needs to be closer to this ray than to any other ray
-	double maxdistance; 
+	double maxdistance;
 	maxdistance = std::sqrt(std::pow((maxx-minx)/(x_pixel-1),2)+std::pow((maxy-miny)/(y_pixel-1),2))/2.;
 	// However, it is better to just take the minimum of the pixel size in either direction, because it is then used in the maxdistancebox
 	maxdistance = std::max((maxx-minx)/(x_pixel-1),(maxy-miny)/(y_pixel-1))/2.;
@@ -141,7 +141,7 @@ FoMo::RenderCube nearestneighbourinterpolation(FoMo::GoftCube goftcube, const do
 	boost::progress_display show_progress(x_pixel*y_pixel*z_pixel);
 	double deltaz=(maxz-minz);
 	if (z_pixel != 1) deltaz/=(z_pixel-1);
-	
+
 #ifdef _OPENMP
 #pragma omp parallel for schedule(dynamic) collapse(2) shared (rtree) private (x,y,z,intpolpeak,intpolfwhm,intpollosvel,lambdaval,tempintens,ind,returned_values,targetpoint,maxdistancebox)
 #endif
@@ -151,9 +151,9 @@ FoMo::RenderCube nearestneighbourinterpolation(FoMo::GoftCube goftcube, const do
 			// now we're on one ray, through point with coordinates in the image plane
 			x = double(j)/(x_pixel-1)*(maxx-minx)+minx;
 			y = double(i)/(y_pixel-1)*(maxy-miny)+miny;
-						
+
 			std::vector<double> p;
-			
+
 			#ifdef _OPENMP
 			#pragma omp task
 			#endif
@@ -163,14 +163,14 @@ FoMo::RenderCube nearestneighbourinterpolation(FoMo::GoftCube goftcube, const do
 		// calculate the interpolation in the original frame of reference
 		// i.e. derotate the point using angles -l and -b
 				p={x*cos(b)*cos(l)+y*sin(l)+z*sin(b)*cos(l),-x*cos(b)*sin(l)+y*cos(l)-z*sin(b)*sin(l),-x*sin(b)+z*cos(b)};
-				
+
 				// initialise nearestindex to point -1
 				int nearestindex=-1;
-				
+
 				// look for nearest point to targetpoint
 				targetpoint=point(p.at(0),p.at(1),p.at(2));
 				returned_values.clear();
-				// the second condition ensures the point is not further away than 
+				// the second condition ensures the point is not further away than
 				// - half the x-resolution in the x-direction
 				// - half the y-resolution in the y-direction
 				// - the maximum of both the previous numbers in the z-direction (sort of improvising a convex hull approach)
@@ -179,6 +179,7 @@ FoMo::RenderCube nearestneighbourinterpolation(FoMo::GoftCube goftcube, const do
 				maxdistancebox=box(point(p.at(0)-maxdistance,p.at(1)-maxdistance,p.at(2)-maxdistance),point(p.at(0)+maxdistance,p.at(1)+maxdistance,p.at(2)+maxdistance));
 				//numberofpoints=
 				rtree.query(bgi::nearest(targetpoint, 1) && bgi::within(maxdistancebox), std::back_inserter(returned_values));
+
 				if (returned_values.size() >= 1)
 				{
 					nearestindex=returned_values.at(0).second;
@@ -190,7 +191,7 @@ FoMo::RenderCube nearestneighbourinterpolation(FoMo::GoftCube goftcube, const do
 				{
 					intpolpeak=0;
 				}
-					
+
 				if (lambda_pixel>1)// spectroscopic study
 				{
 					for (int il=0; il<lambda_pixel; il++) // changed index from global variable l into il [D.Y. 17 Nov 2014]
@@ -200,9 +201,11 @@ FoMo::RenderCube nearestneighbourinterpolation(FoMo::GoftCube goftcube, const do
 						// here a ternary operator may be used
 						// if intpolpeak is not zero then the correct expression is used. otherwise, the intensity is just 0
 						// it remains to be tested if this is faster than just the direct computation
-						//tempintens=intpolpeak ? intpolpeak*exp(-pow(lambdaval-intpollosvel/speedoflight*lambda0,2)/pow(intpolfwhm,2)*4.*log(2.)) : 0;
-						tempintens=intpolpeak*exp(-pow(lambdaval-intpollosvel/speedoflight*lambda0,2)/pow(intpolfwhm,2)*4.*log(2.));
-						ind=(i*(x_pixel)+j)*lambda_pixel+il;// 
+						tempintens=intpolpeak ? intpolpeak*exp(-pow(lambdaval-intpollosvel/speedoflight*lambda0,2)/pow(intpolfwhm,2)*4.*log(2.)) : 0; // Uncommented this line by Vaibhav pant on 22 Nov, 2018. tempintens as defined below was giving NAN values for odd wavelength bins.
+
+						//tempintens=intpolpeak*exp(-pow(lambdaval-intpollosvel/speedoflight*lambda0,2)/pow(intpolfwhm,2)*4.*log(2.));
+
+						ind=(i*(x_pixel)+j)*lambda_pixel+il;//
 						newgrid.at(0).at(ind)=x;
 						newgrid.at(1).at(ind)=y;
 						newgrid.at(2).at(ind)=lambdaval+lambda0; // store the full wavelength
@@ -211,10 +214,10 @@ FoMo::RenderCube nearestneighbourinterpolation(FoMo::GoftCube goftcube, const do
 					}
 				}
 			
-				if (lambda_pixel==1) // AIA imaging study. Algorithm not verified [DY 14 Nov 2014]
+				if (lambda_pixel==1) // AIA imaging study
 				{
 					tempintens=intpolpeak;
-					ind=(i*x_pixel+j); 
+					ind=(i*x_pixel+j);
 					newgrid.at(0).at(ind)=x;
 					newgrid.at(1).at(ind)=y;
 					// this is critical, but with tasks, the ind is unique for each task, and no collision should occur
@@ -226,20 +229,44 @@ FoMo::RenderCube nearestneighbourinterpolation(FoMo::GoftCube goftcube, const do
 			}
 		}
 	if (commrank==0) std::cout << " Done! " << std::endl << std::flush;
-	
+
 	FoMo::RenderCube rendercube(goftcube);
 	FoMo::tvars newdata;
 	double pathlength=(maxz-minz)/(z_pixel-1);
 	// this does not work if only one z_pixel is given (e.g. for a 2D simulation), or the maxz and minz are equal (face-on on 2D simulation)
-	// assume that the thickness of the slab is 1Mm. 
+	// assume that the thickness of the slab is 1Mm.
 	if ((maxz==minz) || (z_pixel==1))
 	{
 		pathlength=1.;
-		std::cout << "Assuming that this is a 2D simulations: setting thickness of simulation to " << pathlength << "Mm." << std::endl << std::flush;
+		std::cout << "Assuming that this is a 2D simulation: setting thickness of simulation to " << pathlength << "Mm." << std::endl << std::flush;
 	}
-	intens=FoMo::operator*(pathlength*1e8,intens); // assume that the coordinates are given in Mm, and convert to cm
+	
+	// the intensity does not need to be rescaled for spectroscopic data
+	double apix = 1.;
+	// these are the default units if spectroscopic data
+	std::vector<std::string> unitvec;
+	unitvec.push_back("Mm");
+	unitvec.push_back("Mm");
+	if (lambda_pixel > 1) unitvec.push_back("\\AA{}");
+	unitvec.push_back("erg cm^{-2} s^{-1} \\AA{}^{-1}");
+	// check if the units of emissivity contain DN: then we are dealing with an instrument, and spatial units should be converted to arcsec, 
+	// intensity should be rescaled to pixel size
+	std::size_t found = goftcube.readunit().at(dim).find("DN");
+	if (found!=std::string::npos)
+	{
+		unitvec.at(0)="arcsec";
+		newgrid.at(0)=FoMo::operator*(1./Mmperarcsec,newgrid.at(0));
+		unitvec.at(1)="arcsec";
+		newgrid.at(1)=FoMo::operator*(1./Mmperarcsec,newgrid.at(1));
+		float dx=(maxx-minx)/(x_pixel-1),dy=(maxy-miny)/(y_pixel-1); // are given in Mm
+		apix = (dx/Mmperarcsec)*(dy/Mmperarcsec)*pow(pi/180./3600.,2); 
+		std::cout << "apix" << apix << "dx" << dx << "dy" << dy;
+		unitvec.back()="DN s^{-1} pixel^{-1}"; // this could be improved using Boost::units, making everything automatic, including compiler checks
+	}
+	
+	intens=FoMo::operator*(pathlength*1e8*apix,intens); // assume that the coordinates in goftcube are given in Mm, and convert to cm
 	newdata.push_back(intens);
-	rendercube.setdata(newgrid,newdata);
+	rendercube.setdata(newgrid,newdata,&unitvec);
 	rendercube.setrendermethod("NearestNeighbour");
 	rendercube.setresolution(x_pixel,y_pixel,z_pixel,lambda_pixel,lambda_width);
 	if (lambda_pixel == 1)
@@ -278,4 +305,3 @@ namespace FoMo
 		return rendercube;
 	}
 }
-

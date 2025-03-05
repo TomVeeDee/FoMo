@@ -57,9 +57,14 @@ int main(int argc, char* argv[])
 				variables.push_back(tmpvar);
 			}
 			
+			vector<string> unitvec;
+			for (unsigned int i=0; i<3; i++) unitvec.push_back("Mm");
+			unitvec.push_back("cm^{-3}");
+			unitvec.push_back("K");
+			for (unsigned int i=0; i<3; i++) unitvec.push_back("m s^{-1}");
 			// If the file has not reached the end, this is probably a valid data point. Push it back 
 			// into the FoMoObject.
-			if ( !filetoread.eof() ) Object.push_back_datapoint(coordinates, variables);
+			if ( !filetoread.eof() ) Object.push_back_datapoint(coordinates, variables, &unitvec);
 		}
 	}
 	/// [Read in data]

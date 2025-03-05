@@ -231,7 +231,9 @@ FoMo::RenderCube CGALinterpolation(FoMo::GoftCube goftcube, Delaunay_triangulati
 						{
 							// lambda the relative wavelength around lambda0, with a width of lambda_width
 							lambdaval=double(il)/(lambda_pixel-1)*lambda_width_in_A-lambda_width_in_A/2.;
-							tempintens=intpolpeak*exp(-pow(lambdaval-intpollosvel/speedoflight*lambda0,2)/pow(intpolfwhm,2)*4.*log(2.));
+							tempintens=intpolpeak ? intpolpeak*exp(-pow(lambdaval-intpollosvel/speedoflight*lambda0,2)/pow(intpolfwhm,2)*4.*log(2.)) : 0; // Added this line by Vaibhav pant on 22 Nov, 2018. tempintens as defined below was giving NAN values for odd wavelength bins.
+
+							//tempintens=intpolpeak*exp(-pow(lambdaval-intpollosvel/speedoflight*lambda0,2)/pow(intpolfwhm,2)*4.*log(2.));
 							ind=(i*(x_pixel)+j)*lambda_pixel+il;// 
 							newgrid.at(0).at(ind)=x;
 							newgrid.at(1).at(ind)=y;
@@ -258,9 +260,39 @@ FoMo::RenderCube CGALinterpolation(FoMo::GoftCube goftcube, Delaunay_triangulati
 	FoMo::RenderCube rendercube(goftcube);
 	FoMo::tvars newdata;
 	double pathlength=(maxz-minz)/(z_pixel-1);
-	intens=FoMo::operator*(pathlength*1e8,intens); // assume that the coordinates are given in Mm, and convert to cm
+	// this does not work if only one z_pixel is given (e.g. for a 2D simulation), or the maxz and minz are equal (face-on on 2D simulation)
+	// assume that the thickness of the slab is 1Mm. 
+	if ((maxz==minz) || (z_pixel==1))
+	{
+		pathlength=1.;
+		std::cout << "Assuming that this is a 2D simulation: setting thickness of simulation to " << pathlength << "Mm." << std::endl << std::flush;
+	}
+	
+	// the intensity does not need to be rescaled for spectroscopic data
+	double apix = 1.;
+	// these are the default units if spectroscopic data
+	std::vector<std::string> unitvec;
+	unitvec.push_back("Mm");
+	unitvec.push_back("Mm");
+	if (lambda_pixel > 1) unitvec.push_back("\\AA{}");
+	unitvec.push_back("erg cm^{-2} s^{-1} \\AA{}^{-1}");
+	// check if the units of emissivity contain DN: then we are dealing with an instrument, and spatial units should be converted to arcsec, 
+	// intensity should be rescaled to pixel size
+	std::size_t found = goftcube.readunit().at(dim).find("DN");
+	if (found!=std::string::npos)
+	{
+		unitvec.at(0)="arcsec";
+		newgrid.at(0)=FoMo::operator*(1./Mmperarcsec,newgrid.at(0));
+		unitvec.at(1)="arcsec";
+		newgrid.at(1)=FoMo::operator*(1./Mmperarcsec,newgrid.at(1));
+		float dx=(maxx-minx)/(x_pixel-1),dy=(maxy-miny)/(y_pixel-1); // are given in Mm
+		apix = (dx/Mmperarcsec)*(dy/Mmperarcsec)*pow(pi/180./3600.,2); 
+		unitvec.back()="DN s^{-1} pixel^{-1}"; // this could be improved using Boost::units, making everything automatic, including compiler checks
+	}
+	
+	intens=FoMo::operator*(pathlength*1e8*apix,intens); // assume that the coordinates in goftcube are given in Mm, and convert to cm
 	newdata.push_back(intens);
-	rendercube.setdata(newgrid,newdata);
+	rendercube.setdata(newgrid,newdata,&unitvec);
 	rendercube.setrendermethod("CGAL");
 	rendercube.setresolution(x_pixel,y_pixel,z_pixel,lambda_pixel,lambda_width);
 	if (lambda_pixel == 1)

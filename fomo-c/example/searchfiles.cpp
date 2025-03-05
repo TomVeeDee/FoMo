@@ -4,6 +4,7 @@
 #include <fstream>
 #include <iomanip>
 #include <sstream>
+#include <filesystem>
 #include <boost/filesystem/path.hpp>
 #include <boost/filesystem/operations.hpp>
 #include <map>
@@ -31,8 +32,9 @@ static const map<string,string> AIAmap{ &AIAfilters[0], &AIAfilters[6]};
 int main(int argc, char* argv[])
 {
 	// search the current path for files that contain string compstring
-	boost::filesystem::path full_path( boost::filesystem::initial_path<boost::filesystem::path>() );
-	boost::filesystem::directory_iterator end_itr; // default construction yields past-the-end
+	// deprecated line boost::filesystem::path full_path( boost::filesystem::initial_path<boost::filesystem::path>() );
+	string full_path = "./";
+	std::filesystem::directory_iterator end_itr; // default construction yields past-the-end
 	vector<string> filelist;
 	vector<string> complist;
 	int ng=512;
@@ -40,11 +42,11 @@ int main(int argc, char* argv[])
 	complist.push_back(compstring);
 	compstring=".dat";
 	complist.push_back(compstring);
-	for ( boost::filesystem::directory_iterator itr( full_path ); itr != end_itr; ++itr )
+	for ( auto & itr : std::filesystem::directory_iterator{full_path} )
 	{
-		if ( boost::filesystem::is_regular_file( itr->status() ) )
+		if ( std::filesystem::is_regular_file( itr ) )
 		{
-			string filename=itr->path().string();
+			string filename=itr.path();
 			bool matches=true;
 			for (unsigned int i=0; i<complist.size(); i++)
 			{

@@ -56,21 +56,23 @@ namespace FoMo
 		unsigned int ng;
 		FoMo::tgrid grid;
 		FoMo::tvars vars;
-		void setgrid(tgrid ingrid);
-		void setvar(const unsigned int, const tphysvar);
+		std::vector<std::string> unit;
+		void setgrid(tgrid ingrid, std::vector<std::string> * inunit = NULL);
+		void setvar(const unsigned int, const tphysvar, std::string inunit="");
 	public:
 		DataCube(const int = 3);
 		~DataCube();
 		int readdim() const;
 		int readngrid() const;
 		int readnvars() const;
+		std::vector<std::string> readunit() const;
 		tgrid readgrid() const;
 		tphysvar readvar(const unsigned int) const;
 		void setdim(const int indim);
 		void setnvars(const int innvars);
 		void setngrid(const int inngrid);
-		void setdata(tgrid& ingrid, tvars& indata);
-		void push_back(std::vector<double> coordinate, std::vector<double> variables);
+		void setdata(tgrid& ingrid, tvars& indata, std::vector<std::string> * unitvec = NULL);
+		void push_back(std::vector<double> coordinate, std::vector<double> variables, std::vector<std::string> * unitvec = NULL);
 	};
 	
 	const int noptions=4; // the number of write options for a goftcube
@@ -202,8 +204,8 @@ namespace FoMo
 		std::string readchiantifile();
 		std::string readabundfile();
 		void setoutfile(const std::string outfile);
-		void push_back_datapoint(std::vector<double> coordinate, std::vector<double> variables);
-		void setdata(tgrid& ingrid, tvars& indata);
+		void push_back_datapoint(std::vector<double> coordinate, std::vector<double> variables, std::vector<std::string> * unitvec = NULL);
+		void setdata(tgrid& ingrid, tvars& indata, std::vector<std::string> * unitvec = NULL);
 		void setobservationtype(FoMoObservationType);
 		FoMoObservationType readobservationtype();
 		void setresolution(const int & x_pixel, const int & y_pixel, const int & z_pixel, const int & lambda_pixel, const double & lambda_width);
