@@ -1,12 +1,12 @@
 
 
-PRO gridlos,gridx=gridx,gridy=gridy,mua_d=mua_d,velx=velx,vely=vely,dx=dx,dy=dy,n_gridx=n_gridx,n_gridy=n_gridy,ngrid=ngrid,dl=dl,ds=ds,losvel=losvel
+PRO gridlos, gridx=gridx, gridy=gridy, mua_d=mua_d, velx=velx, vely=vely, dx=dx, dy=dy, n_gridx=n_gridx, n_gridy=n_gridy, ngrid=ngrid, dl=dl, losvel=losvel
 
 if keyword_set(gridx) eq 0 then begin
    print,'gridlos, gridx=gridx, gridy=gridy, mua_d=mua_d, velx=velx, vely=vely, dx=dx, dy=dy, n_gridx=n_gridx, n_gridy=n_gridy, ngrid=ngrid, dl=dl, losvel=losvel'
    return
 endif
-  
+
 ; Calculates the LOS rays provided a LOS angle, and optionally outputs
 ; the LOS velocity
 
@@ -22,7 +22,6 @@ endif
 ; n_gridy = y-coordinates for points along rays
 ; ngrid = provides number and ordering of rays
 ; dl = distance between rays
-; ds = distance along rays
 
 ; OPTIONAL INPUT:
 ; velx = (2d float) array of velocity along x
@@ -61,7 +60,6 @@ if mua_r eq !pi/2 then begin
    ye_ar = ye
    ls = 1.
    dl = dy
-   ds = dx
    while(ind eq 0) do begin
       y0_p = yc+float(i)
       yd_p = yc+float(i)

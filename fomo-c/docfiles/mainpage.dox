@@ -5,69 +5,12 @@
 
 (This is a copy of the "instrument" paper on FoMo, published in Frontiers in Astronomy and Space Sciences. Please refer to the <a href="http://journal.frontiersin.org/article/10.3389/fspas.2016.00004/full">open access publication</a>.)
 
-The problem of generating of a synthetic image seen by a telescope or spectrograph can be split into two: 
-- calculation of plasma emission in a particular spectral line or a passband of a telescope;
-- calculation of how a given imaging instrument sees the plasma, with taking into account its optical characteristics, e.g. aperture area, pixel size, focal length, sensitivity etc. 
-
-\subsection emissivity Plasma emission
-
-The emissivity of coronal plasma \f$\widetilde{\epsilon}_{\lambda_0}\f$ [\f$\mbox{erg s}^{-1}\mbox{ cm}^{-3}\mbox{ sr}^{-1}\f$] in a given monochromatic spectral line \f$\lambda_0\f$ can be obtained from plasma parameters --- temperature \f$T\f$, density \f$n_e\f$, chemical abundances, and atomic coefficients such as excitation cross-section. We imply that the corona is optically thin, and thus we can project plasma emission into the plane of sky:
+The corona is optically thin, and thus the specific intensity \f$I(\lambda,x',y')\f$ (in \f$\mbox{ergs cm}^{-2} \mbox{s}^{-1} \mbox{sr}^{-1} \AA{}^{-1}\f$) at a wavelength \f$\lambda\f$ is the integral of the monochromatic emissivity \f$\epsilon(\lambda,x,y,z)\f$ at each point along the LOS. Let us assume that the LOS is along a given \f$z'\f$ axis, that may not be aligned to any of the numerical axes.
 \f{equation}{
-	I_{\lambda_0}(x',y') = \int \widetilde{\epsilon}_{\lambda_0}(x',y',z') dz'
+	I(\lambda,x',y')=\int \epsilon(\lambda,x(z'),y(z'),z(z')) dz'.
+	\label{eq:int}
 \f}
-where \f$I_{\lambda_0}\f$ [\f$\mbox{ergs s}^{-1} \mbox{ cm}^{-2} \mbox{ sr}^{-1}\f$]  is the specific intensity, or surface brightness, \f$(x',y')\f$ are the coordinates in the plane of sky, and the integration is performed along the LOS, that coincide with the \f$z'\f$-axis. The reference frame \f$(x',y',z')\f$ should not necessarily coincide with the reference frame of the simulation \f$(x,y,z)\f$.
-
-The emissivity \f$\widetilde{\epsilon}_{\lambda_0}\f$ of plasma at a given spectral line \f$\lambda_0\f$ is calculated as: 
-\f{equation}{
-	\widetilde{\epsilon}_{\lambda_0}=G_{\lambda_0}(T,n_\mathrm{e}) n^2_\mathrm{e},
-	\label{eq:contrib}
-\f}
-where \f$G_{\lambda_0}\f$ [\f$\mbox{erg s}^{-1} \mbox{ cm}^3 \mbox{ sr}^{-1}\f$] is the so called contribution function for that specific spectral line, and depends upon excitation/de-excitation cross-sections, abundances, atomic term structure, plasma parameters. The contribution functions are pre-calculated using CHIANTI package and used as look-up tables in the code. There are various definitions of the contribution function in the literature, that do not include abundances directly, or do not include \f$\frac{1}{4\pi}\f$ factor; we use the former definition.
-
-? Assumptions... Thin plasma, ionization equilibria, \f$T_{ions}=T_{el}\f$. ? Refer to some spectroscopic paper ?
-
-The two equations 1.1 and 1.2 can be combined:
-\f{equation}{
-	I_{\lambda_0}(x',y') = \int G_{\lambda_0}(T,n_e) n_e^2 dz',
-\f} 
-and it is implied that values \f$T\f$ and \f$n_e\f$ are taken at a point with coordinates \f$(x',y',z')\f$.
-
-\subsection imaging Imaging with a telescope
-
-The significant difference with the previous part is that usually a telescope spectral passband is wide enough, and many spectral lines contribute to a signal in a single pixel. Thus spectral integration should be performed at some step.
-
-Another difference is that when one considers a particular telescope, he implies also other parameters, like focal length or pixel plate scale, aperture size (similar telescope with larger aperture will register higher signal) etc. These parameters determine the level of signal registered in a given pixel. The final units are expressed not in surface brightness [\f$\mbox{ergs s}^{-1} \mbox{ cm}^{-2} \mbox{ sr}^{-1}\f$], but in [\f$\mbox{DN s}^{-1} \mbox{ pixel}^{-1}\f$].
-
-<!-- When one considers how a telescope registers an image, it is convenient to split the process in two steps:
-- Ideal imaging system forms an image from the plane of sky in the plane of detector. The image in the detector plane is rescaled depending upon \f$f\f$ --- focal length of the telescope and \f$L\f$ --- distance between the telescope and plasma, the intensity also depends on the telescope aperture area \f$A\f$;
-- Real parameters of the telescope are taken into account, such as finite optical transmission, sensitivity of the detector, pixel size etc.
--->
-
-Let's take the following parameters: \f$f\f$ [\f$\mbox{mm}\f$] --- focal distance of the telescope, \f$L\f$ [\f$\mbox{cm}\f$] --- distance between the telescope and plasma, \f$A=\frac{\pi D^2}{4}\f$ [\f$\mbox{cm}^2\f$] --- telescope aperture area, \f$dx\f$ [\f$\mbox{mm}\f$] --- linear pixel size of the detector, transmission of the optical system \f$T(\lambda)\f$. Let's also consider particular wavelength \f$\lambda_0\f$. A given pixel on the detector will receive all the photons from a particular area \f$S=\left( \frac{dx}{f}L \right)^2\f$ [\f$\mbox{cm}^2\f$] on the plane of sky that are emitted into \f$\Omega=\frac{A}{L^2}\f$ [\f$\mbox{sr}\f$] --- the solid angle that corresponds to the aperture of the telescope. Thus the number of received photons is calculated as:
-\f{equation}{
-  N = B_{\lambda_0} \cdot \Omega \cdot S \cdot T(\lambda) = B_{\lambda_0} \cdot A \cdot \left(\frac{dx}{f}\right)^2 \cdot T(\lambda_0),
-\f}
-where \f$B_{\lambda_0}=\frac{h\lambda}{c} I_{\lambda_0}\f$ [\f$\mbox{photons s}^{-1} \mbox{ cm}^{-2} \mbox{ sr}^{-1}\f$] --- is the specific intensity expressed in photons, the factor \f$\left( \frac{dx}{f} \right)^2\f$ [\f$\mbox{sr}\f$] denotes solid angle that corresponds to a pixel.  Worthing to note that \f$\mbox{N}\f$ has units [\f$\mbox{photons s}^{-1} \mbox{synth. pixel}^{-1}\f$], i.e. number of photons that receives synthetic pixel with linear size \f$\mbox{dx}\f$ or angular size \f$\left( \frac{dx}{f} \right)\f$. The formula automatically takes into account distance L, scaling of image etc.
-
-<!--Note that \f$A\cdot \left(\frac{dx}{f}\right)^2\f$ is purely geometrical factor, i.e. corresponds to an ideal imaging system, whereas \f$T(\lambda_0)\f$ reflect actual transmission. Other effects, such as final width of PSF can be taken into account at further steps.-->
-
-![How a telescope registers an image](./imaging_via_telescope2.png)
-
-Below we take spectral transmission into account. The optical throughput and the detector sensitivity strictly depend on \f$\lambda\f$. Let's denote with \f$\kappa(\lambda)\f$ [\f$\mbox{DN photon}^{-1}\f$] sensitivity of the detector. One usually introduces factor \f$ A'(\lambda)=A T(\lambda) \kappa(\lambda)\f$ [\f$\mbox{cm}^2 \mbox{ DN photon}^{-1}\f$] called "effective area", which stores most of the telescope spectral and sensitivity. 
-
-Now Eqs. 1.4, and 1.5 can be combined:
-\f{equation}{
-  N = \int_\lambda B_\lambda A'(\lambda) \left(\frac{dx}{f}\right)^2 d\lambda = \int_{\Delta z} \int_\lambda G_\lambda(T,n_e) n_e^2 A'(\lambda) \left(\frac{dx}{f}\right)^2 d\lambda dz' = \left(\frac{dx}{f}\right)^2 \int_{\Delta z} \widetilde{G}(T,n_e) n_e^2 dz',
-\f}
-where \f$\widetilde{G}(T,n_e)=\int_\lambda G_\lambda(T,n_e)A'(\lambda) d\lambda\f$ reflects convolution with spectral sensitivity of the telescope, and N has units [\f$\mbox{DN s}^{-1} \mbox{ synth. pixel}^{-1}\f$]. Note that the Eq. 1.5 resembles Eq. 1.3, however here \f$\widetilde{G}(T,n_e)\f$ has units [\f$\mbox{DN s}^{-1} \mbox{ cm}^5 \mbox{ sr}^{-1}\f$].
-
-In the imaging regime we store pre-calculated \f$\widetilde{G}(T,n_e)\f$ functions, in take into account factor \f$\left(\frac{dx}{f}\right)^2\f$ inside FoMo. Such an approach allows to make sub-resolution synthetic images. In order to compare subresolution synthetic image with observational data, one shall reduce the synthetic image with integration signal over neighbouring pixel.  
-
-\subsection software Software implementation
-
-Depending on the regime, FoMo calculates either integral from Eq. 1.3 (spectroscopic regime) or Eq. 1.5 (imaging regime). The mathematical implementation of the integral is the same in both regimes, and the obtained units depend on the units of stored \f$G(T,n_e)\f$ tables.
-
-The essential thing is that the two coordinate systems --- of the simulation \f$(x,y,z)\f$ and the "observational" \f$(x',y',z')\f$  need not to coincide. The two coordinate systems are connected by two rotations, first an angle \f$l\f$ around the \f$z\f$-axis, then around an angle \f$-b\f$ around the \f$y\f$-axis:
+Here \f$(x,y,z)\f$ are the coordinates in the original simulation, and \f$(x',y',z')\f$ are the coordinates in the rotated frame of reference of the observation. \f$(x',y')\f$ are the coordinates in the image plane (also known as the plane-of-the-sky, or POS), and \f$z'\f$ is the direction along the LOS. The two coordinate systems are connected by two rotations, first an angle \f$l\f$ around the \f$z\f$-axis, then around an angle \f$-b\f$ around the \f$y\f$-axis:
 \f{equation}{
 	\begin{pmatrix} x' \\ y' \\ z'\end{pmatrix}=\begin{pmatrix} \cos{b} & 0 & -\sin{b} \\ 0&1&0\\ \sin{b} & 0 & \cos{b}\end{pmatrix}\begin{pmatrix} \cos{l} & -\sin{l} &0\\ \sin{l} & \cos{l} &0\\ 0&0&1\end{pmatrix} \begin{pmatrix} x\\y\\z\end{pmatrix}.
 	\label{eq:angle}
@@ -75,18 +18,11 @@ The essential thing is that the two coordinate systems --- of the simulation \f$
 The viewing angles are set as argument of the FoMo::FoMoObject.render() function.
 The simulation box with grid \f$(x,y,z)\f$ is considered as the input, and is the data for which the forward model needs to be computed. There the input model needs to contain the \f$x-, y-, z-\f$coordinates of each data point, and specify the number density \f$n_\mathrm{e}\f$, the temperature \f$T\f$ and three velocity components \f$(v_x,v_y,v_z)\f$ at these data points. \f$(x,y,z)\f$ should be in Mm (megameter), \f$n_\mathrm{e}\f$ in \f$\mbox{cm}^{-3}\f$, temperature \f$T\f$ in K and the velocity components should have units m/s.
 
-Then, a new grid is generated in the observation reference frame \f$(x',y',z')\f$. The grid points in this new, "observational" grid are called voxels. The resolution of the new grid is set by the user, with the FoMo::FoMoObject member function FoMo::FoMoObject.setresolution(). The integrals from Eqs. 1.3 or 1.5 are discretised as follows:
-\f{equation}{
-	I_{\lambda_0}(x'_i,y'_j)=\sum_{k} \widetilde{\epsilon}_{\lambda_0}(x'_i,y'_j,z'_k) \Delta l=\sum_{k} G_{\lambda_0}(T,n_e) n_e^2 \Delta l,
-	\label{eq:discrete}
-\f}
-where \f$T\f$ and \f$n_e\f$ are taken at the coordinates \f$(x'_i,y'_j,z'_k)\f$.
-
-The choice for the resolution in the \f$z'-\f$direction (\f$\Delta l\f$) should be close to the numerical resolution of the input model, as otherwise emission features may be missed in the forward models. 
+Then, a new grid is generated in the observation reference frame \f$(x',y',z')\f$. The grid points in this new, "observational" grid are called voxels. The resolution of the new grid is set by the user, with the FoMo::FoMoObject member function FoMo::FoMoObject.setresolution(). The choice for the resolution in the \f$z'-\f$direction (\f$\Delta l\f$) should be close to the numerical resolution of the input model, as otherwise emission features may be missed in the forward models. 
 The numerical resolution of the forward model is not related to the instrument resolution. The numerical resolution is necessary to capture the fine emission features that may be present in the numerical model. The instrument resolution should be simulated by post-processing the forward model with a point spread function (or simply summing pixels to degrade the image). 
 At each voxel \f$(x'_i,y'_j,z'_k)\f$, the emissivity is interpolated from the nearest grid point in the \f$(x,y,z)\f$-space and then the LOS integration is performed.
 
-<!--The integral in Eq. 1 is then discretised as follows
+The integral in Eq. 1 is then discretised as follows
 \f{equation}{
 	I(\lambda,x'_i,y'_j)=\sum_{k} \epsilon(\lambda,x'_i,y'_j,z'_k) \Delta l,
 	\label{eq:discrete}
@@ -98,11 +34,8 @@ The monochromatic emission is calculated by first converting the physical variab
 	\widetilde{\epsilon}(x,y,z)=\frac{A_\mathrm{b}}{4\pi} n^2_\mathrm{e}(x,y,z) G_{\lambda_0}(n_\mathrm{e}(x,y,z),T(x,y,z)),
 	\label{eq:contrib}
 \f}
-where \f$A_\mathrm{b}\f$ is the abundance of the emitting element (with respect to hydrogen) and \f$G_{\lambda_0}\f$ the contribution function for that specific spectral line (including the Gaunt factor and oscillator strength for the spectral line).
--->
-
- 
-The \f$G_{\lambda_0}(T,n_e)\f$ or \f$\widetilde{G}(T,n_e)\f$ are calculated by a look-up table (see the tables list on the wiki webpage at <a>https://wiki.esat.kuleuven.be/FoMo/GeneratingTables</a>), selected by FoMo::FoMoObject.setchiantifile(). The look-up tables were generated for a range of temperatures and densities using gofnt.pro in the CHIANTI database. The procedure implies particular abundance, electrons and protons have the same temperature and that the plasma is in ionisation equilibrium. For the latter, the chianti.ioneq is used by default.  
+where \f$A_\mathrm{b}\f$ is the abundance of the emitting element (with respect to hydrogen) and \f$G_{\lambda_0}\f$ the contribution function for that specific spectral line (including the Gaunt factor and oscillator strength for the spectral line). 
+The \f$G_{\lambda_0}\f$ is calculated by a look-up table (see the tables list on the wiki webpage at <a>https://wiki.esat.kuleuven.be/FoMo/GeneratingTables</a>), selected by FoMo::FoMoObject.setchiantifile(). The look-up tables were generated for a range of temperatures and densities using g_of_t.pro in the CHIANTI database. This routine assumes that the plasma satisfies the coronal approximation, in particular, that electrons and protons have the same temperature and that the plasma is in ionisation equilibrium. For the latter, the chianti.ioneq is used by default. Moreover, the emission tables were generated with the assumption that the spectral lines are collisionally excited. 
 Some included line emission (such as HeII, MgII) is often observed to be optically thick. The users of the code need to ensure that the considered model (and its expected emission) is in the optically thin regime for these spectral lines, and the assumption of ionisation equilibrium is not too stringent for the modelled environment.
 The abundance \f$A_\mathrm{b}\f$ is read from a CHIANTI abundance file. As a standard sun_coronal_2012_schmelz.abund is used, but it may be swapped with another file if needed by FoMo::FoMoObject.setabundfile().
 
@@ -114,10 +47,10 @@ We compute the full-width half-maximum of the spectral line \f$\lambda_\mathrm{w
 where \f$k\f$ is the Boltzmann constant, \f$c\f$ is the speed of light, \f$m_\mathrm{p}\f$ is the mass of a proton, \f$\mu_{\lambda_0}\f$ is the atomic weight (in proton masses) of the emitting element and \f$v_\mathrm{th}=\sqrt{\frac{2kT}{\mu_{\lambda_0}m_\mathrm{p}}}\f$ is the thermal velocity. This is done at each voxel.
 Thus, in this first step of the computation FoMo::FoMoObject.render(), the physical variables \f$n_\mathrm{e},T\f$ are converted to \f$\widetilde{\epsilon},\lambda_\mathrm{w}\f$, and is stored as FoMo::FoMoObject.goftcube.
 
-In the second step of FoMo::FoMoObject.render(), the integration along the LOS is performed. At each voxel, the emissivity, spectral line width and velocity \f$\widetilde{\epsilon},\lambda_\mathrm{w},\vec{v}\f$ are interpolated from its nearest neighbour in the \f$(x,y,z)\f$ grid. Then the wavelength dependence of the monochromatic emissivity is calculated by taking a Gaussian shaped spectral line with the correct thermal line width (Eq. 1.8) and the local Doppler shift. 
+In the second step of FoMo::FoMoObject.render(), the integration along the LOS is performed. At each voxel, the emissivity, spectral line width and velocity \f$\widetilde{\epsilon},\lambda_\mathrm{w},\vec{v}\f$ are interpolated from its nearest neighbour in the \f$(x,y,z)\f$ grid. Then the wavelength dependence of the monochromatic emissivity is calculated by taking a Gaussian shaped spectral line with the correct thermal line width (Eq. 5) and the local Doppler shift. 
 \f{align}{
-	\epsilon(\lambda,x',y',z')&=\frac{2\sqrt{2\ln{2}}}{\sqrt{2\pi}\lambda_\mathrm{w}}\widetilde{\epsilon}_{\lambda_0}(x',y',z') \exp{\left(-\frac{4\ln{2}}{\lambda^2_\mathrm{w}}\left(\lambda-\lambda_0\left(1-\vec{z'}\cdot \vec{v}/c\right)\right)^2\right)}\\
-	&=\frac{1}{\sigma_\mathrm{w}\sqrt{2\pi}}\widetilde{\epsilon}_{\lambda_0}(x',y',z') \exp{\left(-\frac{1}{2 \sigma^2_\mathrm{w}}\left(\lambda-\lambda_0\left(1-\vec{z'}\cdot \vec{v}/c\right)\right)^2\right)}
+	\epsilon(\lambda,x',y',z')&=\frac{2\sqrt{2\ln{2}}}{\sqrt{2\pi}\lambda_\mathrm{w}}\widetilde{\epsilon}(x',y',z') \exp{\left(-\frac{4\ln{2}}{\lambda^2_\mathrm{w}}\left(\lambda-\lambda_0\left(1-\vec{z'}\cdot \vec{v}/c\right)\right)^2\right)}\\
+	&=\frac{1}{\sigma_\mathrm{w}\sqrt{2\pi}}\widetilde{\epsilon}(x',y',z') \exp{\left(-\frac{1}{2 \sigma^2_\mathrm{w}}\left(\lambda-\lambda_0\left(1-\vec{z'}\cdot \vec{v}/c\right)\right)^2\right)}
 	\label{eq:gauss}
 \f}
 The local Doppler shift is calculated by projecting the local velocity \f$\vec{v}\f$ onto a unit vector \f$\vec{z'}\f$ along the LOS, given by 
@@ -125,13 +58,11 @@ The local Doppler shift is calculated by projecting the local velocity \f$\vec{v
 	\vec{z'}=\begin{pmatrix}\sin{b}\cos{l}\\ -\sin{b}\sin{l}\\ \cos{b}\end{pmatrix}.
 	\label{eq:los}
 \f}
-as can be readily derived from Eq. 1.6.
+as can be readily derived from Eq. 2.
 The velocity projection is done in each grid point, and then the value is interpolated to the forward modelling grid.
-After summation with Eq. 1.7, the specific intensity \f$I(\lambda,x'_i,y'_j)\f$ is returned as a result of the second step in the code, and is stored as FoMo::FoMoObject.rendering. This specific intensity can then be read out and fitted with a Gaussian in order to obtain intensity, Doppler shift and line width.
+After summation with Eq. 3, the specific intensity \f$I(\lambda,x'_i,y'_j)\f$ is returned as a result of the second step in the code, and is stored as FoMo::FoMoObject.rendering. This specific intensity can then be read out and fitted with a Gaussian in order to obtain intensity, Doppler shift and line width.
 
-For the imaging regime proper \f$\widetilde{G}(T,n_e)\f$ tables were calculated, that take into account spectral sensitivity and aperture size of the telescope. This feature can be used by setting FoMo::FoMoObject.setobservationtype() to FoMo::Imaging and using the appropriate emission file (set by FoMo::FoMoObject.setchiantifile()) 
-
-<!--For the calculation of emission in the imaging telescopes of SDO/AIA, we have computed instrument response functions \f$\kappa_\alpha(n_\mathrm{e},T)\f$ for bandpass \f$\alpha\f$ on a grid of densities \f$n_\mathrm{e}\f$ and temperatures \f$T\f$ (see <a>https://wiki.esat.kuleuven.be/FoMo/GeneratingTables</a>). This feature can be used by setting FoMo::FoMoObject.setobservationtype() to FoMo::Imaging and using the appropriate emission file (set by FoMo::FoMoObject.setchiantifile()). The instrument response is then computed by
+For the calculation of emission in the imaging telescopes of SDO/AIA, we have computed instrument response functions \f$\kappa_\alpha(n_\mathrm{e},T)\f$ for bandpass \f$\alpha\f$ on a grid of densities \f$n_\mathrm{e}\f$ and temperatures \f$T\f$ (see <a>https://wiki.esat.kuleuven.be/FoMo/GeneratingTables</a>). This feature can be used by setting FoMo::FoMoObject.setobservationtype() to FoMo::Imaging and using the appropriate emission file (set by FoMo::FoMoObject.setchiantifile()). The instrument response is then computed by
 \f{equation}{
 	\kappa_\alpha(n_\mathrm{e},T)=\int_\lambda G(\lambda,n_\mathrm{e},T) R_\alpha(\lambda) d\lambda,
 \f}
@@ -140,7 +71,6 @@ where \f$R_\alpha\f$ is the wavelength-dependent response function of bandpass \
 	I(x'_i,y'_j)=\sum_{k} \kappa_\alpha(x'_i,y'_j,z'_k) \Delta l,
 \f}
 in which the emissivity was replaced by the instrument response function. 
--->
 
 \section Installation
 

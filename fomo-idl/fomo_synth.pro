@@ -1,10 +1,5 @@
 
-pro fomo_synth,dir=dir,gotdir=gotdir,w0=w0,ion=ion,idcase=idcase,imaging=imaging,channel=channel,filenm=filenm,extro=extro,silent=silent,save=save
-
-if keyword_set(dir) eq 0 then begin
-   print,'fomo_synth,dir=dir,gotdir=gotdir,w0=w0,ion=ion,idcase=idcase,imaging=imaging,channel=channel,filenm=filenm,extro=extro,silent=silent,save=save'
-   return
-endif
+pro fomo_synth,dir=dir,gotdir=gotdir,w0=w0,ion=ion,idcase=idcase,imaging=imaging,aia=aia,silent=silent,save=save
 
 ; WRAPPER AROUND FOMO:
 ; This example assumes that you have 2 IDL save files (wavetube0.idl &
@@ -13,12 +8,9 @@ endif
 ; forward modelling is done by taking slices in the (x,y)
 ; plane. Specifically wavetube contains (all in CGS and all have
 ; dimensions (dimx,dimy,dimz) ):
-; - ndens: total number density (converted to electron number density
-;   during calculation, assuming ratio of protons to electrons is
-;   0.887 and 0.848, respectively, for coronal and photospheric abundances)
+; - ndens: number density
 ; - temperature
-;
-
+; 
 ; In this example we further assume that we have 50 positions along z
 ; (leading to 50 slices for each time step)
 ; The angles provided below correspond to angles in this plane, 
@@ -30,7 +22,6 @@ endif
 
 ; KEYWORDS:
 ; DIR: work directory. (don't forget to add '/' at the end of the path
-; GOTDIR: directory of chianti tables in fomo (full path)
 ; IDCASE: name of the current study. The wrapper assumes that a
 ; subdirectory in dir exists with this name.
 ; The output will be saved in dir+idcase+'/sav/'
@@ -38,32 +29,17 @@ endif
 ; ION = name of line (see below for examples) 
 ; IMAGING: set this keyword indicating that only imaging (no spectra)
 ; will be saved
-; CHANNEL: set to 'aia' for AIA channels. See below
+; AIA: keyword indicating that AIA channels will be treated. See below
 ; for details on how to select the appropriate channel
-; FILENM = optional keyword for additional labelling
-; EXTRO: set for G(T,n) tables with extended density range [6,12]
-;        in log. Default for spectral lines is [8,11] for log(T)>5 and [8,12]
-;        for log(T)<5 where T is the maximum formation temperature. 
-;        Default for AIA 304,1600,1700,4500 is [8,12] and [8,11] for rest.
-;        Default for EIT 304 is [8,12] and [8,11] for rest.
-;        Default for DKIST is [8,11].
 ; SAVE: Set this keyword to save all output
 
-; OUTPUT UNITS of FOMO:
-; Channel imaging (such as AIA channels): DN simulation pixel^{-1} s^{-1}
-; Line imaging (specific spectral line): erg cm^{-2} s^{-1} sr^{-1}
-; spectroscopy (specific spectral line): erg cm^{-2} s^{-1} sr^{-1} A^{-1}
-
-; For Data post-processing (targetting specific instrument) see
-; routine 'degrad_res.pro'
-
 if keyword_set(dir) eq 0 then begin
-    print,'fomo_synth,dir=dir,gotdir=gotdir,w0=w0,ion=ion,idcase=idcase,imaging=imaging,channel=channel,filenm=filenm,silent=silent,save=save'
+    print,'fomo_synth,dir=dir,gotdir=gotdir,w0=w0,ion=ion,idcase=idcase,imaging=imaging,aia=aia,silent=silent,save=save'
     return
 endif
-if keyword_set(channel) then imaging = 1
+
 ; NAME of output:
-if (keyword_set(imaging) or keyword_set(channel)) then name = 'fomo_'+idcase+'_imag' else name = 'fomo_'+idcase+'_synth'
+if (keyword_set(imaging) or keyword_set(aia)) then name = 'fomo_'+idcase+'_imag' else name = 'fomo_'+idcase+'_synth'
 
 ; OUTPUT DIRECTORY:
 
@@ -81,7 +57,7 @@ endif
 file_abund = 'coronal'
 
 ; CHOOSE LINE TO SYNTHESIZE:
-; examples:
+
 ; for Fe IX 171.073 (about 1MK)
 ;w0 = 171.073 & ion = 'fe_9'
 
@@ -133,25 +109,21 @@ file_abund = 'coronal'
 
 ; SDO FILTERS:
 ; AIA-171
-; w0 = 171
+;w0 = 171. & ion = '171'
 ; AIA-193
-; w0 = 193
+;w0 = 193. & ion = '193'
 ; AIA-211
-; w0 = 211
+;w0 = 211. & ion = '211'
 ; AIA-131
-; w0 = 131
+;w0 = 131. & ion = '131'
 ; AIA-304
-; w0 = 304
+;w0 = 304. & ion = '304'
 ; AIA-335
-; w0 = 335
+;w0 = 335. & ion = '335'
 ; AIA-094
-; w0 = 94
-; AIA-1600
-; w0 = 1600
-; AIA-1700
-; w0 = 1700
+;w0 = 94. & ion = '094'
 
-if ~keyword_set(ion) and keyword_set(channel) and keyword_set(w0) then begin
+if ~keyword_set(ion) and keyword_set(aia) and keyword_set(w0) then begin
    if w0 lt 1.e3 then ion = string(w0,format="(i3.3)") else ion = string(w0,format="(i4.4)")
 endif
 
@@ -176,10 +148,10 @@ emilin = 'emission_goft'
 savlin = linlin+','+emilin
 
 ; SDO FILTERS (imaging): 
-if keyword_set(channel) or keyword_set(imaging) then begin
+if keyword_set(aia) or keyword_set(imaging) then begin
    wayemi = 5
-   if keyword_set(channel) then begin
-      name = name+'_'+channel+'_'+ion
+   if keyword_set(aia) then begin
+      name = name+'_aia_'+ion
    endif else begin
       name = name +'_'+ion+'_'+nw0
    endelse
@@ -220,34 +192,30 @@ for i=0,num-1 do begin
    restore,dir+idcase+'/wavetube'+sn+'.idl'
    gridx = x ; x-grid
    gridy = y ; y-grid
-   gridz = z ; z-grid
-   d_perp = gridz[1]-gridz[0] ; perpendicular axis w.r.t. fomo slices (x,y)
    for j=nz0,dimz-1 do begin
       jnm = STRING(j, FORMAT = "(I5.5)")
       lcx3 = j
-      checkfile = name+'_z='+jnm+'_t='+inm+'.done'
+      if dimz gt 1 then checkfile = name+'_z='+jnm+'_t='+inm+'.done' else checkfile = name+'_z='+jnm+'_t='+inm+'.done'
       if (file_test(savedir+checkfile) eq 0) then begin
          OPENW, lun, savedir+checkfile, /get_lun
          free_lun, lun
          print,'Doing slice_time:',checkfile
 ; ndens, temperature, v_x, v_y are 3d-arrays (dimx,dimy,dimz)
-         nem = ndens[*,*,j] ; total density (CGS)
-         tem = temperature[*,*,j] ; in K
-         if ~keyword_set(imaging) and ~keyword_set(channel) then begin
-            v1m = v_x[*,*,j]/1.e5 ; convert to km/s
-            v2m = v_y[*,*,j]/1.e5 ; convert to km/s
-         endif
-         tstep = t ; t is scalar indicating time step in sec
+         nem = ndens[*,*,j]
+         tem = temperature[*,*,j] ; 
+         v1m = v_x[*,*,j]/1.e5 ; convert to km/s
+         v2m = v_y[*,*,j]/1.e5 ; convert to km/s
+         time = t ; t is scalar indicating time step in sec
 
          ; CALCULATE INTENSITIES
-         synthemi,rho=rho,nem=nem,tem=tem,v1m=v1m,v2m=v2m,ion=ion,mua_d=mua_d,gridx=gridx,gridy=gridy,gridz=gridz,emission_goft=emission_goft,wave=wave,nwave=nwave,w0=w0,n_gridx_1=n_gridx_1,n_gridy_1=n_gridy_1,ngrid_1=ngrid_1,n_gridx_2=n_gridx_2,n_gridy_2=n_gridy_2,ngrid_2=ngrid_2,n_gridx_3=n_gridx_3,n_gridy_3=n_gridy_3,ngrid_3=ngrid_3,n_gridx_4=n_gridx_4,n_gridy_4=n_gridy_4,ngrid_4=ngrid_4,n_gridx_5=n_gridx_5,n_gridy_5=n_gridy_5,ngrid_5=ngrid_5,n_gridx_6=n_gridx_6,n_gridy_6=n_gridy_6,ngrid_6=ngrid_6,n_gridx_7=n_gridx_7,n_gridy_7=n_gridy_7,ngrid_7=ngrid_7,dl_1=dl_1,dl_2=dl_2,dl_3=dl_3,dl_4=dl_4,dl_5=dl_5,dl_6=dl_6,dl_7=dl_7,line_1=line_1,line_2=line_2,line_3=line_3,line_4=line_4,line_5=line_5,line_6=line_6,line_7=line_7,wayemi=wayemi,filenm=filenm,gotdir=gotdir,file_abund=file_abund,imaging=imaging,channel=channel,nab=nab,abund_name=abund_name,enum=enum,inum=inum,abund_fact=abund_fact,extro=extro,silent=silent
+         synthemi,rho=rho,nem=nem,tem=tem,v1m=v1m,v2m=v2m,ion=ion,mua_d=mua_d,gridx=gridx,gridy=gridy,emission_goft=emission_goft,wave=wave,nwave=nwave,w0=w0,n_gridx_1=n_gridx_1,n_gridy_1=n_gridy_1,ngrid_1=ngrid_1,n_gridx_2=n_gridx_2,n_gridy_2=n_gridy_2,ngrid_2=ngrid_2,n_gridx_3=n_gridx_3,n_gridy_3=n_gridy_3,ngrid_3=ngrid_3,n_gridx_4=n_gridx_4,n_gridy_4=n_gridy_4,ngrid_4=ngrid_4,n_gridx_5=n_gridx_5,n_gridy_5=n_gridy_5,ngrid_5=ngrid_5,n_gridx_6=n_gridx_6,n_gridy_6=n_gridy_6,ngrid_6=ngrid_6,n_gridx_7=n_gridx_7,n_gridy_7=n_gridy_7,ngrid_7=ngrid_7,dl_1=dl_1,dl_2=dl_2,dl_3=dl_3,dl_4=dl_4,dl_5=dl_5,dl_6=dl_6,dl_7=dl_7,line_1=line_1,line_2=line_2,line_3=line_3,line_4=line_4,line_5=line_5,line_6=line_6,line_7=line_7,wayemi=wayemi,filenm=filenm,gotdir=gotdir,file_abund=file_abund,imaging=imaging,aia=aia,nab=nab,abund_name=abund_name,enum=enum,inum=inum,abund_fact=abund_fact,silent=silent
 
          if keyword_set(save) then begin
             if i eq 0 and j eq nz0 then begin
-               exp = 'save,gridx,gridy,gridz,wave,w0,ion,mua_d,dimz,d_perp,num,'+dllin+','+nglin+','+ngxlin+','+ngylin+',filename=savedir+"params_"+name+".sav"'
+               exp = 'save,gridx,gridy,wave,w0,ion,mua_d,'+dllin+','+nglin+','+ngxlin+','+ngylin+',filename=savedir+"params_"+name+".sav"'
                void = execute(exp)
             endif
-            exs = 'save,tstep,'+savlin+',filename=savedir+name+"_z="+jnm+"_t="+inm+".sav"'
+            exs = 'save,time,'+savlin+',filename=savedir+name+"_z="+jnm+"_t="+inm+".sav"'
             void = execute(exs)
          endif
       endif

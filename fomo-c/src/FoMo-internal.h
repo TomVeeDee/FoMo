@@ -1,8 +1,6 @@
 #include <vector>
 #include <string>
 
-const double Mmperarcsec=0.715; // how many Mm fit in one arcsec
-
 namespace FoMo
 {
 	double readgoftfromchianti(const std::string chiantifile);

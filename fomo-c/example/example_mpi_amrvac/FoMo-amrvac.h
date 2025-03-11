@@ -1,5 +1,4 @@
 #include "FoMo.h"
-#include <cstdint>
 #include <string>
 #include <climits>
 #include <vector>

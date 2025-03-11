@@ -1,7 +1,7 @@
-pro lineongrid_goft_tab, te_s=te_s, ne_s=ne_s, gotdir=gotdir,wave=wave,nwave=nwave,ion=ion, w0=w0, emission_goft=emission_goft, goft=goft, logt=logt, wayemi=wayemi, watom=watom,file_abund=file_abund,ext_abund=ext_abund,nab=nab,abund_name=abund_name,enum=enum,inum=inum,abund_fact=abund_fact,extro=extro,silent=silent
+pro lineongrid_goft_tab, rh_s=rh_s, te_s=te_s, ne_s=ne_s, gotdir=gotdir,wave=wave,nwave=nwave,ion=ion, w0=w0, emission_goft=emission_goft, goft=goft, logt=logt, wayemi=wayemi, watom=watom,file_abund=file_abund,ext_abund=ext_abund,nab=nab,abund_name=abund_name,enum=enum,inum=inum,abund_fact=abund_fact,silent=silent
 
-if arg_present(ne_s) lt 1 then begin
-   print,'lineongrid_goft_tab, te_s=te_s, ne_s=ne_s, gotdir=gotdir,wave=wave,nwave=nwave,ion=ion, w0=w0, emission_goft=emission_goft, goft=goft, logt=logt, wayemi=wayemi, watom=watom, file_abund=file_abund,ext_abund=ext_abund,nab=nab,abund_name=abund_name,enum=enum,inum=inum,abund_fact=abund_fact,extro=extro,silent=silent'
+if arg_present(rh_s) lt 1 or arg_present(ne_s) lt 1 then begin
+   print,'lineongrid_goft_tab, rh_s=rh_s, te_s=te_s, ne_s=ne_s, gotdir=gotdir,wave=wave,nwave=nwave,ion=ion, w0=w0, emission_goft=emission_goft, goft=goft, logt=logt, wayemi=wayemi, watom=watom, file_abund=file_abund,ext_abund=ext_abund,nab=nab,abund_name=abund_name,enum=enum,inum=inum,abund_fact=abund_fact,silent=silent'
    return
 endif
 
@@ -10,8 +10,9 @@ endif
 ; Uses the chianti.eq ionization equilibrium values
 
 ; INPUT:
-; ne_s: 2D or 3D array of electron number density in CGS. 
-; te_s: 2D or 3D array of temperature in K
+; rh_s (or ne_s): 2D or 3D array of mass density in CGS. 
+; te_s: 2D or 3D array of temperature in K. If normalized by
+;                 (protonmass/(2*kboltz)*1.e10) then set keyword conv
 ; ion = ion for which to calculate emissivities (default = fe_9)
 ; w0 = wavelength center of line transition (default = 171.073)
 ; gotdir: (string) directory path to where the .dat G(T,n) file is
@@ -23,7 +24,7 @@ endif
 ;	     the full path to the abundance file in the keyword 'ext_abund'.
 ; wayemi: (int) for different ways of calculating the emissivity in the
 ;        routine lineongrid_goft_tab.pro. The default is wayemi = 4
-;        If wayemi = 5 is set then this procedure should not
+;        If wayemi = 5 and if keyword 'aia' is set then this procedure should not
 ;        be called. 
 
 ; OPTIONAL:
@@ -31,9 +32,6 @@ endif
 ;        set keyword wayemi to 1 if emission calculated point by
 ;        point, else set to 2-4 if calculated through binning of
 ;        G(T)*ne^2 term (default = 4) 
-; extro: set for G(T,n) tables with extended density range [6,12]
-;        in log. Default for spectral lines is [8,11] for log(T)>5 and [8,12]
-;        for log(T)<5 where T is the maximum formation temperature. 
 
 ; OUTPUT:
 ; wave = wavelength array set to nwave pts, containing line transition	
@@ -106,14 +104,23 @@ if n_elements(abund_dflt) eq 0 then begin
    endif
 endif
 
-proton=1.67262158*10^(-27.) ; SI is OK here 
-kboltz = 1.380658*10^(-23.) ; SI is OK here
-c = 299792000. ; SI is OK here
+proton=1.67262158*10^(-27.)
+kboltz = 1.380658*10^(-23.)
+c = 299792000.
 gamma = 5./3.
 
-logT = alog10(te_s>1.)
+; check for CGS
+T = te_s
+if ~keyword_set(ne_s) then begin
+   rh = rh_s
+   n_e = rh/proton 
+endif else begin
+   n_e = ne_s
+endelse
 
-sizes=size(ne_s)
+logT = alog10(T>1.)
+
+sizes=size(n_e)
 dims=sizes[0]
 if dims eq 3 then begin
    nx=sizes[1]
@@ -155,19 +162,19 @@ wave=findgen(nwave)/(nwave-1)*(maxwave-minwave)+minwave
 ;   if (dims eq 3) then emission_goft=dblarr(nx,ny,nz,nwave)
 ;endelse
 
-ne_sort = sort(ne_s)
-n_e_sorted = ne_s[ne_sort]
+ne_sort = sort(n_e)
+n_e_sorted = n_e[ne_sort]
 Tlg_sorted = logT[ne_sort]
 
 ; Read tabulated G(ne,T) values for given number density (n_e_lg) and temperature (t_lg) arrays
-lookup_goft,ion=ion,w0=w0,gotdir=gotdir,n_e_lg=n_e_lg,logt=t_lg,goft_mat=goft_mat,watom=watom,nab=nab,extro=extro,silent=silent
+lookup_goft, ion=ion, w0=w0, gotdir=gotdir,n_e_lg=n_e_lg, logt=t_lg, goft_mat=goft_mat, watom= watom,nab=nab,silent=silent
 if n_elements(enum) eq 0 or n_elements(inum) eq 0 then begin
    elements, w0=w0, ion=ion, enum=enum, inum=inum
 endif
 
 if wayemi ne 3 and wayemi ne 4 and wayemi ne 5 then begin
 ; create a ch_synthetic structure called "singleline"
-   ch_synthetic,min(wave),max(wave),output=singleline,density=max(ne_s),logt_isothermal=max(alog10(te_s)),ioneq_name=ioneq_name,sngl_ion=ion
+   ch_synthetic,min(wave),max(wave),output=singleline,density=max(n_e),logt_isothermal=max(alog10(T)),ioneq_name=ioneq_name,sngl_ion=ion
 endif
 
 if n_elements(abund_fact) eq 0 then begin
@@ -177,14 +184,14 @@ if n_elements(abund_fact) eq 0 then begin
    line_abunds_dflt = ab_dflt[enum-1]
    abund_fact = line_abunds/line_abunds_dflt
 endif
- 
-goft=ne_s*0.
+
+goft=n_e*0.
 ; calculate emission point by point:
 if wayemi eq 1 then begin
-   for i=0.,n_elements(ne_s)-1 do begin
+   for i=0.,n_elements(n_e)-1 do begin
       lc_ne = ([min(abs(n_e_lg-alog10(n_e_sorted[i]))),!c])[1]
       lc_te = ([min(abs(t_lg-tlg_sorted[i])),!c])[1]
-      coords=array_indices(ne_s,ne_sort[i])
+      coords=array_indices(n_e,ne_sort[i])
 ;      if dims eq 2 then goft[coords[0],coords[1]] = spline(t_lg,goft_mat[lc_ne,*],tlg_sorted[i])
 ;      if dims eq 3 then goft[coords[0],coords[1],coords[2]] = spline(t_lg,goft_mat[lc_ne,*],tlg_sorted[i])
       goft[ne_sort[i]] = spline(t_lg,goft_mat[lc_ne,*],tlg_sorted[i])
@@ -200,13 +207,13 @@ endif
 
 ; calculate emission through binning of G(T)*ne^2 matrix
 if wayemi eq 2 then begin
-   emi=ne_s*0.d
-   for i=0.,n_elements(ne_s)-1 do begin
+   emi=n_e*0.d
+   for i=0.,n_elements(n_e)-1 do begin
       lc_ne = ([min(abs(n_e_lg-alog10(n_e_sorted[i]))),!c])[1]
       lc_te = ([min(abs(t_lg-tlg_sorted[i])),!c])[1]
       if tlg_sorted[i] lt min(t_lg) or tlg_sorted[i] gt max(t_lg) then goft[ne_sort[i]] = 0. else goft[ne_sort[i]] = interpol(goft_mat[lc_ne,*],t_lg,tlg_sorted[i])
       emi[ne_sort[i]] = goft[ne_sort[i]]*n_e_sorted[i]^2
-      if ~keyword_set(silent) then print,string(13b)+' % finished: ',float(i)*100./(n_elements(ne_s)-1),format='(a,f4.0,$)'
+      if ~keyword_set(silent) then print,string(13b)+' % finished: ',float(i)*100./(n_elements(n_e)-1),format='(a,f4.0,$)'
    endfor
 
    numemi = min([n_elements(uniq(emi)),10000]) ; 10000 pts are sufficient
@@ -234,13 +241,13 @@ if wayemi eq 2 then begin
 endif
 
 if wayemi eq 3 then begin
-   emi=ne_s*0.d
-   for i=0.,n_elements(ne_s)-1 do begin
+   emi=n_e*0.d
+   for i=0.,n_elements(n_e)-1 do begin
       lc_ne = ([min(abs(n_e_lg-alog10(n_e_sorted[i]))),!c])[1]
       lc_te = ([min(abs(t_lg-tlg_sorted[i])),!c])[1]
       if tlg_sorted[i] lt min(t_lg) or tlg_sorted[i] gt max(t_lg) then goft[ne_sort[i]] = 0. else goft[ne_sort[i]] = interpol(goft_mat[lc_ne,*],t_lg,tlg_sorted[i])
       emi[ne_sort[i]] = goft[ne_sort[i]]*n_e_sorted[i]^2
-      if ~keyword_set(silent) then print,string(13b)+' % finished: ',float(i)*100./(n_elements(ne_s)-1),format='(a,f4.0,$)'
+      if ~keyword_set(silent) then print,string(13b)+' % finished: ',float(i)*100./(n_elements(n_e)-1),format='(a,f4.0,$)'
    endfor
 
    numemi = min([n_elements(uniq(emi)),10000]) ; 10000 pts are sufficient
@@ -268,13 +275,13 @@ if wayemi eq 3 then begin
 endif
 
 if wayemi eq 4 or wayemi eq 5 then begin
-   emission_goft=ne_s*0.d
-   for i=0.,n_elements(ne_s)-1 do begin
+   emission_goft=n_e*0.d
+   for i=0.,n_elements(n_e)-1 do begin
       lc_ne = ([min(abs(n_e_lg-alog10(n_e_sorted[i]))),!c])[1]
       lc_te = ([min(abs(t_lg-tlg_sorted[i])),!c])[1]
       if tlg_sorted[i] lt min(t_lg) or tlg_sorted[i] gt max(t_lg) then goft[ne_sort[i]] = 0. else goft[ne_sort[i]] = interpol(goft_mat[lc_ne,*],t_lg,tlg_sorted[i])
       emission_goft[ne_sort[i]] = goft[ne_sort[i]]*n_e_sorted[i]^2
-      if ~keyword_set(silent) then print,string(13b)+' % finished: ',float(i)*100./(n_elements(ne_s)-1),format='(a,f4.0,$)'
+      if ~keyword_set(silent) then print,string(13b)+' % finished: ',float(i)*100./(n_elements(n_e)-1),format='(a,f4.0,$)'
    endfor
 endif
 emission_goft = emission_goft*abund_fact

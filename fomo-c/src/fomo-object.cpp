@@ -133,11 +133,10 @@ std::string FoMo::FoMoObject::readchiantifile()
  * The FoMoObject adds the argument data to its protected member datacube.
  * @param coordinate This is a vector of length dimension of the FoMoObject.
  * @param variables This is a vector of length nvars (i.e. number of variables required by rendermethod, e.g. \f$\rho\f$, T, vx, vy, vz for CHIANTI renderings)
- * @param unitvec This is a pointer to a vector of strings (of length coordinate.size()+variables.size()) containing the units of the coordinates and variables
  */
-void FoMo::FoMoObject::push_back_datapoint(std::vector<double> coordinate, std::vector<double> variables, std::vector<std::string> * unitvec)
+void FoMo::FoMoObject::push_back_datapoint(std::vector<double> coordinate, std::vector<double> variables)
 {
-	this->datacube.push_back(coordinate,variables,unitvec);
+	this->datacube.push_back(coordinate,variables);
 }
 
 /**
@@ -147,11 +146,10 @@ void FoMo::FoMoObject::push_back_datapoint(std::vector<double> coordinate, std::
  * equal length. It sets the dimension, number of gridpoints and number of variables in the FoMoObject.
  * @param ingrid A tgrid of the desired dimension, containing a number of data points.
  * @param indata The physical variables at the corresponding grid points.
- * @param unitvec This is a pointer to a vector of strings (of length coordinate.size()+variables.size()) containing the units of the coordinates and variables
  */
-void FoMo::FoMoObject::setdata(tgrid& ingrid, tvars& indata, std::vector<std::string> * unitvec)
+void FoMo::FoMoObject::setdata(tgrid& ingrid, tvars& indata)
 {
-	this->datacube.setdata(ingrid,indata,unitvec);
+	this->datacube.setdata(ingrid,indata);
 }
 
 /**

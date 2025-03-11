@@ -1,4 +1,4 @@
-pro integrateemission,emission=emission,logt=logt,n_gridx=n_gridx,n_gridy=n_gridy,ngrid=ngrid,wave=wave,w0=w0,direction=direction,losvel=losvel,imaging=imaging,watom=watom,image=image,dl=dl,ds=ds,d_perp=d_perp,wayemi=wayemi,channel=channel,silent=silent
+pro integrateemission,emission=emission,logt=logt,n_gridx=n_gridx,n_gridy=n_gridy,ngrid=ngrid,wave=wave,w0=w0,direction=direction,losvel=losvel,imaging=imaging,watom=watom,image=image,dl=dl,wayemi=wayemi,aia=aia,dkist=dkist,silent=silent
 
 ; Calculates intensity by integrating emissivity along a given
 ; line-of-sight
@@ -8,31 +8,21 @@ pro integrateemission,emission=emission,logt=logt,n_gridx=n_gridx,n_gridy=n_grid
 ; wave = wavelength array from lineongrid_goft_tab.pro
 ; n_gridx, n_gridy, ngrid = output of gridlos.pro
 ; direction = (int) direction of the integration (1 = x, 2 = y, 3 = z, 4 = mua_d angle)
-; losvel = (2d array) output of gridlos.pro, line-of-sight velocity
-; (in km/s unit). Only necessary for spectral calculations (no imaging)
-; dl = distance between rays
-; ds = distance along rays
-; d_perp = distance between fomo slices (resolution in 3rd axis: if
-; fomo slice is in (x,y) plane then d_perp = dz, where dz is
-; resolution along z axis)
-  
+; losvel = (2d array) output of gridlos.pro, line-of-sight velocity (in km/s unit)
+
 ; OPTIONAL:
-; set keyword imaging or channel (-> wayemi = 5) for no doppler shift
-; calculation (imaging case) (default = 1).  
+; set keyword imaging or aia or dkist (or wayemi = 5) for no doppler shift calculation (imaging
+; case) (default = 1).  
 
 ; OUTPUT:
 ; image	= (2d float array) intensity along line-of-sight (n_elements(ngrid),nwave)
-
-; solid angle of 1 simulation pixel in arcsec
-
-if keyword_set(channel) then apix = (dl/1.e5/715.)*(d_perp/1.e5/715.)*(!pi/180./3600.)^2 else apix = 1
 
 sizes=size(emission)
 dims = sizes[0]
 nx = sizes[1]
 ny = sizes[2]
 if dims eq 3 then nz = sizes[3] else nz = 1
-if ~keyword_set(imaging) and ~keyword_set(channel) then begin
+if ~keyword_set(imaging) and ~keyword_set(aia) and ~keyword_set(dkist)  then begin
    nwave = n_elements(wave)
 endif else begin
    nwave = 1
@@ -43,7 +33,7 @@ c=299792000.d
 
 if dims eq 3 then doppleremission = fltarr(nx,ny,nz,nwave) else doppleremission = fltarr(nx,ny,nwave)
 
-if wayemi ne 5 and ~keyword_set(channel) and ~keyword_set(imaging) then begin
+if wayemi ne 5 and ~keyword_set(aia) and ~keyword_set(dkist) and ~keyword_set(imaging) then begin
 
 ; calculate doppler shifts through binning of velocity matrix
    bsize = 0.5 ; bins of 0.5 km/s
@@ -100,18 +90,17 @@ endelse
 ; then sum up over rays:
 
 if (direction le dims) then begin
-   image=total(doppleremission,direction)*ds*apix
-   if direction eq 1 then image = reverse(image,1)
+	image=total(doppleremission,direction)*dl
 endif else begin
    if direction eq 4 then begin
       if dims eq 2 then image = dblarr(n_elements(ngrid)-1,nwave) else image = dblarr(nx,n_elements(ngrid)-1,nwave)
       for i=0., n_elements(ngrid)-2 do begin
          if (dims eq 2) then begin
-            for j=0,nwave-1 do image[i,j] = total(interpolate(reform(doppleremission[*,*,j]),n_gridx[ngrid[i]:ngrid[i+1]-1],n_gridy[ngrid[i]:ngrid[i+1]-1]))*ds*apix
+            for j=0,nwave-1 do image[i,j] = total(interpolate(reform(doppleremission[*,*,j]),n_gridx[ngrid[i]:ngrid[i+1]-1],n_gridy[ngrid[i]:ngrid[i+1]-1]))*dl
          endif
          if (dims eq 3) then begin
             for k=0,nx-1 do begin
-               for j=0,nwave-1 do image[k,i,j] = total(interpolate(reform(doppleremission[k,*,*,j]),n_gridx[ngrid[i]:ngrid[i+1]-1],n_gridy[ngrid[i]:ngrid[i+1]-1]),/double)*ds*apix
+               for j=0,nwave-1 do image[k,i,j] = total(interpolate(reform(doppleremission[k,*,*,j]),n_gridx[ngrid[i]:ngrid[i+1]-1],n_gridy[ngrid[i]:ngrid[i+1]-1]),/double)*dl
             endfor
          endif
          if ~keyword_set(silent) then print,string(13b)+' % finished: ',float(i)*100./(n_elements(ngrid)-2),format='(a,f4.0,$)'

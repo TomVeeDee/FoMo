@@ -1,7 +1,7 @@
-m4_define(FOMOVERSION,3.4)
-AC_INIT([FoMo],[FOMOVERSION],[tom.vandoorsselaere@kuleuven.be])
+m4_define(FOMOVERSION,3.3)
+AC_INIT(FoMo,FOMOVERSION,tom.vandoorsselaere@wis.kuleuven.be)
 AC_SUBST(fomoversion,FOMOVERSION)
-AC_PREREQ([2.72])
+AC_PREREQ(2.59)
 AM_INIT_AUTOMAKE(1.9)
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_HEADERS(config.h)
@@ -9,10 +9,10 @@ AC_PROG_CXX
 AC_ENABLE_SHARED
 AC_DISABLE_STATIC
 LT_INIT
-LT_INIT([libtool])
+AC_PROG_LIBTOOL(libtool)
 # check if mpi is wanted
 AC_ARG_WITH(mpi,
-[AS_HELP_STRING([--with-mpi],[build MPI version of FoMo])],
+[AC_HELP_STRING([--with-mpi],[build MPI version of POLLUX])],
 mpi=$withval,mpi="no")
 # search for the fortran compiler
 if test "a$mpi" = "ayes" ; then
@@ -23,7 +23,7 @@ fi
 AC_PROG_CXX($CXXCOMP)
 AC_PROG_CXXCPP([cpp])
 AC_LANG(C++)
-AC_LANG([C++])
+AC_LANG_CPLUSPLUS
 AX_CXX_COMPILE_STDCXX_11
 # Include the macro to find VTK
 m4_include([m4/ax_vtk.m4])
@@ -32,29 +32,6 @@ VTK_INCLUDE_DIR=$HOME/Darias/code/VTK-install/usr/local/include/vtk-9.3
 AC_SUBST([VTK_INCLUDE_DIR])
 # Check for VTK and set the necessary flags and libraries
 AX_VTK
-
-# set the version number of FoMo
-# part of the code is copied from GIT_VERSION_GEN
-AC_MSG_CHECKING([for FoMo version])
-VN='
-'
-TEMPVN='
-'
-# check if the ../.git is a file or directory
-if [test -d ../.git -o -f ../.git]; then
-	# if that is the case, get the version number from git
-	VN=$(git describe --dirty --always --tags 2>/dev/null)
-	method="git"
-fi
-# if the git command failed, or if there is no git repository, use the default version of FoMo
-if [test "$VN" = "$TEMPVN"]; then
-	method="default"
-	VN=v"FOMOVERSION"
-fi
-CFLAGS+=" -DFOMOVERSION=$VN"
-CXXFLAGS+=" -DFOMOVERSION=$VN"
-AC_MSG_RESULT([($method method) $VN])
-
 
 # check for HDF5 for the hdf5 example
 AX_LIB_HDF5([serial])
@@ -94,9 +71,7 @@ if test "x$with_hdf5" = "xyes"; then
 fi
 AM_CONDITIONAL(HAVE_HDF5, [test -n "$HDF5_CXX"])
 
-AC_CHECK_INCLUDES_DEFAULT
-AC_PROG_EGREP
-
+AC_HEADER_STDC
 AC_CHECK_HEADERS([string])
 AC_CHECK_HEADERS([iostream])
 AC_CHECK_HEADERS([vector])
@@ -215,5 +190,4 @@ DX_PDF_FEATURE(ON)
 DX_INIT_DOXYGEN($PACKAGE_NAME,docfiles/fomo-doxygen.cfg,doc)
 
 # write the Makefiles
-AC_CONFIG_FILES([Makefile src/Makefile example/Makefile example/example_FLASH/Makefile example/example_mpi_amrvac/Makefile])
-AC_OUTPUT
+AC_OUTPUT(Makefile src/Makefile example/Makefile example/example_FLASH/Makefile example/example_mpi_amrvac/Makefile)

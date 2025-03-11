@@ -16,7 +16,6 @@ FoMo::DataCube::DataCube(const int indim)
 	grid.resize(indim);
 	ng=0;
 	nvars=0;
-	unit.resize(indim+nvars);
 }
 
 /**
@@ -53,15 +52,6 @@ int FoMo::DataCube::readnvars() const
 };
 
 /**
- * @brief This returns the units of the variables and the grid in the DataCube.
- * @return The vector of strings with the units of the grid and variables, of length dim+nvars.
- */
-std::vector<std::string> FoMo::DataCube::readunit() const 
-{
-	return unit;
-}
-
-/**
  * @brief This function sets the dimension of the DataCube.
  * 
  * The dimension is set to the positive integer (the argument). The grid is resized to have indim 
@@ -75,7 +65,6 @@ void FoMo::DataCube::setdim(const int indim)
 	assert(dim > 0);
 	dim=indim;
 	grid.resize(indim);
-	unit.resize(indim+nvars);
 }
 
 /**
@@ -87,10 +76,9 @@ void FoMo::DataCube::setdim(const int indim)
  */
 void FoMo::DataCube::setnvars(const int innvars)
 {
-	assert(innvars >= 0);
+	assert(nvars >= 0);
 	nvars=innvars;
 	vars.resize(innvars);
-	unit.resize(dim+nvars);
 }
 
 /**
@@ -120,15 +108,11 @@ void FoMo::DataCube::setngrid(const int inngrid)
  * @param ingrid The parameter is a vector of vectors of doubles (tgrid). It should have at least one 
  * element.
  * The elements of ingrid should have equal length.
- * @param inunit The unit of the grid can be given as a string.
  */
-void FoMo::DataCube::setgrid(FoMo::tgrid ingrid, std::vector<std::string> * inunit)
+void FoMo::DataCube::setgrid(FoMo::tgrid ingrid)
 {
 	//perform checks
 	assert(ingrid.size() != 0); // The dimension is 0. This shouldn't work.
-	// store the old units of vars
-	std::vector<std::string> oldunits(unit.begin()+dim,unit.end());
-	
 	dim=ingrid.size();
 	
 	unsigned int tempng=ingrid[0].size();
@@ -140,14 +124,6 @@ void FoMo::DataCube::setgrid(FoMo::tgrid ingrid, std::vector<std::string> * inun
 	
 	grid=ingrid;
 	ng=tempng;
-	
-	// check if inunit is not NULL
-	if (inunit)
-	{
-		assert(inunit->size() == dim);
-		unit=*inunit;
-		unit.insert(unit.end(),oldunits.begin(),oldunits.end());
-	}
 };
 
 /**
@@ -169,13 +145,11 @@ FoMo::tgrid FoMo::DataCube::readgrid() const
  * be ng (number of grid points). The responsibility is left to the programmer to allow greater flexibility
  * in importing the numerical data. If the check would be enforced, first the grid needs to be set with
  * setgrid().
- * @param inunit This is the unit of the variable as a string.
  */
-void FoMo::DataCube::setvar(const unsigned int nvar, const FoMo::tphysvar var, std::string inunit)
+void FoMo::DataCube::setvar(const unsigned int nvar, const FoMo::tphysvar var)
 {
 	assert(nvar < vars.size());
 	vars.at(nvar)=var;
-	unit.at(dim+nvar)=inunit;
 }
 
 /**
@@ -202,7 +176,7 @@ FoMo::tphysvar FoMo::DataCube::readvar(const unsigned int nvar) const
  * @param variables This contains the physical variables at the data point. It should have length
  * nvars, unless there is no data yet in the DataCube.
  */
-void FoMo::DataCube::push_back(std::vector<double> coordinate, std::vector<double> variables, std::vector<std::string> * unitvec)
+void FoMo::DataCube::push_back(std::vector<double> coordinate, std::vector<double> variables)
 {
 	if (this->readngrid() == 0)
 	{
@@ -218,7 +192,7 @@ void FoMo::DataCube::push_back(std::vector<double> coordinate, std::vector<doubl
 			tphysvar tempvar{variables.at(i)};
 			startvars.push_back(tempvar);
 		}
-		this->setdata(startgrid,startvars,unitvec);
+		this->setdata(startgrid,startvars);
 	}
 	else
 	{
@@ -253,7 +227,7 @@ void FoMo::DataCube::push_back(std::vector<double> coordinate, std::vector<doubl
  * @param ingrid The grid to be imported in DataCube.
  * @param indata The data to be imported in DataCube.
  */
-void FoMo::DataCube::setdata(tgrid& ingrid, tvars& indata, std::vector<std::string> * unitvec)
+void FoMo::DataCube::setdata(tgrid& ingrid, tvars& indata)
 {
 	this->setgrid(ingrid);
 	
@@ -261,19 +235,12 @@ void FoMo::DataCube::setdata(tgrid& ingrid, tvars& indata, std::vector<std::stri
 	if (indata.size() !=0)
 	{
 		// set nvars
-		this->setnvars(indata.size());
-		// if unitvec is not NULL, its size should be the size of ingrid + indata
+		nvars=indata.size();
+		vars.resize(nvars,tphysvar(ng,0));
 		for (unsigned int i=0; i<nvars; i++)
 		{
 			assert(indata[i].size() == ng);
 			this->setvar(i,indata[i]);
 		}
-	}
-	
-	// check if unitvec is not NULL
-	if (unitvec) 
-	{
-		assert(unitvec->size() == dim+nvars);
-		unit=*unitvec;
 	}
 }
