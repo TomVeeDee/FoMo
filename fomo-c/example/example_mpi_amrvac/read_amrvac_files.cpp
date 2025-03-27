@@ -15,7 +15,9 @@ double kboltz = GSL_CONST_MKSA_BOLTZMANN;   //                 # J/K = kg/K m_^2
 double mhydro = GSL_CONST_MKSA_MASS_PROTON;    //                # kg  (proton mass for the amrvac_nonAMR.par)
 double R_spec = kboltz/(0.5e0*mhydro);
 
-std::vector<int> compatible_versions={3};
+//Version 5 (AMRVAC 2.2) compatibility added by Krishna
+//Version 4 may also be integrated here after testing
+std::vector<int> compatible_versions={3, 5};  
 
 // this recursive procedure loops through the forest and calculates the indices of each leaf block
 // the implementation is a carbon copy of the python code of Oliver Porth (included in AMRVAC)
@@ -175,6 +177,16 @@ std::vector<std::vector<double>> read_blocks(istream & file, const int ndim, con
 			}
 		}
 		///////////////////////////////////////////////////////////////
+		// added by Krishna for compatibility with AMRVAC 2.2 (version 5)
+		///////////////////////////////////////////////////////////////
+		if (version==5)
+		{
+			for (int j=0; j<ndim; j++)
+			{
+				file.read(reinterpret_cast<char*>(&tempint), sizeof(int));
+				file.read(reinterpret_cast<char*>(&tempint), sizeof(int));
+			}
+		}
 		///////////////////////////////////////////////////////////////
 		// then start reading the block
 		// in principle, if the above number of ghost cells is non-zero, then we need to take a different block size, and select different numbers
@@ -205,7 +217,11 @@ std::vector<std::vector<int>> build_block_info_morton(std::vector<int> nblocks, 
 	// later on, we will prune simulation points from the mortoncurve
 	// can this be optimized for 2D data?
 	// If number of blocks is odd, make cube with +1 size
-	if (maxgridlength % 2 !=  0) maxgridlength++;
+	//if (maxgridlength % 2 !=  0) maxgridlength++; //removed by Krishna
+	//it seems mortonEncode_for will produce indices of the same size as the number of grid cells only
+	//when the dimensions of the grid is in powers of 2. So added the below line to accommodate this. 
+	//perhaps not an efficient approach when maxgridlength is large. Should be optimized in the future.
+        maxgridlength = pow(2, ceil(log(maxgridlength)/log(2))); //added by Krishna
 	mortoncurve.resize(pow(maxgridlength,3));
 	 for (int k=0; k<maxgridlength; k++)
 	 for (int j=0; j<maxgridlength; j++)
@@ -488,8 +504,26 @@ FoMo::FoMoObject read_amrvac_new_dat_file(const char* datfile, int version_numbe
 			file.read(reinterpret_cast<char*>(&nx.at(i)), sizeof(int));
 			nglev1*=nx.at(i);
 			std::cout << "block_nx(" << i << "):" << nx.at(i) << std::endl;
+		}		
+		///////////////////////////////////////////////////////////////
+		// added by Krishna for compatibility with AMRVAC 2.2 (version 5)
+		///////////////////////////////////////////////////////////////
+		if (version == 5)
+		{		
+			std::vector<int> periodic(ndim);
+		        for (int i=0; i<ndim; i++)
+		        {
+		                file.read(reinterpret_cast<char*>(&periodic.at(i)), sizeof(int));
+		                std::cout << "Boundary Periodicity ["<< i <<"]:" << periodic.at(i)  << std::endl;
+		        }
+		        char geom[16];
+		        file.read(geom,16);
+		        std::cout << "Geometry:" << geom <<std::endl;
+			int stag;
+		        file.read(reinterpret_cast<char*>(&stag),sizeof(int));
+		        std::cout << "Staggered:" << stag <<std::endl;
 		}
-
+		///////////////////////////////////////////////////////////////
 		char temp[16];
 		std::vector<std::string> varnames(nw);
 		for (int i=0; i<nw; i++)
@@ -510,7 +544,7 @@ FoMo::FoMoObject read_amrvac_new_dat_file(const char* datfile, int version_numbe
 		double gamma=0;
 		std::vector<double> eqpar(neqpar);
 		std::vector<std::string> eqparnames(neqpar);
-		std::string gammaname="gamma           ";
+		std::string gammaname="gamma"; //removed spaces by Krishna for compatibility with versions 3 & 5
 		for (int i=0; i<neqpar; i++)
 		{
 			file.read(reinterpret_cast<char*>(&tmpeqpar), sizeof(double));
@@ -522,7 +556,8 @@ FoMo::FoMoObject read_amrvac_new_dat_file(const char* datfile, int version_numbe
 			eqparnames.at(i)=temp;
 			// if the variable name matches gammaname, then take that value for gamma
 			// this has as consequence that the last of such values will eventually be used
-			if (eqparnames.at(i).compare(gammaname)==0) gamma=eqpar.at(i);
+			if (eqparnames.at(i).substr(0,5).compare(gammaname)==0) gamma=eqpar.at(i); //added substr by Krishna
+			std::cout << "Gamma:" << gamma << std::endl; //added by Krishna
 		}
 		if (gamma==0.)
 		{
@@ -544,6 +579,7 @@ FoMo::FoMoObject read_amrvac_new_dat_file(const char* datfile, int version_numbe
 		//compute the dx in each direction
 		std::vector<double> cellsize(ndim);
 		blocksandsize(nxlone,nx,xprobmin,xprobmax,nblocks,cellsize);
+		for (int i=0; i<ndim; i++) std::cout << "cell size ["<< i << "]:" << cellsize[i] << std::endl; //added by Krishna
 
 		// make sure the code is also working for 2D data!
 		if (ndim<3) nblocks.push_back(1);
@@ -728,8 +764,6 @@ FoMo::FoMoObject read_amrvac_dat_file_v4(const char* datfile, int version_number
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-
-
 FoMo::FoMoObject read_amrvac_dat_file(const char* datfile, const char* amrvacpar, string amrvac_version, const int gamma_eqparposition, const double n_unit, const double Teunit, const double L_unit)
 {
 	int version_number=read_dat_version(datfile);
@@ -742,13 +776,12 @@ FoMo::FoMoObject read_amrvac_dat_file(const char* datfile, const char* amrvacpar
 		Object=read_amrvac_new_dat_file(datfile,version_number,n_unit,Teunit,L_unit);
 	}
 	//////////// Added by vaibhav pant for DATfiles version 4///////////////////////////////////////////////////
-	if(version_number == 4) {
+	else if(version_number == 4) {   //modified (to "else if") by Krishna
 		/* We use the new snapshot reader, which is similar to version 3 except few changes in the definition of Gamma */
 		std::cout << "Using new datfile reader (version 4) for AMRVAC 2.0" << std::endl;
 		Object=read_amrvac_dat_file_v4(datfile,version_number,n_unit,Teunit,L_unit);
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
 	else {
 		/* Not a compatible version, use the old reader */
 		std::cout << "Using old datfile reader." << std::endl;

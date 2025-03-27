@@ -35,7 +35,7 @@ flexibility and removes the need for compilation after each change of option.
 For rendering the AMRVAC files with the AIA 193 filter and putting the results in a separate directory /path/to/datfiles/aia193, I would run the following
 command
 \code{.sh}
-	example/example_mpi_amrvac/render_all_datfiles -f /path/to/datfiles/file\*.dat -p /path/to/datfiles/amrvac.par -n 1e9 -T 1e6 -L 1e1 -o /path/to/datfiles/aia193 -c ../chiantitables/goft_tables_aia193_abco.dat -x 400 -y 400 -z 600 --lambda_pixel 1 -l 0.524 -b 1.047
+	example/example_mpi_amrvac/render_all_datfiles -f /path/to/datfiles/file\*.dat -p /path/to/datfiles/amrvac.par -n 1e9 -T 1e6 -L 1e1 -o /path/to/datfiles/aia193 -c ../chiantitables/goft_table_aia193_abco.dat -x 400 -y 400 -z 600 --lambda_pixel 1 -l 0.524 -b 1.047
 \endcode
 Let me explain these options separately. The first option 
 \code{.sh}
