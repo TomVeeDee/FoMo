@@ -158,7 +158,7 @@ def gaussfitgoftcube(emiss,lvec):
             sig=p[2]
             peak[j,i]=a
             doppler[j,i]=(mu-l0)/l0*2.99e5 #in km/s
-            sigma[j,i]=sig
+            sigma[j,i]=sig/l0*2.99e5 #in km/s
             intens[j,i]=a*sig*np.sqrt(2*np.pi)
             chisq[j,i]=np.sum((fit_gauss(lvec,a,mu,sig) - spectralline) ** 2)
         
