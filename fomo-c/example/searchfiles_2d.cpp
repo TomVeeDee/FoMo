@@ -13,6 +13,14 @@
 
 using namespace std;
 
+#if __cplusplus >= 201703L
+    #include <filesystem>
+    namespace fs = std::filesystem;
+#else
+    #include <experimental/filesystem>
+    namespace fs = std::experimental::filesystem;
+#endif
+
 static const string rootdir="/users/cpa/tomvd/data/idl/FoMo/chiantitables/";
 
 static const map<string,string>::value_type AIAfilters[]=
@@ -34,7 +42,7 @@ int main(int argc, char* argv[])
 	// search the current path for files that contain string compstring
 	// boost::filesystem::path full_path( boost::filesystem::initial_path<boost::filesystem::path>() );
 	string full_path = "./";
-	std::filesystem::directory_iterator end_itr; // default construction yields past-the-end
+	fs::directory_iterator end_itr; // default construction yields past-the-end
 	vector<string> filelist;
 	vector<string> complist;
 	int ng=512;
@@ -42,9 +50,9 @@ int main(int argc, char* argv[])
 	complist.push_back(compstring);
 	compstring=".dat";
 	complist.push_back(compstring);
-	for ( auto & itr : std::filesystem::directory_iterator{full_path} )
+	for ( auto & itr : fs::directory_iterator{full_path} )
 	{
-		if ( std::filesystem::is_regular_file( itr ) )
+		if ( fs::is_regular_file( itr ) )
 		{
 			string filename=itr.path();
 			bool matches=true;

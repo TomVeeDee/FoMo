@@ -25,6 +25,7 @@ AC_PROG_CXXCPP([cpp])
 AC_LANG(C++)
 AC_LANG_CPLUSPLUS
 AX_CXX_COMPILE_STDCXX_11
+
 # Include the macro to find VTK
 m4_include([m4/ax_vtk.m4])
 # Define the VTK include path
@@ -32,6 +33,7 @@ VTK_INCLUDE_DIR=$HOME/Darias/code/VTK-install/usr/local/include/vtk-9.3
 AC_SUBST([VTK_INCLUDE_DIR])
 # Check for VTK and set the necessary flags and libraries
 AX_VTK
+
 
 # check for HDF5 for the hdf5 example
 AX_LIB_HDF5([serial])
@@ -86,9 +88,31 @@ AC_CHECK_HEADERS([climits])
 AC_CHECK_HEADERS([bitset])
 
 AX_BOOST_BASE([1.54])
-CPPFLAGS="$CPPFLAGS $BOOST_CPPFLAGS"
-LDFLAGS="$LDFLAGS $BOOST_LDFLAGS"
-AC_CHECK_HEADER(boost/progress.hpp,[],[AC_MSG_ERROR(Boost progress header not found)])
+# --- Make sure include/link flags are exported ---
+if test -n "$BOOST_CPPFLAGS"; then
+  CPPFLAGS="$CPPFLAGS $BOOST_CPPFLAGS"
+else
+  # Fallback if macro fails
+  CPPFLAGS="$CPPFLAGS -I/usr/include"
+fi
+
+if test -n "$BOOST_LDFLAGS"; then
+  LDFLAGS="$LDFLAGS $BOOST_LDFLAGS"
+else
+  # Fallback for typical 64-bit systems
+  LDFLAGS="$LDFLAGS -L/usr/lib64 -L/usr/lib"
+fi
+
+AC_SUBST([BOOST_CPPFLAGS])
+AC_SUBST([BOOST_LDFLAGS])
+
+AC_MSG_NOTICE([Using BOOST_CPPFLAGS=$BOOST_CPPFLAGS])
+AC_MSG_NOTICE([Using BOOST_LDFLAGS=$BOOST_LDFLAGS])
+AC_MSG_NOTICE([Final CPPFLAGS=$CPPFLAGS])
+
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <boost/progress.hpp>]], [[return 0;]])],
+  [AC_MSG_RESULT([found boost/progress.hpp])],
+  [AC_MSG_ERROR([Boost progress header not found])])
 AC_CHECK_HEADER(boost/geometry.hpp,[],[AC_MSG_ERROR(Boost geometry header not found)])
 AC_CHECK_HEADER(boost/geometry/index/rtree.hpp,[],[AC_MSG_ERROR(Boost rtree header not found)],[#include <iostream>])
 AC_CHECK_HEADER(boost/regex.hpp,[],[AC_MSG_ERROR(Boost regex header not found)])
@@ -188,6 +212,23 @@ DX_HTML_FEATURE(ON)
 DX_MAN_FEATURE(ON)
 DX_PDF_FEATURE(ON)
 DX_INIT_DOXYGEN($PACKAGE_NAME,docfiles/fomo-doxygen.cfg,doc)
+
+AC_LANG_PUSH([C++])
+AC_MSG_CHECKING([whether std::experimental::filesystem needs -lstdc++fs])
+AC_LINK_IFELSE(
+  [AC_LANG_PROGRAM([#include <experimental/filesystem>],
+                   [std::experimental::filesystem::path p(".");])],
+  [need_stdcxxfs=no],
+  [need_stdcxxfs=yes]
+)
+
+if test "x$need_stdcxxfs" = "xyes"; then
+  LIBS="$LIBS -lstdc++fs"
+  AC_MSG_RESULT([yes])
+else
+  AC_MSG_RESULT([no])
+fi
+AC_LANG_POP([C++])
 
 # write the Makefiles
 AC_OUTPUT(Makefile src/Makefile example/Makefile example/example_FLASH/Makefile example/example_mpi_amrvac/Makefile)

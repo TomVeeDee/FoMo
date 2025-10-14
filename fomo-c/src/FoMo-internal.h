@@ -1,13 +1,14 @@
 #include <vector>
 #include <string>
 
-const double Mmperarcsec=0.715; // how many Mm fit in one arcsec
+const double Mmperarcsec = 0.715; 
 
 namespace FoMo
 {
 	double readgoftfromchianti(const std::string chiantifile);
 	DataCube readgoftfromchianti(const std::string chiantifile, std::string & ion, double & lambda0, double & atweight);
 	GoftCube emissionfromdatacube(DataCube, std::string, std::string, const FoMoObservationType);
+	GoftCube thomsonfromdatacube(DataCube);
 	
 #ifdef HAVE_CGAL_DELAUNAY_TRIANGULATION_2_H	
 	FoMo::RenderCube RenderWithCGAL(FoMo::DataCube datacube, FoMo::GoftCube goftcube, FoMoObservationType observationtype, 
@@ -20,6 +21,9 @@ namespace FoMo
 #endif
 	
 	FoMo::RenderCube RenderWithNearestNeighbour(FoMo::GoftCube goftcube, const int x_pixel, const int y_pixel, const int z_pixel, const int lambda_pixel, const double lambda_width,
+	std::vector<double> lvec, std::vector<double> bvec, const std::string outfile);
+	
+	FoMo::RenderCube RenderWithThomson(FoMo::GoftCube goftcube, const int x_pixel, const int y_pixel, const int z_pixel,
 	std::vector<double> lvec, std::vector<double> bvec, const std::string outfile);
 	
 	FoMo::RenderCube RenderWithProjection(FoMo::GoftCube goftcube, const int x_pixel, const int y_pixel, const int z_pixel, const int lambda_pixel, const double lambda_width,

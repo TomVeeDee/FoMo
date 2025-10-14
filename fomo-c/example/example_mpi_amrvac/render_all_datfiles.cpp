@@ -15,6 +15,16 @@
 namespace po = boost::program_options;
 using namespace std;
 
+#if __cplusplus >= 201703L
+    // C++17 and later
+    #include <filesystem>
+    namespace fs = std::filesystem;
+#else
+    // Pre-C++17 (e.g. C++14)
+    #include <experimental/filesystem>
+    namespace fs = std::experimental::filesystem;
+#endif
+
 // next two routines copied from http://stackoverflow.com/questions/3300419/file-name-matching-with-wildcard
 void EscapeRegex(string &regex)
 {
@@ -114,11 +124,11 @@ int main(int argc, char* argv[])
 		pathstring = compstring.substr(0,lastslash);
 	}
 	
-	std::filesystem::directory_iterator end_itr; // default construction yields past-the-end
+	fs::directory_iterator end_itr; // default construction yields past-the-end
 	vector<string> filelist;
-	for ( auto & itr : std::filesystem::directory_iterator{pathstring})
+	for ( auto & itr : fs::directory_iterator{pathstring})
 	{
-		if ( std::filesystem::is_regular_file(itr) && MatchTextWithWildcards(itr.path(),compstring) )
+		if ( fs::is_regular_file(itr) && MatchTextWithWildcards(itr.path(),compstring) )
 		{
 			string filename=itr.path();
 			filelist.push_back( filename );

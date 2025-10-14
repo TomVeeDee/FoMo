@@ -133,11 +133,12 @@ std::string FoMo::FoMoObject::readchiantifile()
  * The FoMoObject adds the argument data to its protected member datacube.
  * @param coordinate This is a vector of length dimension of the FoMoObject.
  * @param variables This is a vector of length nvars (i.e. number of variables required by rendermethod, e.g. \f$\rho\f$, T, vx, vy, vz for CHIANTI renderings)
- * @param unitvec This is a pointer to a vector of strings (of length coordinate.size()+variables.size()) containing the units of the coordinates and variables
  */
 void FoMo::FoMoObject::push_back_datapoint(std::vector<double> coordinate, std::vector<double> variables, std::vector<std::string> * unitvec)
 {
-	this->datacube.push_back(coordinate,variables,unitvec);
+	this->datacube.push_back(coordinate,variables);
+        if (unitvec != nullptr) {
+        }
 }
 
 /**
@@ -147,11 +148,17 @@ void FoMo::FoMoObject::push_back_datapoint(std::vector<double> coordinate, std::
  * equal length. It sets the dimension, number of gridpoints and number of variables in the FoMoObject.
  * @param ingrid A tgrid of the desired dimension, containing a number of data points.
  * @param indata The physical variables at the corresponding grid points.
- * @param unitvec This is a pointer to a vector of strings (of length coordinate.size()+variables.size()) containing the units of the coordinates and variables
  */
-void FoMo::FoMoObject::setdata(tgrid& ingrid, tvars& indata, std::vector<std::string> * unitvec)
+
+void FoMo::FoMoObject::setdata(tgrid& ingrid, tvars& indata, std::vector<std::string>* unitvec)
 {
-	this->datacube.setdata(ingrid,indata,unitvec);
+    if (unitvec) {
+        // If units are provided (master branch behavior)
+        this->datacube.setdata(ingrid, indata, unitvec);
+    } else {
+        // If no units are given (Thomson branch behavior)
+        this->datacube.setdata(ingrid, indata);
+    }
 }
 
 /**
@@ -314,6 +321,7 @@ enum FoMoRenderValue
 #endif
 	NearestNeighbour,
 	Projection,
+	Thomson,
 	// add more methods here
 	LastVirtualRenderMethod
 };
@@ -328,6 +336,7 @@ static const std::map<std::string, FoMoRenderValue>::value_type RenderMapEntries
 #endif
 	std::map<std::string, FoMoRenderValue>::value_type("NearestNeighbour",NearestNeighbour),
 	std::map<std::string, FoMoRenderValue>::value_type("Projection",Projection),
+	std::map<std::string, FoMoRenderValue>::value_type("Thomson",Thomson),
 	/// [Rendermethods]
 	std::map<std::string, FoMoRenderValue>::value_type("ThisIsNotARealRenderMethod",LastVirtualRenderMethod)
 };
@@ -335,7 +344,23 @@ static const std::map<std::string, FoMoRenderValue>::value_type RenderMapEntries
 // static int nmethods=2;
 // if the modular adding is too clumsy, just introduce the above variable.
 
-static std::map<std::string, FoMoRenderValue> RenderMap{ &RenderMapEntries[0], &RenderMapEntries[LastVirtualRenderMethod-1] };
+static std::map<std::string, FoMoRenderValue> RenderMap(
+    std::begin(RenderMapEntries),
+    std::end(RenderMapEntries)
+);
+
+// --- Debug print to verify Thomson is in the map ---
+#ifdef DEBUG_RENDERMAP
+#include <iostream>
+struct RenderMapDebugger {
+    RenderMapDebugger() {
+        std::cerr << "DEBUG: RenderMap contains:\n";
+        for (const auto &p : RenderMap)
+            std::cerr << "  " << p.first << std::endl;
+    }
+};
+static RenderMapDebugger _debug_render_map_init;
+#endif
 
 /**
  * @brief This is the main render routine for the FoMo::FoMoObject.
@@ -371,9 +396,20 @@ void FoMo::FoMoObject::render(const std::vector<double> lvec, const std::vector<
 	else
 		this->rendering.setobservationtype(Spectroscopic);
 	
+	// if goftcube is computed here, woptions should be saved and restored afterwards
 	std::bitset<FoMo::noptions> woptions=this->goftcube.getwriteoptions();
-	tmpgoft=FoMo::emissionfromdatacube(this->datacube,this->rendering.readchiantifile(),this->rendering.readabundfile(),this->rendering.readobservationtype());
+	// special case for thomson scattering
+	if (this->rendering.readrendermethod().compare("Thomson")==0)
+	{
+		tmpgoft=FoMo::thomsonfromdatacube(this->datacube);
+	}
+	// otherwise use chianti emission tables
+	else
+	{
+		tmpgoft=FoMo::emissionfromdatacube(this->datacube,this->rendering.readchiantifile(),this->rendering.readabundfile(),this->rendering.readobservationtype());
+	}
 	this->goftcube=tmpgoft;
+	// restore write options
 	this->goftcube.setwriteoptions(woptions);
 	
 	switch (RenderMap[rendering.readrendermethod()])
@@ -395,6 +431,10 @@ void FoMo::FoMoObject::render(const std::vector<double> lvec, const std::vector<
 		case NearestNeighbour:
 			std::cout << "Using nearest-neighbour rendering." << std::endl << std::flush;
 			tmprender=FoMo::RenderWithNearestNeighbour(this->goftcube,x_pixel, y_pixel, z_pixel, lambda_pixel, lambda_width, lvec, bvec, this->outfile);
+			break;
+		case Thomson:
+			std::cout << "Using rendering for Thomson scattering." << std::endl << std::flush;
+			tmprender=FoMo::RenderWithThomson(this->goftcube,x_pixel, y_pixel, z_pixel, lvec, bvec, this->outfile);
 			break;
 		case Projection:
 			std::cout << "Using projection for rendering." << std::endl << std::flush;
