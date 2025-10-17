@@ -6,12 +6,23 @@ AC_DEFUN([AX_VTK], [
         [AS_HELP_STRING([--with-vtk-dir=DIR],
                         [Specify VTK install directory (default: /usr/local)])],
         [vtk_dir=$withval],
-        [vtk_dir=/usr/local])
+        [vtk_dir=""])
 
     # Check for VTK include directory
     AC_MSG_CHECKING([for VTK include directory])
-    VTK_INCLUDE_DIR="$vtk_dir/include/vtk-9.3"
+    VTK_INCLUDE_DIR=""
+    for d in \
+        /usr/include/vtk* \
+        /usr/local/include/vtk* \
+        if test -d "$d"; then
+            VTK_INCLUDE_DIR="$d"
+            break
+        fi
+    done
     if test -d "$VTK_INCLUDE_DIR"; then
+        AC_MSG_RESULT([$VTK_INCLUDE_DIR])
+    elif test -d $vtk_dir/include/vtk"; then
+        VTK_INCLUDE_DIR="$vtk_dir/include/vtk"
         AC_MSG_RESULT([$VTK_INCLUDE_DIR])
     else
         AC_MSG_ERROR([Cannot find VTK include directory in $VTK_INCLUDE_DIR. Please check your VTK installation or use --with-vtk-dir.])

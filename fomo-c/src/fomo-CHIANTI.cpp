@@ -10,6 +10,7 @@
 #include <algorithm>
 #include <cassert>
 #include <cstring>
+#include <limits>
 
 // Physical constants
 const double alphaconst=1.0645; // alpha=\sqrt{2\pi}/2/\sqrt{2ln2}
