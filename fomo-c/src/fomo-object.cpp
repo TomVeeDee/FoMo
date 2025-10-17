@@ -349,19 +349,6 @@ static std::map<std::string, FoMoRenderValue> RenderMap(
     std::end(RenderMapEntries)
 );
 
-// --- Debug print to verify Thomson is in the map ---
-#ifdef DEBUG_RENDERMAP
-#include <iostream>
-struct RenderMapDebugger {
-    RenderMapDebugger() {
-        std::cerr << "DEBUG: RenderMap contains:\n";
-        for (const auto &p : RenderMap)
-            std::cerr << "  " << p.first << std::endl;
-    }
-};
-static RenderMapDebugger _debug_render_map_init;
-#endif
-
 /**
  * @brief This is the main render routine for the FoMo::FoMoObject.
  * 
