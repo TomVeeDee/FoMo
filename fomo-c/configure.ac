@@ -26,14 +26,26 @@ AC_LANG(C++)
 AC_LANG_CPLUSPLUS
 AX_CXX_COMPILE_STDCXX_11
 
-# Include the macro to find VTK
-m4_include([m4/ax_vtk.m4])
-# Define the VTK include path
-VTK_INCLUDE_DIR=$HOME/Darias/code/VTK-install/usr/local/include/vtk-9.3
-AC_SUBST([VTK_INCLUDE_DIR])
-# Check for VTK and set the necessary flags and libraries
-AX_VTK
+AC_ARG_WITH([vtk],
+  [AS_HELP_STRING([--with-vtk],
+                  [Enable VTK support (default: no)])],
+  [with_vtk=$withval],
+  [with_vtk=no])
 
+AC_MSG_CHECKING([whether to build with VTK])
+AC_MSG_RESULT([$with_vtk])
+
+m4_include([m4/ax_vtk.m4])
+
+AS_IF([test "x$with_vtk" = "xyes"], [
+  AX_VTK
+], [
+  AC_MSG_NOTICE([VTK support disabled])
+  VTK_INCLUDE_DIR=""
+  VTK_LIB_DIR=""
+  AC_SUBST([VTK_INCLUDE_DIR])
+  AC_SUBST([VTK_LIB_DIR])
+])
 
 # check for HDF5 for the hdf5 example
 AX_LIB_HDF5([serial])
