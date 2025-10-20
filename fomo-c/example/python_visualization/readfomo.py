@@ -31,58 +31,95 @@ def readgoftcube_txt(filename,compress=0):
     f.close()
     return np.array(data),chiantifile
     
-def readgoftcube_dat(filename,compress=0):
-    if (compress):
-        f=gzip.open(filename,"rb")
+def readgoftcube_dat(filename, compress=0):
+    import gzip, struct, numpy as np
+
+    if compress:
+        f = gzip.open(filename, "rb")
     else:
-        f=open(filename,"rb")
-    
-    int_in=f.read(4)
-    dim=struct.unpack('i',int_in)[0]
-    int_in=f.read(4)
-    ng=struct.unpack('i',int_in)[0]
-    int_in=f.read(4)
-    nvars=struct.unpack('i',int_in)[0]
-    int_in=f.read(8)
-    chiantisize=struct.unpack('q',int_in)[0]
-    chiantifile=f.read(chiantisize)
-    int_in=f.read(8)
-    abundsize=struct.unpack('q',int_in)[0]
-    abundfile=f.read(abundsize)
-    
-    data=[]
-    for i in range(ng):
-        row=[]
-        for j in range(dim+nvars):
-            row.append(0.)
-        data.append(row)
-        
-    for j in range(dim+nvars):
-        for i in range(ng):
-            float_in=f.read(4)
-            data[i][j]=struct.unpack('f',float_in)[0]
-    
+        f = open(filename, "rb")
+
+    # --- Try reading header until '#' (new format marker) ---
+    header_bytes = b""
+    while True:
+        c = f.read(1)
+        if not c:
+            break
+        header_bytes += c
+        if c == b"#":
+            break
+        # Stop early if header gets too long
+        if len(header_bytes) > 60:
+            break
+
+    header = header_bytes.decode(errors="ignore")
+
+    # ------------------------------------------------------------------
+    # Case 1: New format (FoMo-v...#)
+    # ------------------------------------------------------------------
+    if header.startswith("FoMo-") and header.strip().endswith("#"):
+        dim = struct.unpack("i", f.read(4))[0]
+        ng = struct.unpack("i", f.read(4))[0]
+        nvars = struct.unpack("i", f.read(4))[0]
+
+        # read units
+        units = []
+        for _ in range(dim + nvars):
+            size_buf = f.read(8)
+            if len(size_buf) < 8:
+                raise EOFError("Unexpected EOF while reading unit size.")
+            size = struct.unpack("q", size_buf)[0]
+            unitstring = f.read(size) if size > 0 else b""
+            units.append(unitstring.decode(errors="ignore"))
+
+        chiantisize = struct.unpack("q", f.read(8))[0]
+        chiantifile = f.read(chiantisize)
+        abundsize = struct.unpack("q", f.read(8))[0]
+        abundfile = f.read(abundsize)
+
+    # ------------------------------------------------------------------
+    # Case 2: Old format (no FoMo header)
+    # ------------------------------------------------------------------
+    else:
+        # rewind to start
+        f.seek(0)
+        dim = struct.unpack("i", f.read(4))[0]
+        ng = struct.unpack("i", f.read(4))[0]
+        nvars = struct.unpack("i", f.read(4))[0]
+        chiantisize = struct.unpack("q", f.read(8))[0]
+        chiantifile = f.read(chiantisize)
+        abundsize = struct.unpack("q", f.read(8))[0]
+        abundfile = f.read(abundsize)
+        units = []
+
+    # ------------------------------------------------------------------
+    # Common data read section
+    # ------------------------------------------------------------------
+    ncols = dim + nvars
+    data = np.zeros((ng, ncols), dtype=np.float32)
+
+    for j in range(ncols):
+        buf = f.read(ng * 4)
+        if len(buf) < ng * 4:
+            raise EOFError("Unexpected EOF in data section.")
+        data[:, j] = np.frombuffer(buf, dtype=np.float32, count=ng)
+
     f.close()
-    return np.array(data),chiantifile
-    
-def readgoftcubechianti(filename):
-    parts=filename.split(".")
-    compress=0
-    if parts[-1]=="gz":
-        compress=1
-    
-    if parts[-1-compress]=="txt":
-        data,chiantifile=readgoftcube_txt(filename,compress=compress)
-    
-    if parts[-1-compress]=="dat":
-        data,chiantifile=readgoftcube_dat(filename,compress=compress)
-        
-    # print len(data), len(data[:][0])
-        
-    return data,chiantifile
+    return data, units, chiantifile
 
 def readgoftcube(filename):
-    data,chiantifile=readgoftcubechianti(filename)
+    parts = filename.split(".")
+    compress = 0
+    if parts[-1] == "gz":
+        compress = 1
+
+    if parts[-1 - compress] == "txt":
+        data, chiantifile = readgoftcube_txt(filename, compress=compress)
+    elif parts[-1 - compress] == "dat":
+        data, _, chiantifile = readgoftcube_dat(filename, compress=compress)
+    else:
+        raise ValueError("Unknown file format: " + filename)
+
     return data
     
 def regulargoftcube(data):
